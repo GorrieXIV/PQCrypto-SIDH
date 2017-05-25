@@ -2,13 +2,14 @@
 
 OPT=-O3     # Optimization option by default
 
-CC=clang
+CC=gcc
 ifeq "$(CC)" "gcc"
     COMPILER=gcc
 else ifeq "$(CC)" "clang"
     COMPILER=clang
 endif
 
+ARCH=x64
 ifeq "$(ARCH)" "x64"
     ARCHITECTURE=_AMD64_
 else ifeq "$(ARCH)" "x86"
@@ -37,7 +38,7 @@ ifeq "$(ARCH)" "ARM64"
 endif
 
 cc=$(COMPILER)
-CFLAGS=-c $(OPT) $(ADDITIONAL_SETTINGS) -D $(ARCHITECTURE) -D __LINUX__ $(USE_GENERIC)
+CFLAGS=-w -c $(OPT) $(ADDITIONAL_SETTINGS) -D $(ARCHITECTURE) -D __LINUX__ $(USE_GENERIC)
 LDFLAGS=
 ifeq "$(GENERIC)" "TRUE"
     EXTRA_OBJECTS=fp_generic.o
@@ -58,10 +59,10 @@ OBJECTS_ALL=$(OBJECTS) $(OBJECTS_ARITH_TEST) $(OBJECTS_KEX_TEST)
 all: arith_test kex_test
 
 kex_test: $(OBJECTS_KEX_TEST)
-	$(CC) -o kex_test $(OBJECTS_KEX_TEST) $(ARM_SETTING)
+	$(CC) -w -o kex_test $(OBJECTS_KEX_TEST) $(ARM_SETTING)
 
 arith_test: $(OBJECTS_ARITH_TEST)
-	$(CC) -o arith_test $(OBJECTS_ARITH_TEST) $(ARM_SETTING)
+	$(CC) -w -o arith_test $(OBJECTS_ARITH_TEST) $(ARM_SETTING)
 
 kex.o: kex.c SIDH_internal.h
 	$(CC) $(CFLAGS) kex.c

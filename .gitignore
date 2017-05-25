@@ -250,3 +250,10 @@ paket-files/
 # JetBrains Rider
 .idea/
 *.sln.iml
+
+# Misc
+*.o
+
+# Executables
+arith_test
+kex_test
