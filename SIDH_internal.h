@@ -379,7 +379,7 @@ void fp2inv751_mont_bingcd(f2elm_t a);
 void mont_n_way_inv(const f2elm_t* vec, const int n, f2elm_t* out);
 
 // n-way partial batched inversion
-void fp2nwayinv751_mont(f2elm_t* vec, f2elm_t* dest, int n);
+void fp2nwayinv751_mont(const f2elm_t* vec, f2elm_t* dest, int n);
 
 // Select either x or y depending on value of option 
 void select_f2elm(const f2elm_t x, const f2elm_t y, f2elm_t z, const digit_t option);

@@ -392,8 +392,8 @@ bool fp2_test()
 		f2elm_t batch_inv[100];
 
 		//do batched inversion and regular inversions
-		//fp2nwayinv751_mont(batch, batch_inv, 100);
-		mont_n_way_inv(batch, 100, batch_inv);
+		fp2nwayinv751_mont(batch, batch_inv, 100);
+		//mont_n_way_inv(batch, 100, batch_inv);
 
 		for (q = 0; q < 100; q++) {
 			fp2inv751_mont(test_inv[q]);
@@ -401,10 +401,8 @@ bool fp2_test()
 
 		//test that the batched inversion matches individual inversions 
 		for (q = 0; q < 100; q++) {
-			if (batch_inv[q] != test_inv[q]) {
+			if (!fpequal751_non_constant_time(test_inv[q], batch_inv[q])){//if (batch_inv[q] != test_inv[q]) {
 				return false;
-			} else {
-				//shit_on(the->game);
 			}
 		}
 			
