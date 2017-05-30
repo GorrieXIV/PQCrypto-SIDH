@@ -405,7 +405,7 @@ bool fp2_test()
 		//temp test stuff
 		f2elm_t test1, test2;
 		fp2random751_test(test1);
-		fpcopy751(test1, test2);
+		fp2copy751(test1, test2);
 
 		printf("test1 = %u\n", test1);
 		printf("test2 = %u\n", test2);
@@ -418,7 +418,7 @@ bool fp2_test()
 
 		//test that the batched inversion matches individual inversions 
 		//for (q = 0; q < 100; q++) {
-			if (!fpequal751_non_constant_time(test1, test2)){//if (batch_inv[q] != test_inv[q]) {
+			if (!fp2compare751(test1, test2)){//if (batch_inv[q] != test_inv[q]) {
 				return false;
 			}
 		//}
