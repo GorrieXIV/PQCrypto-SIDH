@@ -386,25 +386,42 @@ bool fp2_test()
 		for (q = 0; q < 100; q++) {
 			fp2random751_test(batch[q]);
 			fpcopy751(batch[q], test_inv[q]);
-		}
+		}	
 		
 		//make empty buffer for inverted elements
 		f2elm_t batch_inv[100];
 
 		//do batched inversion and regular inversions
 		fp2nwayinv751_mont(batch, batch_inv, 100);
-		//mont_n_way_inv(batch, 100, batch_inv);
+		//mont_n_way_inv(batch, 100, batch_inv);			
 
 		for (q = 0; q < 100; q++) {
 			fp2inv751_mont(test_inv[q]);
 		}
 
+		//printf("batch_inv[0][0] = %u, batch_inv[0][1] = %u\n", batch_inv[0][0], batch_inv[0][1]);
+		//printf("test_inv[0][0] = %u, test_inv[0][1] = %u\n", test_inv[0][0], test_inv[0][1]);
+
+		//temp test stuff
+		f2elm_t test1, test2;
+		fp2random751_test(test1);
+		fpcopy751(test1, test2);
+
+		printf("test1 = %u\n", test1);
+		printf("test2 = %u\n", test2);
+
+		fp2inv751_mont(test1);
+		fp2inv751_mont(test2);
+		
+		//printf("test1[0] = %u, test1[1] = %u\n", test1[0], test1[1]);
+		//printf("test2[0] = %u, test2[1] = %u\n", test2[0], test2[1]);
+
 		//test that the batched inversion matches individual inversions 
-		for (q = 0; q < 100; q++) {
-			if (!fpequal751_non_constant_time(test_inv[q], batch_inv[q])){//if (batch_inv[q] != test_inv[q]) {
+		//for (q = 0; q < 100; q++) {
+			if (!fpequal751_non_constant_time(test1, test2)){//if (batch_inv[q] != test_inv[q]) {
 				return false;
 			}
-		}
+		//}
 			
 		printf("batched inversion tests passed!\n");
 		//////////////////////////////////////////////////////
