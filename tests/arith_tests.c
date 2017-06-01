@@ -380,7 +380,7 @@ bool fp2_test()
 		//SECTION FOR TESTING N WAY BATCHED INVERSION ALGO/////
 
 		//generate a buffer of random fp2 elements (2 copies)
-		f2elm_t batch[100];
+		f2elm_t batch[100], mbatch[100];
 		f2elm_t test_inv[100];
 		int q;
 		for (q = 0; q < 100; q++) {
@@ -389,39 +389,50 @@ bool fp2_test()
 		}	
 		
 		//make empty buffer for inverted elements
-		f2elm_t batch_inv[100];
+		f2elm_t batch_inv[100], mbatch_inv[100];
 
 		//do batched inversion and regular inversions
-		fp2nwayinv751_mont(batch, batch_inv, 100);
-		//mont_n_way_inv(batch, 100, batch_inv);			
+		//fp2nwayinv751_mont(batch, batch_inv, 100);
+//mont_n_way_inv(mbatch, 100, mbatch_inv);
+		for (q = 0; q < 100; q++) {
+			to_mont(batch[q], mbatch[q]);
+		}
+		partial_batched_inv(mbatch, mbatch_inv, 100);
+		for (q = 0; q < 100; q++) {
+			from_mont(mbatch_inv[q], batch_inv[q]);
+		}
 
 		for (q = 0; q < 100; q++) {
-			fp2inv751_mont(test_inv[q]);
+			f2elm_t mtmp;
+			to_mont(test_inv[q], mtmp);
+			fp2inv751_mont(mtmp);
+			from_mont(mtmp, test_inv[q]);
 		}
 
 		//printf("batch_inv[0][0] = %u, batch_inv[0][1] = %u\n", batch_inv[0][0], batch_inv[0][1]);
 		//printf("test_inv[0][0] = %u, test_inv[0][1] = %u\n", test_inv[0][0], test_inv[0][1]);
 
-		//temp test stuff
-		f2elm_t test1, test2;
+		//temp test stuff		
+		/*f2elm_t test1, test2;
 		fp2random751_test(test1);
 		fp2copy751(test1, test2);
 
-		printf("test1 = %u\n", test1);
-		printf("test2 = %u\n", test2);
+		printf("test1 = %u\n", test1[0][0]);
+		printf("test2 = %u\n", test2[0][0]);
 
 		fp2inv751_mont(test1);
 		fp2inv751_mont(test2);
 		
-		//printf("test1[0] = %u, test1[1] = %u\n", test1[0], test1[1]);
-		//printf("test2[0] = %u, test2[1] = %u\n", test2[0], test2[1]);
+		printf("test1[0] = %u, test1[1] = %u\n", test1[0], test1[1]);
+		printf("test2[0] = %u, test2[1] = %u\n", test2[0], test2[1]);*/
 
 		//test that the batched inversion matches individual inversions 
-		//for (q = 0; q < 100; q++) {
-			if (!fp2compare751(test1, test2)){//if (batch_inv[q] != test_inv[q]) {
+		for (q = 0; q < 100; q++) {
+			if (fp2compare751(batch_inv[q], test_inv[q]) != 0){//if (batch_inv[q] != test_inv[q]) {
+				printf("q=%u, %u, %u\n", q, batch_inv[q][0][0], test_inv[q][0][0]);
 				return false;
 			}
-		//}
+		}
 			
 		printf("batched inversion tests passed!\n");
 		//////////////////////////////////////////////////////
