@@ -409,23 +409,6 @@ bool fp2_test()
 			from_mont(mtmp, test_inv[q]);
 		}
 
-		//printf("batch_inv[0][0] = %u, batch_inv[0][1] = %u\n", batch_inv[0][0], batch_inv[0][1]);
-		//printf("test_inv[0][0] = %u, test_inv[0][1] = %u\n", test_inv[0][0], test_inv[0][1]);
-
-		//temp test stuff		
-		/*f2elm_t test1, test2;
-		fp2random751_test(test1);
-		fp2copy751(test1, test2);
-
-		printf("test1 = %u\n", test1[0][0]);
-		printf("test2 = %u\n", test2[0][0]);
-
-		fp2inv751_mont(test1);
-		fp2inv751_mont(test2);
-		
-		printf("test1[0] = %u, test1[1] = %u\n", test1[0], test1[1]);
-		printf("test2[0] = %u, test2[1] = %u\n", test2[0], test2[1]);*/
-
 		//test that the batched inversion matches individual inversions 
 		for (q = 0; q < 100; q++) {
 			if (fp2compare751(batch_inv[q], test_inv[q]) != 0){//if (batch_inv[q] != test_inv[q]) {

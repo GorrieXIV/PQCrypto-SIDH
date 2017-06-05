@@ -1302,21 +1302,43 @@ void fp2nwayinv751_mont(const f2elm_t* vec, f2elm_t* dest, int n)
 
 void partial_batched_inv (const f2elm_t* vec, f2elm_t* dest, const int n)
 {
-	f2elm_t t1;
 	int i;
+	felm_t t0[n]; //a portion of vec elements
+	felm_t t1[n]; //b portion of vec elements
+	felm_t den[n]; //denominator of vec elements
 
-	fp2copy751(vec[0], dest[0]);                      // dest[0] = vec[0]
+	//convert f2elm to felm denominators
+	for (i = 0; i < n; i++) {
+		fpsqr751_mont((vec[i])[0], t0[i]); //t0[i] = a[i][0]^2
+		fpsqr751_mont((vec[i])[1], t1[i]); //t1[i] = a[i][1]^2
+		fpadd751(t0[i], t1[i], den[i]);//den[i] = t0[i] + t1[i];
+	}	
+	
+
+	//invert felms
+	felm_t a[n];
+	
+	fpcopy751(den[0], a[0]);                      // a[0] = den[0]
 	for (i = 1; i < n; i++) {
-		fp2mul751_mont(dest[i-1], vec[i], dest[i]);    // dest[i] = dest[i-1]*vec[i]
+		fpmul751_mont(a[i-1], den[i], a[i]);    // a[i] = a[i-1]*den[i]
 	}
 
-	fp2copy751(dest[n-1], t1);                        // t1 = 1/dest[n-1]
-	fp2inv751_mont_bingcd(t1);
+	
+	felm_t a_inv;
+	fpcopy751(a[n-1], a_inv);                        // a_inv = 1/a[n-1]
+	fpinv751_mont_bingcd(a_inv);
     
 	for (i = n-1; i >= 1; i--) {
-		fp2mul751_mont(dest[i-1], t1, dest[i]);        // dest[i] = t1*dest[i-1]
-		fp2mul751_mont(t1, vec[i], t1);              // t1 = t1*vec[i]
+		fpmul751_mont(a[i-1], a_inv, a[i]);        // a[i] = a_inv*dest[i-1]
+		fpmul751_mont(a_inv, den[i], a_inv);              // a_inv = a_inv*den[i]
 	}
 
-	fp2copy751(t1, dest[0]);                          // dest[0] = t1
+	fpcopy751(a_inv, a[0]);                          // dest[0] = a_inv
+
+	//convert from felm denominators to f2elm
+	for (i = 0; i < n; i++) {
+		fpmul751_mont(a[i],vec[i][0],dest[i][0]);
+		fpneg751((vec[i])[1]);
+		fpmul751_mont(a[i],vec[i][1],dest[i][1]);
+	}
 }
