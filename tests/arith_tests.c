@@ -377,7 +377,7 @@ bool fp2_test()
     else { printf("  GF(p^2) inversion tests... FAILED"); printf("\n"); return false; }
     printf("\n");
     
-		//SECTION FOR TESTING N WAY BATCHED INVERSION ALGO/////
+		//SECTION FOR TESTING N WAY BATCHED INVERSION ALGO//////////
 
 		//generate a buffer of random fp2 elements (2 copies)
 		f2elm_t batch[100], mbatch[100];
@@ -392,8 +392,6 @@ bool fp2_test()
 		f2elm_t batch_inv[100], mbatch_inv[100];
 
 		//do batched inversion and regular inversions
-		//fp2nwayinv751_mont(batch, batch_inv, 100);
-//mont_n_way_inv(mbatch, 100, mbatch_inv);
 		for (q = 0; q < 100; q++) {
 			to_mont(batch[q], mbatch[q]);
 		}
@@ -412,13 +410,15 @@ bool fp2_test()
 		//test that the batched inversion matches individual inversions 
 		for (q = 0; q < 100; q++) {
 			if (fp2compare751(batch_inv[q], test_inv[q]) != 0){//if (batch_inv[q] != test_inv[q]) {
-				printf("q=%u, %u, %u\n", q, batch_inv[q][0][0], test_inv[q][0][0]);
-				return false;
+				passed = 0;
 			}
 		}
 			
-		printf("batched inversion tests passed!\n");
-		//////////////////////////////////////////////////////
+		if (passed==1) printf("  GF(p^2) batched partial inversion tests.......................... PASSED");
+    else { printf("  GF(p^2) batched partial inversion tests... FAILED"); printf("\n"); return false; }
+    printf("\n");
+
+		////////////////////////////////////////////////////////////////////
 
     return OK;
 }
@@ -598,8 +598,40 @@ bool fp2_run()
 	}
 	printf("  GF(p^2) inversion (binary GCD) runs in .......................... %7lld ", cycles/SMALL_BENCH_LOOPS); print_unit;
 	printf("\n");
-    
-    return OK;
+
+
+	//inversion and batched inversion comparison
+	n = 100;
+	int q;
+	f2elm_t batch[n];
+	f2elm_t batch_inv[n];
+	f2elm_t test_inv[n];
+	for (q = 0; q < n; q++) {
+		fp2random751_test(batch[q]);
+		fpcopy751(batch[q], test_inv[q]);
+	}	
+
+	// GF(p^2) unbatched inversion
+	cycles = 0;
+	cycles1 = cpucycles();
+	for (q = 0; q < n; q++) {
+		fp2inv751_mont(test_inv[q]);
+	}
+	cycles2 = cpucycles();
+	cycles = cycles+(cycles2-cycles1);
+	printf("  100 GF(p^2) unbatched inversions runs in ...................... %7lld ", cycles); print_unit;
+	printf("\n");
+
+	// GF(p^2) batched partial inversion
+	cycles = 0;
+	cycles1 = cpucycles();
+	partial_batched_inv(batch, batch_inv, n);
+	cycles2 = cpucycles();
+	cycles = cycles+(cycles2-cycles1);
+	printf("  100 GF(p^2) batched partial inversions runs in .................. %7lld ", cycles); print_unit;
+	printf("\n");
+
+	return OK;
 }
 
 

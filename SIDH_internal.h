@@ -378,9 +378,6 @@ void fp2inv751_mont_bingcd(f2elm_t a);
 // n-way Montgomery inversion
 void mont_n_way_inv(const f2elm_t* vec, const int n, f2elm_t* out);
 
-// n-way partial batched inversion
-void fp2nwayinv751_mont(const f2elm_t* vec, f2elm_t* dest, int n);
-
 // new n-way partial
 void partial_batched_inv(const f2elm_t* vec, f2elm_t* dest, const int n);
 

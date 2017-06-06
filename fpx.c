@@ -1251,55 +1251,6 @@ void inv_mod_orderA(const digit_t* a, digit_t* c)
 	}
 }
 
-//assigns dest[0 ..n]
-void fp2nwayinv751_mont(const f2elm_t* vec, f2elm_t* dest, int n)
-{// GF(p751^2) n-way partial-inversion
-	int i;
-	//f2elm_t -> felm_t	
-	felm_t t0[n]; //t0.SetLength(n);
-	felm_t t1[n]; //t1.SetLength(n);
-	felm_t den[n]; //den.SetLength(n);
-
-	//to_mont(const felm_t a, felm_t mc);
-	//from_mont(const felm_t a, felm_t mc);
-
-	for (i = 0; i < n; i++) {
-		fpsqr751_mont((vec[i])[0], t0[i]); //t0[i] = a[i][0]^2
-		fpsqr751_mont((vec[i])[1], t1[i]); //t1[i] = a[i][1]^2
-		fpadd751(t0[i], t1[i], den[i]);//den[i] = t0[i] + t1[i];
-	}
-
-	//batched ZZ_p inversion
-	felm_t a[n]; //a.SetLength(n);
-	
-	fpcopy751(den[0], a[0]); //a[0] = den[0]
-
-	for (i = 1; i < n; i++) {
-		fpmul751_mont(a[i-1], den[i], a[i]); //a[i] = a[i-1] * den[i];
-	}
-
-	felm_t a_inv; // = inv(a[n-1]);
-	fpcopy751(a[n-1], a_inv);
-	fpinv751_mont(a_inv);
-	//the current inversion function being used is constant time. we can use the function at line 445 (non constant time) with blinding to potentially achieve more iffecient inversion while maintaining security (testing required).
-
-	for (i = n - 1; i >= 1; i--) {	
-		fpmul751_mont(a_inv, a[i-1], a[i]); //a[i] = a_inv * a[i-1];
-		fpmul751_mont(a[i], a_inv, a_inv); //a_inv = a_inv * den[i];
-  }
-
-	fpcopy751(a_inv, a[0]);	//a[0] = a_inv
-
-	//ZZ_p -> FP2
-	for (i = 0; i < n; i++) {
-		fpmul751_mont(a[i], (vec[i])[0], (dest[i])[0]); //dest[i][0] = vec[i][0]*a[i];
-		//NOTE: (vec[i])[1] should be -(vec[i])[1]
-		fpneg751((vec[i])[1]);
-		fpmul751_mont(a[i], (vec[i])[1], (dest[i])[1]); //dest[i][1] = -vec[i][1]*a[i];
-		//fp2correction751(dest[i]);
-	}
-}
-
 void partial_batched_inv (const f2elm_t* vec, f2elm_t* dest, const int n)
 {
 	int i;
