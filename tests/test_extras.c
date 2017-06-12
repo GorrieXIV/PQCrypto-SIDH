@@ -12,6 +12,7 @@
 
 #include "../SIDH_internal.h"
 #include "test_extras.h"
+#include <openssl/rand.h>
 #if (OS_TARGET == OS_WIN)
     #include <windows.h>
     #include <intrin.h>
@@ -109,6 +110,13 @@ void fprandom751_test(felm_t a)
   // SECURITY NOTE: distribution is not fully uniform. TO BE USED FOR TESTING ONLY.
     int i, diff = 768-751;
     unsigned char* string = NULL;
+
+
+		unsigned char* buf;
+		buf = malloc(8*sizeof(char));
+		if (RAND_bytes(buf, 8)) {
+			//success
+		}
 
     string = (unsigned char*)a;
     for (i = 0; i < sizeof(digit_t)*NWORDS_FIELD; i++) {

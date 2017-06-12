@@ -100,7 +100,7 @@ endif
 endif
 
 test_extras.o: tests/test_extras.c tests/test_extras.h
-	$(CC) $(CFLAGS) tests/test_extras.c
+	$(CC) $(CFLAGS) tests/test_extras.c -L/usr/lib -lssl -lcrypto
 
 arith_tests.o: tests/arith_tests.c SIDH_internal.h
 	$(CC) $(CFLAGS) tests/arith_tests.c
