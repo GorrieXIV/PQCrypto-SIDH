@@ -8,20 +8,17 @@
 * Ported to Microsoft's SIDH 2.0 Library by Robert Gorrie (gxiv)
 *************************************************************************/
 
-#include "../SIDH_internal.h"
-#include "../SIDH.h"
-#include "test_extras.h"
+#include "SIDH.h"
+#include "tests/test_extras.h"
 #include <malloc.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <limits.h>
-#include "../keccak.c"
-#include "../sha256.c"
-#include <pthread.h>
+#include "keccak.h"
+#include "sha256.h"
+#include <pthread.h>  
 
-// Benchmark and test parameters  
-#define NUM_ROUNDS     248
 
 int NUM_THREADS = 248;
 int CUR_ROUND = 0;
@@ -33,6 +30,7 @@ invBatch* verifyBatchB;
 invBatch* verifyBatchC;
 pthread_mutex_t RLOCK;
 pthread_mutex_t BLOCK;
+
 
 
 typedef struct thread_params_sign {
@@ -68,12 +66,6 @@ void *sign_thread(void *TPS) {
 
 		if (stop) break;
 
-		//printf("round: %d\n", CUR_ROUND);
-
-
-		//cycles1 = cpucycles();
-		//printf("%s:%d r=%d\n", __FILE__, __LINE__, r);
-
 		tps->sig->Randoms[r] = (unsigned char*)calloc(1, tps->obytes);
 		tps->sig->Commitments1[r] = (unsigned char*)calloc(1, 2*tps->pbytes);
 		tps->sig->Commitments2[r] = (unsigned char*)calloc(1, 2*tps->pbytes);
@@ -93,23 +85,11 @@ void *sign_thread(void *TPS) {
     to_fp2mont(((f2elm_t*)TempPubKey)[0], A);
     fp2copy751(A, *(f2elm_t*)tps->sig->Commitments1[r]);
 
-    ////////////////////////////
-    //TODO: compute using A instead
-
-		//NEED TO REFRESH BATCH PARAMS AND THEN PASS BATCH STRUCT TO SECAGRB
-    
 		Status = SecretAgreement_B(tps->PrivateKey, TempPubKey, tps->sig->Commitments2[r], *(tps->CurveIsogeny), NULL, tps->sig->psiS[r], signBatchB);
     if(Status != CRYPTO_SUCCESS) {
 			printf("Random point generation failed"); 
     }
-
-    //cycles2 = cpucycles();
-    //cycles = cycles2 - cycles1;
-    //printf("ZKP round %d ran in ............ %10lld cycles\n", r, cycles);
-    //totcycles += cycles;
 	}
-
-
 }
 
 
@@ -205,7 +185,11 @@ CRYPTO_STATUS isogeny_sign(PCurveIsogenyStaticData CurveIsogenyData, unsigned ch
 
 cleanup:
     SIDH_curve_free(CurveIsogeny);
-
+    free(signBatchA->invArray);
+		free(signBatchA->invDest);
+    free(signBatchB->invArray);
+		free(signBatchB->invDest);
+		
     return Status;
 }
 
@@ -346,7 +330,6 @@ void *verify_thread(void *TPV) {
 
 	if (!verified) {
 		printf("ERROR: verify failed.\n");
-		//printf("Average time for verification per round ...... %10lld cycles\n", totcycles/NUM_ROUNDS);
 	}
 }
 
@@ -421,8 +404,6 @@ CRYPTO_STATUS isogeny_verify(PCurveIsogenyStaticData CurveIsogenyData, unsigned 
 		sem_init(&verifyBatchC->sign_sem, 0, 0);
 
     int t;
-		//printf("%s %d: creating verify threads\n", __FILE__, __LINE__);
-		//fflush(stdout);
     for (t=0; t<NUM_THREADS; t++) {
     	if (pthread_create(&verify_threads[t], NULL, verify_thread, &tpv)) {
     		printf("ERROR: Failed to create thread %d\n", t);
@@ -436,6 +417,12 @@ CRYPTO_STATUS isogeny_verify(PCurveIsogenyStaticData CurveIsogenyData, unsigned 
 
 cleanup:
     SIDH_curve_free(CurveIsogeny);
+    free(verifyBatchA->invArray);
+		free(verifyBatchA->invDest);
+		free(verifyBatchB->invArray);
+		free(verifyBatchB->invDest);
+		free(verifyBatchC->invArray);
+		free(verifyBatchC->invDest);
 
     return Status;
 }

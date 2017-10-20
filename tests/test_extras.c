@@ -114,7 +114,7 @@ void fprandom751_test(felm_t a)
 
 		unsigned char* buf;
 		buf = malloc(8*sizeof(char));
-		if (RAND_bytes(buf, 8)) {
+		if (random_bytes_test(8, buf)) {
 			//success
 		}
 

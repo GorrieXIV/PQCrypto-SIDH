@@ -253,7 +253,9 @@ paket-files/
 
 # Misc
 *.o
+*~
 
 # Executables
 arith_test
 kex_test
+sig_test

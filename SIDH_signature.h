@@ -8,3 +8,24 @@
 * Header file for Yoo et. al signature procedures
 *
 *********************************************************************************************/ 
+
+#include "SIDH_internal.h"
+
+#define NUM_ROUNDS     248
+
+//signature structure
+struct Signature {
+    unsigned char *Commitments1[NUM_ROUNDS];
+    unsigned char *Commitments2[NUM_ROUNDS];
+    unsigned char *HashResp;
+    unsigned char *Randoms[NUM_ROUNDS];
+    point_proj *psiS[NUM_ROUNDS];
+};
+
+void *sign_thread(void *TPS);
+
+CRYPTO_STATUS isogeny_sign(PCurveIsogenyStaticData CurveIsogenyData, unsigned char *PrivateKey, unsigned char *PublicKey, struct Signature *sig);
+
+void *verify_thread(void *TPV);
+
+CRYPTO_STATUS isogeny_verify(PCurveIsogenyStaticData CurveIsogenyData, unsigned char *PublicKey, struct Signature *sig);

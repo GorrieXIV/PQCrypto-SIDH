@@ -38,7 +38,7 @@ ifeq "$(ARCH)" "ARM64"
 endif
 
 cc=$(COMPILER)
-CFLAGS=-w -c $(OPT) $(ADDITIONAL_SETTINGS) -D $(ARCHITECTURE) -D __LINUX__ $(USE_GENERIC)
+CFLAGS=-c $(OPT) $(ADDITIONAL_SETTINGS) -D $(ARCHITECTURE) -D __LINUX__ $(USE_GENERIC) #took -w flag out
 LDFLAGS=
 ifeq "$(GENERIC)" "TRUE"
     EXTRA_OBJECTS=fp_generic.o
@@ -50,19 +50,24 @@ ifeq "$(ARCH)" "ARM64"
     EXTRA_OBJECTS=fp_arm64.o fp_arm64_asm.o
 endif
 endif
-OBJECTS=kex.o ec_isogeny.o SIDH.o SIDH_setup.o fpx.o $(EXTRA_OBJECTS)
+OBJECTS=kex.o ec_isogeny.o SIDH.o SIDH_setup.o fpx.o SIDH_signature.o$(EXTRA_OBJECTS)
 OBJECTS_TEST=test_extras.o
 OBJECTS_ARITH_TEST=arith_tests.o $(OBJECTS_TEST) $(OBJECTS)
 OBJECTS_KEX_TEST=kex_tests.o $(OBJECTS_TEST) $(OBJECTS)
+OBJECTS_SIG_TEST=sig_tests.o $(OBJECTS_TEST) $(OBJECTS)
 OBJECTS_ALL=$(OBJECTS) $(OBJECTS_ARITH_TEST) $(OBJECTS_KEX_TEST)
 
-all: arith_test kex_test
+all: sig_test 
+#arith_test kex_test
 
 kex_test: $(OBJECTS_KEX_TEST)
-	$(CC) -w -o kex_test $(OBJECTS_KEX_TEST) $(ARM_SETTING)
+	$(CC) -o kex_test $(OBJECTS_KEX_TEST) $(ARM_SETTING)
 
 arith_test: $(OBJECTS_ARITH_TEST)
-	$(CC) -w -o arith_test $(OBJECTS_ARITH_TEST) $(ARM_SETTING)
+	$(CC) -o arith_test $(OBJECTS_ARITH_TEST) $(ARM_SETTING)
+	
+sig_test: $(OBJECTS_SIG_TEST)
+	$(CC) -o sig_test $(OBJECTS_SIG_TEST)
 
 kex.o: kex.c SIDH_internal.h
 	$(CC) $(CFLAGS) kex.c
@@ -75,6 +80,9 @@ SIDH.o: SIDH.c SIDH_internal.h
 
 SIDH_setup.o: SIDH_setup.c SIDH_internal.h
 	$(CC) $(CFLAGS) SIDH_setup.c
+	
+SIDH_signature.o: SIDH_signature.c SIDH_internal.h SIDH.h keccak.h sha256.h
+	$(CC) $(CFLAGS) SIDH_signature.c
 
 fpx.o: fpx.c SIDH_internal.h
 	$(CC) $(CFLAGS) fpx.c
@@ -105,8 +113,11 @@ test_extras.o: tests/test_extras.c tests/test_extras.h
 arith_tests.o: tests/arith_tests.c SIDH_internal.h
 	$(CC) $(CFLAGS) tests/arith_tests.c
 
-kex_tests.o: tests/kex_tests.c SIDH.h
+kex_tests.o: tests/kex_tests.c SIDH.h SIDH_signature.h SIDH_internal.h
 	$(CC) $(CFLAGS) tests/kex_tests.c
+	
+sig_tests.o: tests/sig_tests.c SIDH.h SIDH_internal.h SIDH_signature.h
+	$(CC) $(CFLAGS) tests/sig_tests.c
 
 .PHONY: clean
 
