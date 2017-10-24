@@ -50,7 +50,7 @@ ifeq "$(ARCH)" "ARM64"
     EXTRA_OBJECTS=fp_arm64.o fp_arm64_asm.o
 endif
 endif
-OBJECTS=kex.o ec_isogeny.o SIDH.o SIDH_setup.o fpx.o SIDH_signature.o$(EXTRA_OBJECTS)
+OBJECTS=kex.o ec_isogeny.o SIDH.o SIDH_setup.o fpx.o SIDH_signature.o keccak.o $(EXTRA_OBJECTS)
 OBJECTS_TEST=test_extras.o
 OBJECTS_ARITH_TEST=arith_tests.o $(OBJECTS_TEST) $(OBJECTS)
 OBJECTS_KEX_TEST=kex_tests.o $(OBJECTS_TEST) $(OBJECTS)
@@ -67,7 +67,7 @@ arith_test: $(OBJECTS_ARITH_TEST)
 	$(CC) -o arith_test $(OBJECTS_ARITH_TEST) $(ARM_SETTING)
 	
 sig_test: $(OBJECTS_SIG_TEST)
-	$(CC) -o sig_test $(OBJECTS_SIG_TEST)
+	$(CC) -pthread -o sig_test $(OBJECTS_SIG_TEST)
 
 kex.o: kex.c SIDH_internal.h
 	$(CC) $(CFLAGS) kex.c
@@ -81,11 +81,14 @@ SIDH.o: SIDH.c SIDH_internal.h
 SIDH_setup.o: SIDH_setup.c SIDH_internal.h
 	$(CC) $(CFLAGS) SIDH_setup.c
 	
-SIDH_signature.o: SIDH_signature.c SIDH_internal.h SIDH.h keccak.h sha256.h
+SIDH_signature.o: SIDH_signature.c SIDH_internal.h SIDH.h keccak.h
 	$(CC) $(CFLAGS) SIDH_signature.c
 
 fpx.o: fpx.c SIDH_internal.h
 	$(CC) $(CFLAGS) fpx.c
+	
+keccak.o: keccak.c
+	$(CC) $(CFLAGS) keccak.c
 
 ifeq "$(GENERIC)" "TRUE"
     fp_generic.o: generic/fp_generic.c

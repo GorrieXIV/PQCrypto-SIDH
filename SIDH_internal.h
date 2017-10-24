@@ -18,7 +18,7 @@
 extern "C" {
 #endif
 
-
+#include "SIDH.h"
 #include "SIDH_api.h"   
     
 
@@ -33,30 +33,7 @@ extern "C" {
 #define MAX_Bob               239
    
 
-// SIDH's basic element definitions and point representations
 
-typedef digit_t felm_t[NWORDS_FIELD];                                 // Datatype for representing 751-bit field elements (768-bit max.)
-typedef digit_t dfelm_t[2*NWORDS_FIELD];                              // Datatype for representing double-precision 2x751-bit field elements (2x768-bit max.) 
-typedef felm_t  f2elm_t[2];                                           // Datatype for representing quadratic extension field elements GF(p751^2)
-typedef f2elm_t publickey_t[3];                                       // Datatype for representing public keys equivalent to three GF(p751^2) elements
-        
-typedef struct { f2elm_t x; f2elm_t y; } point_affine;                // Point representation in affine coordinates on Montgomery curve.
-typedef point_affine point_t[1]; 
-        
-typedef struct { f2elm_t X; f2elm_t Z; } point_proj;                  // Point representation in projective XZ Montgomery coordinates.
-typedef point_proj point_proj_t[1]; 
-        
-typedef struct { f2elm_t X; f2elm_t Y; f2elm_t Z; } point_full_proj;  // Point representation in projective XYZ Montgomery coordinates.
-typedef point_full_proj point_full_proj_t[1]; 
-    
-typedef struct { f2elm_t X2; f2elm_t XZ; f2elm_t Z2; f2elm_t YZ; } point_ext_proj;
-typedef point_ext_proj point_ext_proj_t[1];                           // Point representation in extended projective XYZ Montgomery coordinates.
-
-typedef struct { felm_t x; felm_t y; } point_basefield_affine;        // Point representation in affine coordinates on Montgomery curve over the base field.
-typedef point_basefield_affine point_basefield_t[1];  
-        
-typedef struct { felm_t X; felm_t Z; } point_basefield_proj;          // Point representation in projective XZ Montgomery coordinates over the base field.
-typedef point_basefield_proj point_basefield_proj_t[1]; 
     
 
 // Macro definitions
@@ -428,6 +405,9 @@ void swap_points(point_proj_t P, point_proj_t Q, const digit_t option);
 // Computes the j-invariant of a Montgomery curve with projective constant.
 void j_inv(const f2elm_t A, const f2elm_t C, f2elm_t jinv);
 
+// Computes the j-invariant in a parallelizable format
+void j_inv_batch(f2elm_t A, f2elm_t C, f2elm_t jinv, invBatch* batch);
+
 // Simultaneous doubling and differential addition.
 void xDBLADD(point_proj_t P, point_proj_t Q, const f2elm_t xPQ, const f2elm_t A24);
 
@@ -484,6 +464,12 @@ void eval_3_isog(const point_proj_t P, point_proj_t Q);
 
 // 3-way simultaneous inversion
 void inv_3_way(f2elm_t z1, f2elm_t z2, f2elm_t z3);
+
+// 3-way simultaneous inversion
+void inv_4_way(f2elm_t z1, f2elm_t z2, f2elm_t z3, f2elm_t z4);
+
+// 4-way parallelizable inversion
+void inv_4_way_batch(f2elm_t z1, f2elm_t z2, f2elm_t z3, f2elm_t z4, invBatch* batch);
 
 // Computing the point D = (x(Q-P),z(Q-P))
 void distort_and_diff(const felm_t xP, point_proj_t d, PCurveIsogenyStruct CurveIsogeny);

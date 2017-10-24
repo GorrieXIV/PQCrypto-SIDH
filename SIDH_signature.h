@@ -22,6 +22,8 @@ struct Signature {
     point_proj *psiS[NUM_ROUNDS];
 };
 
+CRYPTO_STATUS isogeny_keygen(PCurveIsogenyStaticData CurveIsogenyData, unsigned char *PrivateKey, unsigned char *PublicKey);
+
 void *sign_thread(void *TPS);
 
 CRYPTO_STATUS isogeny_sign(PCurveIsogenyStaticData CurveIsogenyData, unsigned char *PrivateKey, unsigned char *PublicKey, struct Signature *sig);

@@ -18,10 +18,12 @@
 extern "C" {
 #endif
 
-
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
+
+#include <pthread.h>
+#include <semaphore.h>
 
 
 // Definition of operating system
@@ -152,6 +154,30 @@ extern "C" {
 #define BIGMONT_NWORDS_ORDER    ((BIGMONT_NBITS_ORDER+RADIX-1)/RADIX)       // Number of words of BigMont's subgroup order.
 #define BIGMONT_MAXWORDS_ORDER  ((BIGMONT_MAXBITS_ORDER+RADIX-1)/RADIX)     // Max. number of words to represent elements in [1, BigMont_order].
    
+// SIDH's basic element definitions and point representations
+
+typedef digit_t felm_t[NWORDS_FIELD];                                 // Datatype for representing 751-bit field elements (768-bit max.)
+typedef digit_t dfelm_t[2*NWORDS_FIELD];                              // Datatype for representing double-precision 2x751-bit field elements (2x768-bit max.) 
+typedef felm_t  f2elm_t[2];                                           // Datatype for representing quadratic extension field elements GF(p751^2)
+typedef f2elm_t publickey_t[3];                                       // Datatype for representing public keys equivalent to three GF(p751^2) elements
+        
+typedef struct { f2elm_t x; f2elm_t y; } point_affine;                // Point representation in affine coordinates on Montgomery curve.
+typedef point_affine point_t[1]; 
+        
+typedef struct { f2elm_t X; f2elm_t Z; } point_proj;                  // Point representation in projective XZ Montgomery coordinates.
+typedef point_proj point_proj_t[1]; 
+        
+typedef struct { f2elm_t X; f2elm_t Y; f2elm_t Z; } point_full_proj;  // Point representation in projective XYZ Montgomery coordinates.
+typedef point_full_proj point_full_proj_t[1]; 
+    
+typedef struct { f2elm_t X2; f2elm_t XZ; f2elm_t Z2; f2elm_t YZ; } point_ext_proj;
+typedef point_ext_proj point_ext_proj_t[1];                           // Point representation in extended projective XYZ Montgomery coordinates.
+
+typedef struct { felm_t x; felm_t y; } point_basefield_affine;        // Point representation in affine coordinates on Montgomery curve over the base field.
+typedef point_basefield_affine point_basefield_t[1];  
+        
+typedef struct { felm_t X; felm_t Z; } point_basefield_proj;          // Point representation in projective XZ Montgomery coordinates over the base field.
+typedef point_basefield_proj point_basefield_proj_t[1]; 
 
 // Definitions of the error-handling type and error codes
 
@@ -252,6 +278,17 @@ typedef struct
 
 // "SIDHp751", base curve: supersingular elliptic curve E: y^2 = x^3 + x
 extern CurveIsogenyStaticData CurveIsogeny_SIDHp751;
+
+/*************** Data Structure for batch processing ***************/
+
+typedef struct {
+	int batchSize;
+	f2elm_t* invArray;  			//(default thread count of 248)
+	f2elm_t* invDest;					//(default thread count of 248)
+	int cntr;
+	sem_t sign_sem;
+	pthread_mutex_t arrayLock;
+} invBatch;
 
 
 /******************** Function prototypes ***********************/

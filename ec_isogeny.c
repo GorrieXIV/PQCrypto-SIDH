@@ -11,6 +11,8 @@
 
 #include "SIDH_internal.h"
 #include <math.h>
+#include <pthread.h>
+#include <semaphore.h>
 
 extern const uint64_t LIST[22][NWORDS64_FIELD];
 
@@ -37,6 +39,49 @@ void j_inv(const f2elm_t A, const f2elm_t C, f2elm_t jinv)
     fp2add751(t0, t0, t0);                             // t0 = t0+t0
     fp2inv751_mont(jinv);                              // jinv = 1/jinv 
     fp2mul751_mont(jinv, t0, jinv);                    // jinv = t0*jinv
+}
+
+void j_inv_batch(f2elm_t A, f2elm_t C, f2elm_t jinv, invBatch* batch) {	
+	f2elm_t t0, t1;
+	int tempCnt;
+    
+	fp2sqr751_mont(A, jinv);                           // jinv = A^2
+	fp2sqr751_mont(C, t1);                             // t1 = C^2
+	fp2add751(t1, t1, t0);                             // t0 = t1+t1
+	fp2sub751(jinv, t0, t0);                           // t0 = jinv-t0
+	fp2sub751(t0, t1, t0);                             // t0 = t0-t1
+	fp2sub751(t0, t1, jinv);                           // jinv = t0-t1
+	fp2sqr751_mont(t1, t1);                            // t1 = t1^2
+	fp2mul751_mont(jinv, t1, jinv);                    // jinv = jinv*t1
+	fp2add751(t0, t0, t0);                             // t0 = t0+t0
+	fp2add751(t0, t0, t0);                             // t0 = t0+t0
+	fp2sqr751_mont(t0, t1);                            // t1 = t0^2
+	fp2mul751_mont(t0, t1, t0);                        // t0 = t0*t1
+	fp2add751(t0, t0, t0);                             // t0 = t0+t0
+  fp2add751(t0, t0, t0);                             // t0 = t0+t0
+
+	//fp2inv751_mont(jinv);                              // jinv = 1/jinv 
+		
+	pthread_mutex_lock(&batch->arrayLock);
+	fp2copy751(jinv, batch->invArray[batch->cntr]);
+	tempCnt = batch->cntr;
+	batch->cntr++; 
+	pthread_mutex_unlock(&batch->arrayLock);	
+	//printf("%s %d: ctr = %d\n", __FILE__, __LINE__, batch->cntr);
+
+	int i;
+	if (tempCnt+1 == batch->batchSize) {
+		partial_batched_inv(batch->invArray, batch->invDest, batch->batchSize);
+		for (i = 0; i < batch->batchSize - 1; i++) {
+			sem_post(&batch->sign_sem);			
+		}
+	} else {
+		sem_wait(&batch->sign_sem);
+	}
+	fp2copy751(batch->invDest[tempCnt], jinv);
+	batch->cntr = 0;
+
+	fp2mul751_mont(jinv, t0, jinv);                    // jinv = t0*jinv
 }
 
 
@@ -550,6 +595,77 @@ void inv_3_way(f2elm_t z1, f2elm_t z2, f2elm_t z3)
     fp2copy751(t3, z1);                              // z1 = 1/z1
 }
 
+void inv_4_way(f2elm_t z1, f2elm_t z2, f2elm_t z3, f2elm_t z4)
+{ // 4-way simultaneous inversion
+  // Input:  z1,z2,z3,z4
+  // Output: 1/z1,1/z2,1/z3,1/z4 (override inputs).
+  	f2elm_t t0, t1, t2;
+		int tempCnt;
+
+    fp2mul751_mont(z1, z2, t0);                      // t0 = z1*z2
+    fp2mul751_mont(z3, z4, t1);                      // t1 = z3*z4
+    fp2mul751_mont(t0, t1, t2);                      // t2 = z1*z2*z3*z4
+
+    fp2inv751_mont(t2);                              // t2 = 1/(z1*z2*z3*z4)
+
+    fp2mul751_mont(t0, t2, t0);                      // t0 = 1/(z3*z4) 
+    fp2mul751_mont(t1, t2, t1);                      // t1 = 1/(z1*z2) 
+    fp2mul751_mont(t0, z3, t2);                      // t2 = 1/z4
+    fp2mul751_mont(t0, z4, z3);                      // z3 = 1/z3
+    fp2copy751(t2, z4);                              // z4 = 1/z4
+    fp2mul751_mont(z1, t1, t2);                      // t2 = 1/z2
+    fp2mul751_mont(z2, t1, z1);                      // z1 = 1/z1
+    fp2copy751(t2, z2);                              // z2 = 1/z2
+}
+
+void inv_4_way_batch(f2elm_t z1, f2elm_t z2, f2elm_t z3, f2elm_t z4, invBatch* batch) {
+	// 4-way simultaneous inversion
+	// Input:  z1,z2,z3,z4
+	// Output: 1/z1,1/z2,1/z3,1/z4 (override inputs).
+	f2elm_t t0, t1, t2;
+	int tempCnt;
+
+	fp2mul751_mont(z1, z2, t0);                      // t0 = z1*z2
+	fp2mul751_mont(z3, z4, t1);                      // t1 = z3*z4
+	fp2mul751_mont(t0, t1, t2);                      // t2 = z1*z2*z3*z4
+
+	//printf("%s:%d\n", __FILE__, __LINE__);
+	pthread_mutex_lock(&batch->arrayLock);
+	//printf("%s:%d cntr=%d\n", __FILE__, __LINE__, cntr);
+	fp2copy751(t2, batch->invArray[batch->cntr]);
+	tempCnt = batch->cntr;
+	//printf("%s:%d Adding element %d to inversion buffer \n", __FILE__, __LINE__, tempCnt);
+	batch->cntr++; 
+	pthread_mutex_unlock(&batch->arrayLock);
+	
+	int i;
+	
+	//printf("%s:%d cntr=%d, batchSize=%d\n", __FILE__, __LINE__, cntr, batchSize);		
+		
+	if (tempCnt+1 == batch->batchSize) {
+		partial_batched_inv(batch->invArray, batch->invDest, batch->batchSize);
+
+		for (i = 0; i < batch->batchSize; i++) {
+			sem_post(&batch->sign_sem);			
+		}
+	} else {
+		sem_wait(&batch->sign_sem);
+	}
+
+	fp2copy751(batch->invDest[tempCnt], t2);
+	batch->cntr = 0;
+
+	fp2mul751_mont(t0, t2, t0);                      // t0 = 1/(z3*z4) 
+	fp2mul751_mont(t1, t2, t1);                      // t1 = 1/(z1*z2) 
+	fp2mul751_mont(t0, z3, t2);                      // t2 = 1/z4
+	fp2mul751_mont(t0, z4, z3);                      // z3 = 1/z3
+	fp2copy751(t2, z4);                              // z4 = 1/z4
+	fp2mul751_mont(z1, t1, t2);                      // t2 = 1/z2
+	fp2mul751_mont(z2, t1, z1);                      // z1 = 1/z1
+	fp2copy751(t2, z2);                              // z2 = 1/z2
+
+	//printf("%s:%d Batched inversion complete \n", __FILE__, __LINE__);		
+}
 
 void distort_and_diff(const felm_t xP, point_proj_t D, PCurveIsogenyStruct CurveIsogeny)
 { // Computing the point (x(Q-P),z(Q-P))

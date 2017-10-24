@@ -8,7 +8,7 @@
 * Ported to Microsoft's SIDH 2.0 Library by Robert Gorrie (gxiv)
 *************************************************************************/
 
-#include "SIDH.h"
+#include "SIDH_signature.h"
 #include "tests/test_extras.h"
 #include <malloc.h>
 #include <stdio.h>
@@ -16,8 +16,8 @@
 #include <stdlib.h>
 #include <limits.h>
 #include "keccak.h"
-#include "sha256.h"
 #include <pthread.h>  
+#include <semaphore.h>
 
 
 int NUM_THREADS = 248;
@@ -31,7 +31,60 @@ invBatch* verifyBatchC;
 pthread_mutex_t RLOCK;
 pthread_mutex_t BLOCK;
 
+void hashdata(unsigned int pbytes, unsigned char** comm1, unsigned char** comm2, uint8_t* HashResp, int hlen, int dlen, uint8_t *data, uint8_t *cHash, int cHashLength) {
+    int r;
+    for (r=0; r<NUM_ROUNDS; r++) {
+        memcpy(data + (r * 2*pbytes), comm1[r], 2*pbytes);
+        memcpy(data + (NUM_ROUNDS * 2*pbytes) + (r * 2*pbytes), comm2[r], 2*pbytes);
+    }
+    memcpy(data + (2 * NUM_ROUNDS * 2*pbytes), HashResp, 2 * NUM_ROUNDS * hlen);
 
+    keccak(data, dlen, cHash, cHashLength);
+}
+
+CRYPTO_STATUS isogeny_keygen(PCurveIsogenyStaticData CurveIsogenyData, unsigned char *PrivateKey, unsigned char *PublicKey) {
+    unsigned int pbytes = (CurveIsogenyData->pwordbits + 7)/8;      // Number of bytes in a field element 
+    unsigned int n, obytes = (CurveIsogenyData->owordbits + 7)/8;   // Number of bytes in an element in [1, order]
+    bool valid_PublicKey = false;
+    PCurveIsogenyStruct CurveIsogeny = {0};
+    unsigned long long cycles, cycles1, cycles2;
+    CRYPTO_STATUS Status = CRYPTO_SUCCESS;
+    bool passed;
+
+
+    // Curve isogeny system initialization
+    CurveIsogeny = SIDH_curve_allocate(CurveIsogenyData);
+    if (CurveIsogeny == NULL) {
+        Status = CRYPTO_ERROR_NO_MEMORY;
+        goto cleanup;
+    }
+    Status = SIDH_curve_initialize(CurveIsogeny, &random_bytes_test, CurveIsogenyData);
+    if (Status != CRYPTO_SUCCESS) {
+        goto cleanup;
+    }
+
+    // Generate Peggy(Bob)'s keys
+    passed = true;
+    cycles1 = cpucycles();
+    Status = KeyGeneration_B(PrivateKey, PublicKey, CurveIsogeny);
+    if (Status != CRYPTO_SUCCESS) {                                                  
+        passed = false;
+    }
+    cycles2 = cpucycles();
+    cycles = cycles2 - cycles1;
+    if (passed) {
+        //printf("  Key generated in ................... %10lld cycles", cycles);
+    } else { 
+        printf("  Key generation failed"); goto cleanup; 
+    }
+
+
+    
+cleanup:
+    SIDH_curve_free(CurveIsogeny);
+
+    return Status;
+}
 
 typedef struct thread_params_sign {
 	PCurveIsogenyStruct *CurveIsogeny;

@@ -32,23 +32,21 @@ int main (int argc, char** argv) {
 
 	struct Signature sig;
 	
-	//for (rep=0; rep<100; rep++) {
-		Status = isogeny_keygen(&CurveIsogeny_SIDHp751, PrivateKey, PublicKey);
+	Status = isogeny_keygen(&CurveIsogeny_SIDHp751, PrivateKey, PublicKey);
 		
-		cycles1 = cpucycles();
-		Status = isogeny_sign(&CurveIsogeny_SIDHp751, PrivateKey, PublicKey, &sig);
-		cycles2 = cpucycles();
-		scycles = cycles2 - cycles1;
+	cycles1 = cpucycles();
+	Status = isogeny_sign(&CurveIsogeny_SIDHp751, PrivateKey, PublicKey, &sig);
+	cycles2 = cpucycles();
+	scycles = cycles2 - cycles1;
 		
-		printf("%10lld\n", scycles);
+	printf("%10lld\n", scycles);
 		
-		cycles1 = cpucycles();
-		Status = isogeny_verify(&CurveIsogeny_SIDHp751, PublicKey, &sig);
-		cycles2 = cpucycles();
-		scycles = cycles2 - cycles1;
+	cycles1 = cpucycles();
+	Status = isogeny_verify(&CurveIsogeny_SIDHp751, PublicKey, &sig);
+	cycles2 = cpucycles();
+	scycles = cycles2 - cycles1;
 		
-		printf("%10lld\n", scycles);
-	//}
+	printf("%10lld\n", scycles);
 
 	return 0;
 }
