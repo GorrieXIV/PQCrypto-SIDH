@@ -67,7 +67,7 @@ CRYPTO_STATUS isogeny_keygen(PCurveIsogenyStaticData CurveIsogenyData, unsigned 
     passed = true;
     cycles1 = cpucycles();
     Status = KeyGeneration_B(PrivateKey, PublicKey, CurveIsogeny);
-    if (Status != CRYPTO_SUCCESS) {                                                  
+    if (Status != CRYPTO_SUCCESS) {                  
         passed = false;
     }
     cycles2 = cpucycles();
@@ -136,7 +136,7 @@ void *sign_thread(void *TPS) {
 		}
         
     to_fp2mont(((f2elm_t*)TempPubKey)[0], A);
-    fp2copy751(A, *(f2elm_t*)tps->sig->Commitments1[r]);
+    fp2copy751(A, *(f2elm_t*)tps->sig->Commitments1[r]);     //commitment1[r] = A
 
 		Status = SecretAgreement_B(tps->PrivateKey, TempPubKey, tps->sig->Commitments2[r], *(tps->CurveIsogeny), NULL, tps->sig->psiS[r], signBatchB);
     if(Status != CRYPTO_SUCCESS) {
@@ -226,15 +226,8 @@ CRYPTO_STATUS isogeny_sign(PCurveIsogenyStaticData CurveIsogenyData, unsigned ch
     int cHashLength = NUM_ROUNDS/8;
     datastring = calloc(1, DataLength);
     cHash = calloc(1, cHashLength);
-
-    //print_hash(cHash);
     
     hashdata(pbytes, sig->Commitments1, sig->Commitments2, sig->HashResp, HashLength, DataLength, datastring, cHash, cHashLength);
-
-    //printf("\nChallenge hash: ");
-    //print_hash(cHash, cHashLength);
-
-    //printf("\nhashed\n");
 
 cleanup:
     SIDH_curve_free(CurveIsogeny);
@@ -464,7 +457,6 @@ CRYPTO_STATUS isogeny_verify(PCurveIsogenyStaticData CurveIsogenyData, unsigned 
     }
 
     for (t=0; t<NUM_THREADS; t++) {
-    	printf("Thread is joining");
     	pthread_join(verify_threads[t], NULL);
   	}
 

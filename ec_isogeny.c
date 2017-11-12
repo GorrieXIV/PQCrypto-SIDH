@@ -58,16 +58,13 @@ void j_inv_batch(f2elm_t A, f2elm_t C, f2elm_t jinv, invBatch* batch) {
 	fp2sqr751_mont(t0, t1);                            // t1 = t0^2
 	fp2mul751_mont(t0, t1, t0);                        // t0 = t0*t1
 	fp2add751(t0, t0, t0);                             // t0 = t0+t0
-  fp2add751(t0, t0, t0);                             // t0 = t0+t0
-
-	//fp2inv751_mont(jinv);                              // jinv = 1/jinv 
+  fp2add751(t0, t0, t0);                             // t0 = t0+t0 
 		
 	pthread_mutex_lock(&batch->arrayLock);
 	fp2copy751(jinv, batch->invArray[batch->cntr]);
 	tempCnt = batch->cntr;
 	batch->cntr++; 
 	pthread_mutex_unlock(&batch->arrayLock);	
-	//printf("%s %d: ctr = %d\n", __FILE__, __LINE__, batch->cntr);
 
 	int i;
 	if (tempCnt+1 == batch->batchSize) {
