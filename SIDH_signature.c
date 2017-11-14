@@ -73,11 +73,14 @@ CRYPTO_STATUS isogeny_keygen(PCurveIsogenyStaticData CurveIsogenyData, unsigned 
     cycles2 = cpucycles();
     cycles = cycles2 - cycles1;
     if (passed) {
-        //printf("  Key generated in ................... %10lld cycles", cycles);
+        printf("  Key generated in ................... %10lld cycles", cycles);
     } else { 
         printf("  Key generation failed"); goto cleanup; 
     }
 
+		printf("PublicKey size in bytes: %d\n", sizeof(PublicKey));
+		printf("PrivateKey size in bytes: %d\n", sizeof(PrivateKey));
+		printf("Curve size in bytes: %d\n", sizeof(CurveIsogeny));
 
     
 cleanup:
