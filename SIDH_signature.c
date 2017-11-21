@@ -101,7 +101,7 @@ typedef struct thread_params_sign {
 } thread_params_sign;
 
 
-void *sign_thread(void *TPS) {
+void *sign_thread(void *TPS, bool compressed) {
 	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
 	thread_params_sign *tps = (thread_params_sign*) TPS;
 
@@ -149,7 +149,7 @@ void *sign_thread(void *TPS) {
 }
 
 
-CRYPTO_STATUS isogeny_sign(PCurveIsogenyStaticData CurveIsogenyData, unsigned char *PrivateKey, unsigned char *PublicKey, struct Signature *sig) {		
+CRYPTO_STATUS isogeny_sign(PCurveIsogenyStaticData CurveIsogenyData, unsigned char *PrivateKey, unsigned char *PublicKey, struct Signature *sig, bool compressed) {		
     unsigned int pbytes = (CurveIsogenyData->pwordbits + 7)/8;      // Number of bytes in a field element 
     unsigned int n, obytes = (CurveIsogenyData->owordbits + 7)/8;   // Number of bytes in an element in [1, order]
     PCurveIsogenyStruct CurveIsogeny = {0};
@@ -257,7 +257,7 @@ typedef struct thread_params_verify {
 	unsigned int obytes;
 } thread_params_verify;
 
-void *verify_thread(void *TPV) {
+void *verify_thread(void *TPV, bool compressed) {
 	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
 	thread_params_verify *tpv = (thread_params_verify*) TPV;
 
@@ -383,7 +383,7 @@ void *verify_thread(void *TPV) {
 }
 
 
-CRYPTO_STATUS isogeny_verify(PCurveIsogenyStaticData CurveIsogenyData, unsigned char *PublicKey, struct Signature *sig) {
+CRYPTO_STATUS isogeny_verify(PCurveIsogenyStaticData CurveIsogenyData, unsigned char *PublicKey, struct Signature *sig, bool compressed) {
     unsigned int pbytes = (CurveIsogenyData->pwordbits + 7)/8;      // Number of bytes in a field element 
     unsigned int n, obytes = (CurveIsogenyData->owordbits + 7)/8;   // Number of bytes in an element in [1, order]
     PCurveIsogenyStruct CurveIsogeny = {0};

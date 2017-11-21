@@ -1,0 +1,6 @@
+signatures____________
+batching:
+-move batch object outside of sign and verify algorithms and pass as param
+
+compression:
+
