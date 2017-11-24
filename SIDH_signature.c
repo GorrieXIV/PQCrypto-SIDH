@@ -42,7 +42,7 @@ void hashdata(unsigned int pbytes, unsigned char** comm1, unsigned char** comm2,
     keccak(data, dlen, cHash, cHashLength);
 }
 
-CRYPTO_STATUS isogeny_keygen(PCurveIsogenyStaticData CurveIsogenyData, unsigned char *PrivateKey, unsigned char *PublicKey) {
+CRYPTO_STATUS isogeny_keygen(PCurveIsogenyStaticData CurveIsogenyData, unsigned char *PrivateKey, unsigned char *PublicKey, int compressed) {
     unsigned int pbytes = (CurveIsogenyData->pwordbits + 7)/8;      // Number of bytes in a field element 
     unsigned int n, obytes = (CurveIsogenyData->owordbits + 7)/8;   // Number of bytes in an element in [1, order]
     bool valid_PublicKey = false;
@@ -101,7 +101,7 @@ typedef struct thread_params_sign {
 } thread_params_sign;
 
 
-void *sign_thread(void *TPS, bool compressed) {
+void *sign_thread(void *TPS, int compressed) {
 	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
 	thread_params_sign *tps = (thread_params_sign*) TPS;
 
@@ -139,7 +139,7 @@ void *sign_thread(void *TPS, bool compressed) {
 		}
         
     to_fp2mont(((f2elm_t*)TempPubKey)[0], A);
-    fp2copy751(A, *(f2elm_t*)tps->sig->Commitments1[r]);     //commitment1[r] = A
+    fp2copy751(A, *(f2elm_t*)tps->sig->Commitments1[r]);     //commitment1[r] = A = tempPubKey[0]
 
 		Status = SecretAgreement_B(tps->PrivateKey, TempPubKey, tps->sig->Commitments2[r], *(tps->CurveIsogeny), NULL, tps->sig->psiS[r], signBatchB);
     if(Status != CRYPTO_SUCCESS) {
@@ -149,7 +149,7 @@ void *sign_thread(void *TPS, bool compressed) {
 }
 
 
-CRYPTO_STATUS isogeny_sign(PCurveIsogenyStaticData CurveIsogenyData, unsigned char *PrivateKey, unsigned char *PublicKey, struct Signature *sig, bool compressed) {		
+CRYPTO_STATUS isogeny_sign(PCurveIsogenyStaticData CurveIsogenyData, unsigned char *PrivateKey, unsigned char *PublicKey, struct Signature *sig, int compressed) {		
     unsigned int pbytes = (CurveIsogenyData->pwordbits + 7)/8;      // Number of bytes in a field element 
     unsigned int n, obytes = (CurveIsogenyData->owordbits + 7)/8;   // Number of bytes in an element in [1, order]
     PCurveIsogenyStruct CurveIsogeny = {0};
@@ -257,7 +257,7 @@ typedef struct thread_params_verify {
 	unsigned int obytes;
 } thread_params_verify;
 
-void *verify_thread(void *TPV, bool compressed) {
+void *verify_thread(void *TPV, int compressed) {
 	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
 	thread_params_verify *tpv = (thread_params_verify*) TPV;
 
@@ -383,7 +383,7 @@ void *verify_thread(void *TPV, bool compressed) {
 }
 
 
-CRYPTO_STATUS isogeny_verify(PCurveIsogenyStaticData CurveIsogenyData, unsigned char *PublicKey, struct Signature *sig, bool compressed) {
+CRYPTO_STATUS isogeny_verify(PCurveIsogenyStaticData CurveIsogenyData, unsigned char *PublicKey, struct Signature *sig, int compressed) {
     unsigned int pbytes = (CurveIsogenyData->pwordbits + 7)/8;      // Number of bytes in a field element 
     unsigned int n, obytes = (CurveIsogenyData->owordbits + 7)/8;   // Number of bytes in an element in [1, order]
     PCurveIsogenyStruct CurveIsogeny = {0};

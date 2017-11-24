@@ -3,4 +3,8 @@ batching:
 -move batch object outside of sign and verify algorithms and pass as param
 
 compression:
-
+-will ephemeral and non ephemeral keys (3 vs 4 elements) be compatible
+for key exchange
+-2 different approached to consider:
+	- compress only three elements, sending the 4th one along
+	- switch to ephemeral functions if compression is on

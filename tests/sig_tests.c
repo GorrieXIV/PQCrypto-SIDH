@@ -31,18 +31,19 @@ int main (int argc, char** argv) {
 	PublicKey = (unsigned char*)calloc(1, 4*2*pbytes);     // Four elements in GF(p^2)
 
 	struct Signature sig;
+	int compression = 1; //set true if signature is to be compressed, false otherwise
 	
 	Status = isogeny_keygen(&CurveIsogeny_SIDHp751, PrivateKey, PublicKey);
 		
 	cycles1 = cpucycles();
-	Status = isogeny_sign(&CurveIsogeny_SIDHp751, PrivateKey, PublicKey, &sig);
+	Status = isogeny_sign(&CurveIsogeny_SIDHp751, PrivateKey, PublicKey, &sig, compression);
 	cycles2 = cpucycles();
 	scycles = cycles2 - cycles1;
 		
 	printf("%10lld\n", scycles);
 		
 	cycles1 = cpucycles();
-	Status = isogeny_verify(&CurveIsogeny_SIDHp751, PublicKey, &sig);
+	Status = isogeny_verify(&CurveIsogeny_SIDHp751, PublicKey, &sig, compression);
 	cycles2 = cpucycles();
 	scycles = cycles2 - cycles1;
 		

@@ -22,12 +22,12 @@ struct Signature {
     point_proj *psiS[NUM_ROUNDS];
 };
 
-CRYPTO_STATUS isogeny_keygen(PCurveIsogenyStaticData CurveIsogenyData, unsigned char *PrivateKey, unsigned char *PublicKey);
+CRYPTO_STATUS isogeny_keygen(PCurveIsogenyStaticData CurveIsogenyData, unsigned char *PrivateKey, unsigned char *PublicKey, int compressed);
 
-void *sign_thread(void *TPS, bool compressed);
+void *sign_thread(void *TPS, int compressed);
 
-CRYPTO_STATUS isogeny_sign(PCurveIsogenyStaticData CurveIsogenyData, unsigned char *PrivateKey, unsigned char *PublicKey, struct Signature *sig, bool compressed);
+CRYPTO_STATUS isogeny_sign(PCurveIsogenyStaticData CurveIsogenyData, unsigned char *PrivateKey, unsigned char *PublicKey, struct Signature *sig, int compressed);
 
-void *verify_thread(void *TPV, bool compressed);
+void *verify_thread(void *TPV, int compressed);
 
-CRYPTO_STATUS isogeny_verify(PCurveIsogenyStaticData CurveIsogenyData, unsigned char *PublicKey, struct Signature *sig, bool compressed);
+CRYPTO_STATUS isogeny_verify(PCurveIsogenyStaticData CurveIsogenyData, unsigned char *PublicKey, struct Signature *sig, int compressed);

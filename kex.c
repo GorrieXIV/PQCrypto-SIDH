@@ -15,7 +15,7 @@ extern const unsigned int splits_Alice[MAX_Alice];
 extern const unsigned int splits_Bob[MAX_Bob];
 
 
-CRYPTO_STATUS EphemeralKeyGeneration_A(unsigned char* PrivateKeyA, unsigned char* PublicKeyA, PCurveIsogenyStruct CurveIsogeny)
+CRYPTO_STATUS EphemeralKeyGeneration_A(unsigned char* PrivateKeyA, unsigned char* PublicKeyA, PCurveIsogenyStruct CurveIsogeny, invBatch* batch)
 { // Alice's ephemeral key-pair generation
   // It produces a private key PrivateKeyA and computes the public key PublicKeyA.
   // The private key is an even integer in the range [2, oA-2], where oA = 2^372. 
@@ -237,7 +237,7 @@ CRYPTO_STATUS KeyGeneration_A(unsigned char* pPrivateKeyA, unsigned char* pPubli
 }
 
 
-CRYPTO_STATUS EphemeralKeyGeneration_B(unsigned char* PrivateKeyB, unsigned char* PublicKeyB, PCurveIsogenyStruct CurveIsogeny)
+CRYPTO_STATUS EphemeralKeyGeneration_B(unsigned char* PrivateKeyB, unsigned char* PublicKeyB, PCurveIsogenyStruct CurveIsogeny, invBatch* batch)
 { // Bob's ephemeral key-pair generation
   // It produces a private key PrivateKeyB and computes the public key PublicKeyB.
   // The private key is an integer in the range [1, oB-1], where oA = 3^239. 
@@ -439,7 +439,7 @@ CRYPTO_STATUS KeyGeneration_B(unsigned char* pPrivateKeyB, unsigned char* pPubli
 }
 
 
-CRYPTO_STATUS EphemeralSecretAgreement_A(const unsigned char* PrivateKeyA, const unsigned char* PublicKeyB, unsigned char* SharedSecretA, PCurveIsogenyStruct CurveIsogeny)
+CRYPTO_STATUS EphemeralSecretAgreement_A(const unsigned char* PrivateKeyA, const unsigned char* PublicKeyB, unsigned char* SharedSecretA, PCurveIsogenyStruct CurveIsogeny, invBatch* batch)
 { // Alice's ephemeral shared secret computation
   // It produces a shared secret key SharedSecretA using her secret key PrivateKeyA and Bob's public key PublicKeyB
   // Inputs: Alice's PrivateKeyA is an even integer in the range [2, oA-2], where oA = 2^372. 
@@ -592,7 +592,7 @@ CRYPTO_STATUS SecretAgreement_A(unsigned char* pPrivateKeyA, unsigned char* pPub
 }
 
 
-CRYPTO_STATUS EphemeralSecretAgreement_B(const unsigned char* PrivateKeyB, const unsigned char* PublicKeyA, unsigned char* SharedSecretB, PCurveIsogenyStruct CurveIsogeny)
+CRYPTO_STATUS EphemeralSecretAgreement_B(const unsigned char* PrivateKeyB, const unsigned char* PublicKeyA, unsigned char* SharedSecretB, PCurveIsogenyStruct CurveIsogeny, invBatch* batch)
 { // Bob's ephemeral shared secret computation
   // It produces a shared secret key SharedSecretB using his secret key PrivateKeyB and Alice's public key PublicKeyA
   // Inputs: Bob's PrivateKeyB is an integer in the range [1, oB-1], where oB = 3^239. 
@@ -762,7 +762,7 @@ void PublicKeyCompression_A(const unsigned char* PublicKeyA, unsigned char* Comp
     point_t R1, R2, phiP, phiQ;
     publickey_t PK;
     digit_t* comp = (digit_t*)CompressedPKA;
-	digit_t inv[NWORDS_ORDER];
+    digit_t inv[NWORDS_ORDER];
     f2elm_t A, vec[4], Zinv[4];
     digit_t a0[NWORDS_ORDER], b0[NWORDS_ORDER], a1[NWORDS_ORDER], b1[NWORDS_ORDER];
     uint64_t Montgomery_Rprime[NWORDS64_ORDER] = {0x1A55482318541298, 0x070A6370DFA12A03, 0xCB1658E0E3823A40, 0xB3B7384EB5DEF3F9, 0xCBCA952F7006EA33, 0x00569EF8EC94864C}; // Value (2^384)^2 mod 3^239
