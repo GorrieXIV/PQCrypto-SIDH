@@ -757,7 +757,7 @@ void PublicKeyCompression_A(const unsigned char* PublicKeyA, unsigned char* Comp
   // It produces a compressed output that consists of three elements in Z_orderB and one field element
   // Input : Alice's public key PublicKeyA, which consists of 3 elements in GF(p751^2).
   // Output: a compressed value CompressedPKA that consists of three elements in Z_orderB and one element in GF(p751^2). 
-  // CurveIsogeny must be set up in advance using SIDH_curve_initialize().                                                                        
+  // CurveIsogeny must be set up in advance using SIDH_curve_initializ().                                                                        
     point_full_proj_t P, Q, phP, phQ, phX;
     point_t R1, R2, phiP, phiQ;
     publickey_t PK;
