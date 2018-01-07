@@ -120,12 +120,12 @@ CRYPTO_STATUS EphemeralKeyGeneration_A(unsigned char* PrivateKeyA, unsigned char
     return Status;
 }
 
-CRYPTO_STATUS KeyGeneration_A(unsigned char* pPrivateKeyA, unsigned char* pPublicKeyA, PCurveIsogenyStruct CurveIsogeny, bool GenerateRandom, invBatch* batch)
-{ // Alice's key-pair generation
-  // It produces a private key pPrivateKeyA and computes the public key pPublicKeyA.
-  // The private key is an even integer in the range [2, oA-2], where oA = 2^372 (i.e., 372 bits in total). 
-  // The public key consists of 4 elements in GF(p751^2), i.e., 751 bytes in total.
-  // CurveIsogeny must be set up in advance using SIDH_curve_initialize().
+CRYPTO_STATUS KeyGeneration_A(unsigned char* pPrivateKeyA, unsigned char* pPublicKeyA, PCurveIsogenyStruct CurveIsogeny, bool GenerateRandom, invBatch* batch) { 
+	// Alice's key-pair generation
+	// It produces a private key pPrivateKeyA and computes the public key pPublicKeyA.
+	// The private key is an even integer in the range [2, oA-2], where oA = 2^372 (i.e., 372 bits in total). 
+	// The public key consists of 4 elements in GF(p751^2), i.e., 751 bytes in total.
+	// CurveIsogeny must be set up in advance using SIDH_curve_initialize().
 	unsigned int owords = NBITS_TO_NWORDS(CurveIsogeny->owordbits);
 	unsigned int pwords = NBITS_TO_NWORDS(CurveIsogeny->pwordbits);
 	point_basefield_t P;
