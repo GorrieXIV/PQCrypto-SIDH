@@ -1,0 +1,6 @@
+*.~
+*.o
+
+./kex_test
+./arith_test
+./sig_test

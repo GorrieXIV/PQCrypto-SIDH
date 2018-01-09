@@ -77,7 +77,7 @@ void from_mont(const felm_t ma, felm_t c)
 }
 
 
-__inline unsigned int is_felm_zero(const felm_t x)
+unsigned int is_felm_zero(const felm_t x)
 { // Is x = 0? return 1 (TRUE) if condition is true, 0 (FALSE) otherwise.
   // SECURITY NOTE: This function does not run in constant-time.
     unsigned int i;

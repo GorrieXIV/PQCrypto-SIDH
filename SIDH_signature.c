@@ -10,12 +10,11 @@
 
 #include "SIDH_signature.h"
 #include "tests/test_extras.h"
-#include <malloc.h>
+#include "keccak.h"
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <limits.h>
-#include "keccak.h"
 #include <pthread.h>  
 #include <semaphore.h>
 

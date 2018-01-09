@@ -237,7 +237,7 @@ CRYPTO_STATUS KeyGeneration_A(unsigned char* pPrivateKeyA, unsigned char* pPubli
 }
 
 
-CRYPTO_STATUS EphemeralKeyGeneration_B(unsigned char* PrivateKeyB, unsigned char* PublicKeyB, PCurveIsogenyStruct CurveIsogeny, invBatch* batch)
+CRYPTO_STATUS EphemeralKeyGeneration_B(unsigned char* PrivateKeyB, unsigned char* PublicKeyB, PCurveIsogenyStruct CurveIsogeny)
 { // Bob's ephemeral key-pair generation
   // It produces a private key PrivateKeyB and computes the public key PublicKeyB.
   // The private key is an integer in the range [1, oB-1], where oA = 3^239. 

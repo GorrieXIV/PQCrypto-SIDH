@@ -302,6 +302,9 @@ void to_mont(const felm_t a, felm_t mc);
 // Conversion from Montgomery representation to standard representation
 void from_mont(const felm_t ma, felm_t c);
 
+// Determine if a field element is the identity
+unsigned int is_felm_zero(const felm_t x); //used to be __inline
+
 // Field inversion, a = a^-1 in GF(p751)
 void fpinv751_mont(felm_t a);
 
