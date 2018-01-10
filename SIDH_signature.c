@@ -41,7 +41,7 @@ void hashdata(unsigned int pbytes, unsigned char** comm1, unsigned char** comm2,
     keccak(data, dlen, cHash, cHashLength);
 }
 
-CRYPTO_STATUS isogeny_keygen(PCurveIsogenyStaticData CurveIsogenyData, unsigned char *PrivateKey, unsigned char *PublicKey, int compressed) {
+CRYPTO_STATUS isogeny_keygen(PCurveIsogenyStaticData CurveIsogenyData, unsigned char *PrivateKey, unsigned char *PublicKey) {
     unsigned int pbytes = (CurveIsogenyData->pwordbits + 7)/8;      // Number of bytes in a field element 
     unsigned int n, obytes = (CurveIsogenyData->owordbits + 7)/8;   // Number of bytes in an element in [1, order]
     bool valid_PublicKey = false;

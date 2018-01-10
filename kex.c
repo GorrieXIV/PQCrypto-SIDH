@@ -959,40 +959,39 @@ void PublicKeyCompression_B(const unsigned char* PublicKeyB, unsigned char* Comp
   // Input : Bob's public key PublicKeyB, which consists of 3 elements in GF(p751^2).
   // Output: a compressed value CompressedPKB that consists of three elements in Z_orderA and one element in GF(p751^2). 
   // CurveIsogeny must be set up in advance using SIDH_curve_initialize().                                                       
-    point_full_proj_t P, Q, phP, phQ, phX;
-    point_t R1, R2, phiP, phiQ;
-    publickey_t PK;
-    digit_t* comp = (digit_t*)CompressedPKB;
-	digit_t inv[NWORDS_ORDER];
-    f2elm_t A, vec[4], Zinv[4];
-    digit_t a0[NWORDS_ORDER], b0[NWORDS_ORDER], a1[NWORDS_ORDER], b1[NWORDS_ORDER], tmp[2*NWORDS_ORDER], mask = (digit_t)(-1);
+  point_full_proj_t P, Q, phP, phQ, phX;
+  point_t R1, R2, phiP, phiQ;
+  publickey_t PK;digit_t* comp = (digit_t*)CompressedPKB;
+  digit_t inv[NWORDS_ORDER];
+  f2elm_t A, vec[4], Zinv[4];
+  digit_t a0[NWORDS_ORDER], b0[NWORDS_ORDER], a1[NWORDS_ORDER], b1[NWORDS_ORDER], tmp[2*NWORDS_ORDER], mask = (digit_t)(-1);
     
-    mask >>= (CurveIsogeny->owordbits - CurveIsogeny->oAbits);  
-    to_fp2mont(((f2elm_t*)PublicKeyB)[0], ((f2elm_t*)&PK)[0]);    // Converting to Montgomery representation
-    to_fp2mont(((f2elm_t*)PublicKeyB)[1], ((f2elm_t*)&PK)[1]); 
-    to_fp2mont(((f2elm_t*)PublicKeyB)[2], ((f2elm_t*)&PK)[2]); 
+	mask >>= (CurveIsogeny->owordbits - CurveIsogeny->oAbits);  
+	to_fp2mont(((f2elm_t*)PublicKeyB)[0], ((f2elm_t*)&PK)[0]);    // Converting to Montgomery representation
+	to_fp2mont(((f2elm_t*)PublicKeyB)[1], ((f2elm_t*)&PK)[1]); 
+	to_fp2mont(((f2elm_t*)PublicKeyB)[2], ((f2elm_t*)&PK)[2]); 
 
-    recover_y(PK, phP, phQ, phX, A, CurveIsogeny);
-    generate_2_torsion_basis(A, P, Q, CurveIsogeny);
-    fp2copy751(P->Z, vec[0]);
-    fp2copy751(Q->Z, vec[1]);
-    fp2copy751(phP->Z, vec[2]);
-    fp2copy751(phQ->Z, vec[3]);
-    mont_n_way_inv(vec, 4, Zinv);
+	recover_y(PK, phP, phQ, phX, A, CurveIsogeny);
+	generate_2_torsion_basis(A, P, Q, CurveIsogeny);
+	fp2copy751(P->Z, vec[0]);
+	fp2copy751(Q->Z, vec[1]);
+	fp2copy751(phP->Z, vec[2]);
+	fp2copy751(phQ->Z, vec[3]);
+	mont_n_way_inv(vec, 4, Zinv);
 
-    fp2mul751_mont(P->X, Zinv[0], R1->x);
-    fp2mul751_mont(P->Y, Zinv[0], R1->y);
-    fp2mul751_mont(Q->X, Zinv[1], R2->x);
-    fp2mul751_mont(Q->Y, Zinv[1], R2->y);
-    fp2mul751_mont(phP->X, Zinv[2], phiP->x);
-    fp2mul751_mont(phP->Y, Zinv[2], phiP->y);
-    fp2mul751_mont(phQ->X, Zinv[3], phiQ->x);
-    fp2mul751_mont(phQ->Y, Zinv[3], phiQ->y);
+	fp2mul751_mont(P->X, Zinv[0], R1->x);
+	fp2mul751_mont(P->Y, Zinv[0], R1->y);
+	fp2mul751_mont(Q->X, Zinv[1], R2->x);
+	fp2mul751_mont(Q->Y, Zinv[1], R2->y);
+	fp2mul751_mont(phP->X, Zinv[2], phiP->x);
+	fp2mul751_mont(phP->Y, Zinv[2], phiP->y);
+	fp2mul751_mont(phQ->X, Zinv[3], phiQ->x);
+	fp2mul751_mont(phQ->Y, Zinv[3], phiQ->y);
 
-    ph2(phiP, phiQ, R1, R2, A, (uint64_t*)a0, (uint64_t*)b0, (uint64_t*)a1, (uint64_t*)b1, CurveIsogeny);
+	ph2(phiP, phiQ, R1, R2, A, (uint64_t*)a0, (uint64_t*)b0, (uint64_t*)a1, (uint64_t*)b1, CurveIsogeny);
 
-    if ((a0[0] & 1) == 1) {  // Storing [b1*a0inv, a1*a0inv, b0*a0inv] and setting bit384 to 0
-        inv_mod_orderA(a0, inv);        
+	if ((a0[0] & 1) == 1) {  // Storing [b1*a0inv, a1*a0inv, b0*a0inv] and setting bit384 to 0
+		inv_mod_orderA(a0, inv);        
 		multiply(b0, inv, tmp, NWORDS_ORDER);
 		copy_words(tmp, &comp[0], NWORDS_ORDER);
 		comp[NWORDS_ORDER-1] &= mask;
@@ -1014,9 +1013,9 @@ void PublicKeyCompression_B(const unsigned char* PublicKeyB, unsigned char* Comp
 		copy_words(tmp, &comp[2 * NWORDS_ORDER], NWORDS_ORDER);
 		comp[3*NWORDS_ORDER-1] &= mask;
 		comp[3*NWORDS_ORDER-1] |= (digit_t)1 << (sizeof(digit_t)*8 - 1);
-    }
+	}
     
-    from_fp2mont(A, (felm_t*)&comp[3*NWORDS_ORDER]);  // Converting back from Montgomery representation
+	from_fp2mont(A, (felm_t*)&comp[3*NWORDS_ORDER]);  // Converting back from Montgomery representation
 }
 
 
