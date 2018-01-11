@@ -149,93 +149,94 @@ void *sign_thread(void *TPS, int compressed) {
 
 
 CRYPTO_STATUS isogeny_sign(PCurveIsogenyStaticData CurveIsogenyData, unsigned char *PrivateKey, unsigned char *PublicKey, struct Signature *sig, int compressed) {		
-    unsigned int pbytes = (CurveIsogenyData->pwordbits + 7)/8;      // Number of bytes in a field element 
-    unsigned int n, obytes = (CurveIsogenyData->owordbits + 7)/8;   // Number of bytes in an element in [1, order]
-    PCurveIsogenyStruct CurveIsogeny = {0};
-    unsigned long long cycles, cycles1, cycles2, totcycles=0;
+	unsigned int pbytes = (CurveIsogenyData->pwordbits + 7)/8;      // Number of bytes in a field element 
+	unsigned int n, obytes = (CurveIsogenyData->owordbits + 7)/8;   // Number of bytes in an element in [1, order]
+	PCurveIsogenyStruct CurveIsogeny = {0};
+	unsigned long long cycles, cycles1, cycles2, totcycles=0;
 
-    CRYPTO_STATUS Status = CRYPTO_SUCCESS;
-    bool passed;
+	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
+	bool passed;
 
-    // Curve isogeny system initialization
-    CurveIsogeny = SIDH_curve_allocate(CurveIsogenyData);
-    if (CurveIsogeny == NULL) {
-        Status = CRYPTO_ERROR_NO_MEMORY;
-        //goto cleanup;
-    }
-    Status = SIDH_curve_initialize(CurveIsogeny, &random_bytes_test, CurveIsogenyData);
-    if (Status != CRYPTO_SUCCESS) {
-        //goto cleanup;
-    }	
-
-    // Run the ZKP rounds
-    int r;
-    pthread_t sign_threads[NUM_THREADS];
-
-    CUR_ROUND = 0;
-    if (pthread_mutex_init(&RLOCK, NULL)) {
-    	printf("ERROR: mutex init failed\n");
-    	return 1;
-    }
-    thread_params_sign tps = {&CurveIsogeny, PrivateKey, PublicKey, sig, pbytes, n, obytes};
-		
-		signBatchA = (invBatch*) malloc (sizeof(invBatch));
-
-		signBatchA->batchSize = 248;
-		signBatchA->cntr = 0;
-		signBatchA->invArray = (f2elm_t*) malloc (248 * sizeof(f2elm_t));
-		signBatchA->invDest = (f2elm_t*) malloc (248 * sizeof(f2elm_t));
-		pthread_mutex_init(&signBatchA->arrayLock, NULL);
-		sem_init(&signBatchA->sign_sem, 0, 0);
-
-		signBatchB = (invBatch*) malloc (sizeof(invBatch));
-
-		signBatchB->batchSize = 248;
-		signBatchB->cntr = 0;
-		signBatchB->invArray = (f2elm_t*) malloc (248 * sizeof(f2elm_t));
-		signBatchB->invDest = (f2elm_t*) malloc (248 * sizeof(f2elm_t));
-		pthread_mutex_init(&signBatchB->arrayLock, NULL);
-		sem_init(&signBatchB->sign_sem, 0, 0);
-
-    int t;
-    for (t=0; t<NUM_THREADS; t++) {
-    	if (pthread_create(&sign_threads[t], NULL, sign_thread, &tps)) {
-    		printf("ERROR: Failed to create thread %d\n", t);
-    	}
-    }
-
-    for (t=0; t<NUM_THREADS; t++) {
-    	pthread_join(sign_threads[t], NULL);
-  	}
-
-    //printf("Average time for ZKP round ...... %10lld cycles\n", totcycles/NUM_ROUNDS);
-
-
-    // Commit to responses (hash)
-    int HashLength = 32; //bytes
-    sig->HashResp = calloc(2*NUM_ROUNDS, HashLength*sizeof(uint8_t));
-    for (r=0; r<NUM_ROUNDS; r++) {
-        keccak((uint8_t*) sig->Randoms[r], obytes, sig->HashResp+((2*r)*HashLength), HashLength);
-        keccak((uint8_t*) sig->psiS[r], sizeof(point_proj), sig->HashResp+((2*r+1)*HashLength), HashLength);
-    }
-
-    // Create challenge hash (by hashing all the commitments and HashResps)
-    uint8_t *datastring, *cHash;
-    int DataLength = (2 * NUM_ROUNDS * 2*pbytes) + (2 * NUM_ROUNDS * HashLength*sizeof(uint8_t));
-    int cHashLength = NUM_ROUNDS/8;
-    datastring = calloc(1, DataLength);
-    cHash = calloc(1, cHashLength);
+	// Curve isogeny system initialization
+	CurveIsogeny = SIDH_curve_allocate(CurveIsogenyData);
+	if (CurveIsogeny == NULL) {
+		Status = CRYPTO_ERROR_NO_MEMORY;
+		//goto cleanup;
+	}
     
-    hashdata(pbytes, sig->Commitments1, sig->Commitments2, sig->HashResp, HashLength, DataLength, datastring, cHash, cHashLength);
+	Status = SIDH_curve_initialize(CurveIsogeny, &random_bytes_test, CurveIsogenyData);
+	if (Status != CRYPTO_SUCCESS) {
+		//goto cleanup;
+	}	
+
+	// Run the ZKP rounds
+	int r;
+	pthread_t sign_threads[NUM_THREADS];
+
+	CUR_ROUND = 0;
+	if (pthread_mutex_init(&RLOCK, NULL)) {
+		printf("ERROR: mutex init failed\n");
+		return 1;
+	}
+	
+	thread_params_sign tps = {&CurveIsogeny, PrivateKey, PublicKey, sig, pbytes, n, obytes};
+
+	signBatchA = (invBatch*) malloc (sizeof(invBatch));
+
+	signBatchA->batchSize = 248;
+	signBatchA->cntr = 0;
+	signBatchA->invArray = (f2elm_t*) malloc (248 * sizeof(f2elm_t));
+	signBatchA->invDest = (f2elm_t*) malloc (248 * sizeof(f2elm_t));
+	pthread_mutex_init(&signBatchA->arrayLock, NULL);
+	sem_init(&signBatchA->sign_sem, 0, 0);
+
+	signBatchB = (invBatch*) malloc (sizeof(invBatch));
+
+	signBatchB->batchSize = 248;
+	signBatchB->cntr = 0;
+	signBatchB->invArray = (f2elm_t*) malloc (248 * sizeof(f2elm_t));
+	signBatchB->invDest = (f2elm_t*) malloc (248 * sizeof(f2elm_t));
+	pthread_mutex_init(&signBatchB->arrayLock, NULL);
+	sem_init(&signBatchB->sign_sem, 0, 0);
+
+	int t;
+	for (t=0; t<NUM_THREADS; t++) {
+		if (pthread_create(&sign_threads[t], NULL, sign_thread, &tps)) {
+			printf("ERROR: Failed to create thread %d\n", t);
+		}
+	}
+
+	for (t=0; t<NUM_THREADS; t++) {
+		pthread_join(sign_threads[t], NULL);
+	}
+
+	//printf("Average time for ZKP round ...... %10lld cycles\n", totcycles/NUM_ROUNDS);
+
+	// Commit to responses (hash)
+	int HashLength = 32; //bytes
+	sig->HashResp = calloc(2*NUM_ROUNDS, HashLength*sizeof(uint8_t));
+	for (r=0; r<NUM_ROUNDS; r++) {
+		keccak((uint8_t*) sig->Randoms[r], obytes, sig->HashResp+((2*r)*HashLength), HashLength);
+		keccak((uint8_t*) sig->psiS[r], sizeof(point_proj), sig->HashResp+((2*r+1)*HashLength), HashLength);
+	}
+
+	// Create challenge hash (by hashing all the commitments and HashResps)
+	uint8_t *datastring, *cHash;
+	int DataLength = (2 * NUM_ROUNDS * 2*pbytes) + (2 * NUM_ROUNDS * HashLength*sizeof(uint8_t));
+	int cHashLength = NUM_ROUNDS/8;
+	datastring = calloc(1, DataLength);
+	cHash = calloc(1, cHashLength);
+    
+	hashdata(pbytes, sig->Commitments1, sig->Commitments2, sig->HashResp, HashLength, DataLength, datastring, cHash, cHashLength);
 
 cleanup:
-    SIDH_curve_free(CurveIsogeny);
-    free(signBatchA->invArray);
+		SIDH_curve_free(CurveIsogeny);
+		free(signBatchA->invArray);
 		free(signBatchA->invDest);
-    free(signBatchB->invArray);
+		free(signBatchB->invArray);
 		free(signBatchB->invDest);
-		
-    return Status;
+
+	return Status;
 }
 
 

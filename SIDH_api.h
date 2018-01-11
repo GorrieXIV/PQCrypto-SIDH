@@ -34,7 +34,7 @@ extern "C" {
 // The public key consists of 3 elements in GF(p751^2), i.e., 564 bytes.
 // CurveIsogeny must be set up in advance using SIDH_curve_initialize().
 // batch is a struct enabling batched inversion in parallel
-CRYPTO_STATUS EphemeralKeyGeneration_A(unsigned char* pPrivateKeyA, unsigned char* pPublicKeyA, PCurveIsogenyStruct CurveIsogeny, invBatch* batch);
+CRYPTO_STATUS EphemeralKeyGeneration_A(unsigned char* pPrivateKeyA, unsigned char* pPublicKeyA, PCurveIsogenyStruct CurveIsogeny);
 
 // Bob's ephemeral key-pair generation
 // It produces a private key pPrivateKeyB and computes the public key pPublicKeyB.
@@ -50,7 +50,7 @@ CRYPTO_STATUS EphemeralKeyGeneration_B(unsigned char* pPrivateKeyB, unsigned cha
 // Output: a shared secret pSharedSecretA that consists of one element in GF(p751^2), i.e., 1502 bits in total. 
 // CurveIsogeny must be set up in advance using SIDH_curve_initialize().
 // batch is a struct enabling batched inversion in parallel
-CRYPTO_STATUS EphemeralSecretAgreement_A(const unsigned char* pPrivateKeyA, const unsigned char* pPublicKeyB, unsigned char* pSharedSecretA, PCurveIsogenyStruct CurveIsogeny, invBatch* batch);
+CRYPTO_STATUS EphemeralSecretAgreement_A(const unsigned char* pPrivateKeyA, const unsigned char* pPublicKeyB, unsigned char* pSharedSecretA, PCurveIsogenyStruct CurveIsogeny);
 
 // Bob's ephemeral shared secret computation
 // It produces a shared secret key pSharedSecretB using his secret key pPrivateKeyB and Alice's public key pPublicKeyA
@@ -59,7 +59,7 @@ CRYPTO_STATUS EphemeralSecretAgreement_A(const unsigned char* pPrivateKeyA, cons
 // Output: a shared secret pSharedSecretB that consists of one element in GF(p751^2), i.e., 1502 bits in total. 
 // CurveIsogeny must be set up in advance using SIDH_curve_initialize().
 // batch is a struct enabling batched inversion in parallel
-CRYPTO_STATUS EphemeralSecretAgreement_B(const unsigned char* pPrivateKeyB, const unsigned char* pPublicKeyA, unsigned char* pSharedSecretB, PCurveIsogenyStruct CurveIsogeny, invBatch* batch);
+CRYPTO_STATUS EphemeralSecretAgreement_B(const unsigned char* pPrivateKeyB, const unsigned char* pPublicKeyA, unsigned char* pSharedSecretB, PCurveIsogenyStruct CurveIsogeny);
 
 /*********************** Ephemeral key exchange API with compressed public keys ***********************/
 

@@ -610,11 +610,13 @@ int main()
 {
     CRYPTO_STATUS Status = CRYPTO_SUCCESS;
     
+    /*
     Status = cryptotest_kex(&CurveIsogeny_SIDHp751);             // Test key exchange system "SIDHp751"
     if (Status != CRYPTO_SUCCESS) {
         printf("\n\n   Error detected: %s \n\n", SIDH_get_error_message(Status));
         return false;
     }
+    */
 
     Status = cryptorun_kex(&CurveIsogeny_SIDHp751);              // Benchmark key exchange system "SIDHp751"
     if (Status != CRYPTO_SUCCESS) {
@@ -622,6 +624,7 @@ int main()
         return false;
     }
     
+    /*
     Status = cryptotest_kex_compress(&CurveIsogeny_SIDHp751);    // Test key exchange system "SIDHp751" using compression
     if (Status != CRYPTO_SUCCESS) {
         printf("\n\n   Error detected: %s \n\n", SIDH_get_error_message(Status));
@@ -645,6 +648,7 @@ int main()
         printf("\n\n   Error detected: %s \n\n", SIDH_get_error_message(Status));
         return false;
     }
+    */
     
     return true;
 }

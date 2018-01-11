@@ -53,10 +53,25 @@ CRYPTO_STATUS cryptotest_signature_compressed() {
 
 	struct Signature sig;
 	
+	/* // necessary block for reducing number of curve allocation calls
+	PCurveIsogenyStruct CurveIsogeny = {0};
+	
+	CurveIsogeny = SIDH_curve_allocate(&CurveIsogeny_SIDHp751);
+	if (CurveIsogeny == NULL) {
+		Status = CRYPTO_ERROR_NO_MEMORY;
+		goto cleanup;
+	}
+   
+	Status = SIDH_curve_initialize(CurveIsogeny, &random_bytes_test, &CurveIsogeny_SIDHp751);
+	if (Status != CRYPTO_SUCCESS) {
+		goto cleanup;
+	}
+	*/
+	
 	Status = isogeny_keygen(&CurveIsogeny_SIDHp751, PrivateKey, PublicKey);
 	if (Status != CRYPTO_SUCCESS) { return Status; }
 	
-	PublicKeyCompression_B(PublicKey, CompressedPublicKey, );
+	//PublicKeyCompression_B(PublicKey, CompressedPublicKey, CurveIsogeny);
 	
 	Status = isogeny_sign(&CurveIsogeny_SIDHp751, PrivateKey, PublicKey, &sig, 0);
 	if (Status != CRYPTO_SUCCESS) { return Status; }

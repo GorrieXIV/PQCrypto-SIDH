@@ -57,11 +57,11 @@ OBJECTS_KEX_TEST=kex_tests.o $(OBJECTS_TEST) $(OBJECTS)
 OBJECTS_SIG_TEST=sig_tests.o $(OBJECTS_TEST) $(OBJECTS)
 OBJECTS_ALL=$(OBJECTS) $(OBJECTS_ARITH_TEST) $(OBJECTS_KEX_TEST)
 
-all: sig_test 
+all: sig_test
 #arith_test kex_test
 
 kex_test: $(OBJECTS_KEX_TEST)
-	$(CC) -o kex_test $(OBJECTS_KEX_TEST) $(ARM_SETTING)
+	$(CC) -pthread -o kex_test $(OBJECTS_KEX_TEST) $(ARM_SETTING)
 
 arith_test: $(OBJECTS_ARITH_TEST)
 	$(CC) -o arith_test $(OBJECTS_ARITH_TEST) $(ARM_SETTING)

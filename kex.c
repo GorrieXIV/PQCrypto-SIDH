@@ -15,7 +15,7 @@ extern const unsigned int splits_Alice[MAX_Alice];
 extern const unsigned int splits_Bob[MAX_Bob];
 
 
-CRYPTO_STATUS EphemeralKeyGeneration_A(unsigned char* PrivateKeyA, unsigned char* PublicKeyA, PCurveIsogenyStruct CurveIsogeny, invBatch* batch)
+CRYPTO_STATUS EphemeralKeyGeneration_A(unsigned char* PrivateKeyA, unsigned char* PublicKeyA, PCurveIsogenyStruct CurveIsogeny)
 { // Alice's ephemeral key-pair generation
   // It produces a private key PrivateKeyA and computes the public key PublicKeyA.
   // The private key is an even integer in the range [2, oA-2], where oA = 2^372. 
@@ -439,7 +439,7 @@ CRYPTO_STATUS KeyGeneration_B(unsigned char* pPrivateKeyB, unsigned char* pPubli
 }
 
 
-CRYPTO_STATUS EphemeralSecretAgreement_A(const unsigned char* PrivateKeyA, const unsigned char* PublicKeyB, unsigned char* SharedSecretA, PCurveIsogenyStruct CurveIsogeny, invBatch* batch)
+CRYPTO_STATUS EphemeralSecretAgreement_A(const unsigned char* PrivateKeyA, const unsigned char* PublicKeyB, unsigned char* SharedSecretA, PCurveIsogenyStruct CurveIsogeny)
 { // Alice's ephemeral shared secret computation
   // It produces a shared secret key SharedSecretA using her secret key PrivateKeyA and Bob's public key PublicKeyB
   // Inputs: Alice's PrivateKeyA is an even integer in the range [2, oA-2], where oA = 2^372. 
@@ -592,7 +592,7 @@ CRYPTO_STATUS SecretAgreement_A(unsigned char* pPrivateKeyA, unsigned char* pPub
 }
 
 
-CRYPTO_STATUS EphemeralSecretAgreement_B(const unsigned char* PrivateKeyB, const unsigned char* PublicKeyA, unsigned char* SharedSecretB, PCurveIsogenyStruct CurveIsogeny, invBatch* batch)
+CRYPTO_STATUS EphemeralSecretAgreement_B(const unsigned char* PrivateKeyB, const unsigned char* PublicKeyA, unsigned char* SharedSecretB, PCurveIsogenyStruct CurveIsogeny)
 { // Bob's ephemeral shared secret computation
   // It produces a shared secret key SharedSecretB using his secret key PrivateKeyB and Alice's public key PublicKeyA
   // Inputs: Bob's PrivateKeyB is an integer in the range [1, oB-1], where oB = 3^239. 
