@@ -110,19 +110,22 @@ void *sign_thread(void *TPS, int compressed) {
 		// Pick random point R and compute E/<R>
 		f2elm_t A;
 
-    unsigned char *TempPubKey;
-    TempPubKey = (unsigned char*)calloc(1, 4*2*tps->pbytes);
+		unsigned char *TempPubKey;
+		TempPubKey = (unsigned char*)calloc(1, 4*2*tps->pbytes);
 
-    Status = KeyGeneration_A(tps->sig->Randoms[r], TempPubKey, *(tps->CurveIsogeny), true, signBatchA);
+		Status = KeyGeneration_A(tps->sig->Randoms[r], TempPubKey, *(tps->CurveIsogeny), true, signBatchA);
+    //check success of KeyGeneration_A
     if(Status != CRYPTO_SUCCESS) {
     	printf("Random point generation failed");
 		}
-        
-    to_fp2mont(((f2elm_t*)TempPubKey)[0], A);
-    fp2copy751(A, *(f2elm_t*)tps->sig->Commitments1[r]);     //commitment1[r] = A = tempPubKey[0]
 
+		to_fp2mont(((f2elm_t*)TempPubKey)[0], A);
+    fp2copy751(A, *(f2elm_t*)tps->sig->Commitments1[r]);     //commitment1[r] = A = tempPubKey[0]
+		
+		//although SecretAgreement_A runs faster than B, B appears necessary for the time being to ensure success of system
 		Status = SecretAgreement_B(tps->PrivateKey, TempPubKey, tps->sig->Commitments2[r], *(tps->CurveIsogeny), NULL, tps->sig->psiS[r], signBatchB);
-    if(Status != CRYPTO_SUCCESS) {
+		//check success of SecretAgreementB
+		if(Status != CRYPTO_SUCCESS) {
 			printf("Random point generation failed"); 
     }
 	}
