@@ -79,7 +79,6 @@ CRYPTO_STATUS cryptotest_signature_compressed() {
 
 	struct Signature sig;
 	
-	/* // necessary block for reducing number of curve allocation calls
 	PCurveIsogenyStruct CurveIsogeny = {0};
 	
 	CurveIsogeny = SIDH_curve_allocate(&CurveIsogeny_SIDHp751);
@@ -92,19 +91,24 @@ CRYPTO_STATUS cryptotest_signature_compressed() {
 	if (Status != CRYPTO_SUCCESS) {
 		goto cleanup;
 	}
-	*/
 	
 	Status = isogeny_keygen(&CurveIsogeny_SIDHp751, PrivateKey, PublicKey);
 	if (Status != CRYPTO_SUCCESS) {
 		return Status;
 	} else { printf("  SIGNATURE KEYGEN........... SUCCESSFUL\n"); }
 	
-	//PublicKeyCompression_B(PublicKey, CompressedPublicKey, CurveIsogeny);
-	
 	Status = isogeny_sign(&CurveIsogeny_SIDHp751, PrivateKey, PublicKey, &sig, 0);
 	if (Status != CRYPTO_SUCCESS) {
 		return Status;
 	} else { printf("  SIGNATURE SIGN............. SUCCESSFUL\n"); }
+	
+	//Here we will loop through the psi(S) elements of sig and compress them
+	//Or potentially with a flag at the end of isogeny_sign
+	//PublicKeyCompression_B(PublicKey, CompressedPublicKey, CurveIsogeny);
+	
+	//Here we will loop through the psi(S) elements of sig and decompress them
+	//Or potentially with a flag at the beginning of isogeny_verify
+	//PublicKeyDecompression_B(PublicKey, CompressedPublicKey, CurveIsogeny);
 
 	Status = isogeny_verify(&CurveIsogeny_SIDHp751, PublicKey, &sig, 0);
 	if (Status != CRYPTO_SUCCESS) {
@@ -130,7 +134,6 @@ CRYPTO_STATUS cryptorun_signature() {
 
 	struct Signature sig;
 	
-	/* // necessary block for reducing number of curve allocation calls
 	PCurveIsogenyStruct CurveIsogeny = {0};
 	
 	CurveIsogeny = SIDH_curve_allocate(&CurveIsogeny_SIDHp751);
@@ -143,7 +146,6 @@ CRYPTO_STATUS cryptorun_signature() {
 	if (Status != CRYPTO_SUCCESS) {
 		goto cleanup;
 	}
-	*/
 
 	printf("\n\nBENCHMARKING ISOGENY-BASED SIGNATURE SCHEME \n");
 	printf("--------------------------------------------------------------------------------------------------------\n\n");
