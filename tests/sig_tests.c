@@ -29,14 +29,40 @@ CRYPTO_STATUS cryptotest_signature() {
 
 	struct Signature sig;
 	
-	Status = isogeny_keygen(&CurveIsogeny_SIDHp751, PrivateKey, PublicKey);
-	if (Status != CRYPTO_SUCCESS) { return Status; }
+	PCurveIsogenyStruct CurveIsogeny = {0};
 	
-	Status = isogeny_sign(&CurveIsogeny_SIDHp751, PrivateKey, PublicKey, &sig, 0);
-	if (Status != CRYPTO_SUCCESS) { return Status; }
+	CurveIsogeny = SIDH_curve_allocate(&CurveIsogeny_SIDHp751);
+	if (CurveIsogeny == NULL) {
+		Status = CRYPTO_ERROR_NO_MEMORY;
+		goto cleanup;
+	}
+   
+	Status = SIDH_curve_initialize(CurveIsogeny, &random_bytes_test, &CurveIsogeny_SIDHp751);
+	if (Status != CRYPTO_SUCCESS) {
+		goto cleanup;
+	}
+	
+	Status = isogeny_keygen(CurveIsogeny, PrivateKey, PublicKey);
+	if (Status != CRYPTO_SUCCESS) {
+		return Status;
+	} else { printf("  SIGNATURE KEYGEN........... SUCCESSFUL\n"); }
+	
+	Status = isogeny_sign(CurveIsogeny, PrivateKey, PublicKey, &sig, 0);
+	if (Status != CRYPTO_SUCCESS) {
+		return Status;
+	} else { printf("  SIGNATURE SIGN............. SUCCESSFUL\n"); }
 
-	Status = isogeny_verify(&CurveIsogeny_SIDHp751, PublicKey, &sig, 0);
-	if (Status != CRYPTO_SUCCESS) { return Status; }	
+	Status = isogeny_verify(CurveIsogeny, PublicKey, &sig, 0);
+	if (Status != CRYPTO_SUCCESS) {
+		return Status;
+	} else { printf("  SIGNATURE VERIFY........... SUCCESSFUL\n"); }
+	
+cleanup:
+		SIDH_curve_free(CurveIsogeny);    
+		free(PrivateKey);
+		free(PublicKey);
+
+	return Status;		
 }
 
 CRYPTO_STATUS cryptotest_signature_compressed() {
@@ -53,7 +79,6 @@ CRYPTO_STATUS cryptotest_signature_compressed() {
 
 	struct Signature sig;
 	
-	/* // necessary block for reducing number of curve allocation calls
 	PCurveIsogenyStruct CurveIsogeny = {0};
 	
 	CurveIsogeny = SIDH_curve_allocate(&CurveIsogeny_SIDHp751);
@@ -66,18 +91,31 @@ CRYPTO_STATUS cryptotest_signature_compressed() {
 	if (Status != CRYPTO_SUCCESS) {
 		goto cleanup;
 	}
-	*/
 	
 	Status = isogeny_keygen(&CurveIsogeny_SIDHp751, PrivateKey, PublicKey);
-	if (Status != CRYPTO_SUCCESS) { return Status; }
-	
-	//PublicKeyCompression_B(PublicKey, CompressedPublicKey, CurveIsogeny);
+	if (Status != CRYPTO_SUCCESS) {
+		return Status;
+	} else { printf("  SIGNATURE KEYGEN........... SUCCESSFUL\n"); }
 	
 	Status = isogeny_sign(&CurveIsogeny_SIDHp751, PrivateKey, PublicKey, &sig, 0);
-	if (Status != CRYPTO_SUCCESS) { return Status; }
+	if (Status != CRYPTO_SUCCESS) {
+		return Status;
+	} else { printf("  SIGNATURE SIGN............. SUCCESSFUL\n"); }
+	
+	//Here we will loop through the psi(S) elements of sig and compress them
+	//Or potentially with a flag at the end of isogeny_sign
+	//PublicKeyCompression_B(PublicKey, CompressedPublicKey, CurveIsogeny);
+	
+	//Here we will loop through the psi(S) elements of sig and decompress them
+	//Or potentially with a flag at the beginning of isogeny_verify
+	//PublicKeyDecompression_B(PublicKey, CompressedPublicKey, CurveIsogeny);
 
 	Status = isogeny_verify(&CurveIsogeny_SIDHp751, PublicKey, &sig, 0);
-	if (Status != CRYPTO_SUCCESS) { return Status; }
+	if (Status != CRYPTO_SUCCESS) {
+		return Status;
+	} else { printf("  SIGNATURE VERIFY........... SUCCESSFUL\n"); }
+	
+	return Status;
 }
 
 
@@ -96,7 +134,6 @@ CRYPTO_STATUS cryptorun_signature() {
 
 	struct Signature sig;
 	
-	/* // necessary block for reducing number of curve allocation calls
 	PCurveIsogenyStruct CurveIsogeny = {0};
 	
 	CurveIsogeny = SIDH_curve_allocate(&CurveIsogeny_SIDHp751);
@@ -109,9 +146,8 @@ CRYPTO_STATUS cryptorun_signature() {
 	if (Status != CRYPTO_SUCCESS) {
 		goto cleanup;
 	}
-	*/
 
-	printf("\n\nBENCHMARKING EPHEMERAL ISOGENY-BASED KEY EXCHANGE \n");
+	printf("\n\nBENCHMARKING ISOGENY-BASED SIGNATURE SCHEME \n");
 	printf("--------------------------------------------------------------------------------------------------------\n\n");
 	
 	Status = isogeny_keygen(&CurveIsogeny_SIDHp751, PrivateKey, PublicKey);
@@ -145,13 +181,13 @@ int main (int argc, char** argv) {
 	if (Status != CRYPTO_SUCCESS) { 
 		printf("\n\n   Error detected: %s \n\n", SIDH_get_error_message(Status));
 		return -1;	
-	}
+	} else { printf("\n  ISOGENY-BASED SIGNATURE RUN SUCCESSFUL\n\n"); }
 	
-	Status = cryptorun_signature();
-	if (Status != CRYPTO_SUCCESS) { 
-		printf("\n\n   Error detected: %s \n\n", SIDH_get_error_message(Status));
-		return -1;	
-	}
+	//Status = cryptorun_signature();
+	//if (Status != CRYPTO_SUCCESS) { 
+		//printf("\n\n   Error detected: %s \n\n", SIDH_get_error_message(Status));
+		//return -1;	
+	//}
 
 	return 0;
 }

@@ -41,26 +41,13 @@ void hashdata(unsigned int pbytes, unsigned char** comm1, unsigned char** comm2,
     keccak(data, dlen, cHash, cHashLength);
 }
 
-CRYPTO_STATUS isogeny_keygen(PCurveIsogenyStaticData CurveIsogenyData, unsigned char *PrivateKey, unsigned char *PublicKey) {
-    unsigned int pbytes = (CurveIsogenyData->pwordbits + 7)/8;      // Number of bytes in a field element 
-    unsigned int n, obytes = (CurveIsogenyData->owordbits + 7)/8;   // Number of bytes in an element in [1, order]
+CRYPTO_STATUS isogeny_keygen(PCurveIsogenyStruct CurveIsogeny, unsigned char *PrivateKey, unsigned char *PublicKey) {
+    unsigned int pbytes = (CurveIsogeny->pwordbits + 7)/8;      // Number of bytes in a field element 
+    unsigned int n, obytes = (CurveIsogeny->owordbits + 7)/8;   // Number of bytes in an element in [1, order]
     bool valid_PublicKey = false;
-    PCurveIsogenyStruct CurveIsogeny = {0};
     unsigned long long cycles, cycles1, cycles2;
     CRYPTO_STATUS Status = CRYPTO_SUCCESS;
     bool passed;
-
-
-    // Curve isogeny system initialization
-    CurveIsogeny = SIDH_curve_allocate(CurveIsogenyData);
-    if (CurveIsogeny == NULL) {
-        Status = CRYPTO_ERROR_NO_MEMORY;
-        goto cleanup;
-    }
-    Status = SIDH_curve_initialize(CurveIsogeny, &random_bytes_test, CurveIsogenyData);
-    if (Status != CRYPTO_SUCCESS) {
-        goto cleanup;
-    }
 
     // Generate Peggy(Bob)'s keys
     passed = true;
@@ -72,18 +59,12 @@ CRYPTO_STATUS isogeny_keygen(PCurveIsogenyStaticData CurveIsogenyData, unsigned 
     cycles2 = cpucycles();
     cycles = cycles2 - cycles1;
     if (passed) {
-        printf("  Key generated in ................... %10lld cycles", cycles);
+        printf("  Key generated in ................... %10lld cycles\n", cycles);
     } else { 
-        printf("  Key generation failed"); goto cleanup; 
+        printf("  Key generation failed\n"); goto cleanup; 
     }
-
-		printf("PublicKey size in bytes: %d\n", sizeof(PublicKey));
-		printf("PrivateKey size in bytes: %d\n", sizeof(PrivateKey));
-		printf("Curve size in bytes: %d\n", sizeof(CurveIsogeny));
-
-    
+  
 cleanup:
-    SIDH_curve_free(CurveIsogeny);
 
     return Status;
 }
@@ -129,45 +110,35 @@ void *sign_thread(void *TPS, int compressed) {
 		// Pick random point R and compute E/<R>
 		f2elm_t A;
 
-    unsigned char *TempPubKey;
-    TempPubKey = (unsigned char*)calloc(1, 4*2*tps->pbytes);
+		unsigned char *TempPubKey;
+		TempPubKey = (unsigned char*)calloc(1, 4*2*tps->pbytes);
 
-    Status = KeyGeneration_A(tps->sig->Randoms[r], TempPubKey, *(tps->CurveIsogeny), true, signBatchA);
+		Status = KeyGeneration_A(tps->sig->Randoms[r], TempPubKey, *(tps->CurveIsogeny), true, signBatchA);
+    //check success of KeyGeneration_A
     if(Status != CRYPTO_SUCCESS) {
     	printf("Random point generation failed");
 		}
-        
-    to_fp2mont(((f2elm_t*)TempPubKey)[0], A);
-    fp2copy751(A, *(f2elm_t*)tps->sig->Commitments1[r]);     //commitment1[r] = A = tempPubKey[0]
 
+		to_fp2mont(((f2elm_t*)TempPubKey)[0], A);
+    fp2copy751(A, *(f2elm_t*)tps->sig->Commitments1[r]);     //commitment1[r] = A = tempPubKey[0]
+		
+		//although SecretAgreement_A runs faster than B, B appears necessary for the time being to ensure success of system
 		Status = SecretAgreement_B(tps->PrivateKey, TempPubKey, tps->sig->Commitments2[r], *(tps->CurveIsogeny), NULL, tps->sig->psiS[r], signBatchB);
-    if(Status != CRYPTO_SUCCESS) {
+		//check success of SecretAgreementB
+		if(Status != CRYPTO_SUCCESS) {
 			printf("Random point generation failed"); 
     }
 	}
 }
 
 
-CRYPTO_STATUS isogeny_sign(PCurveIsogenyStaticData CurveIsogenyData, unsigned char *PrivateKey, unsigned char *PublicKey, struct Signature *sig, int compressed) {		
-	unsigned int pbytes = (CurveIsogenyData->pwordbits + 7)/8;      // Number of bytes in a field element 
-	unsigned int n, obytes = (CurveIsogenyData->owordbits + 7)/8;   // Number of bytes in an element in [1, order]
-	PCurveIsogenyStruct CurveIsogeny = {0};
+CRYPTO_STATUS isogeny_sign(PCurveIsogenyStruct CurveIsogeny, unsigned char *PrivateKey, unsigned char *PublicKey, struct Signature *sig, int compressed) {		
+	unsigned int pbytes = (CurveIsogeny->pwordbits + 7)/8;      // Number of bytes in a field element 
+	unsigned int n, obytes = (CurveIsogeny->owordbits + 7)/8;   // Number of bytes in an element in [1, order]
 	unsigned long long cycles, cycles1, cycles2, totcycles=0;
 
 	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
 	bool passed;
-
-	// Curve isogeny system initialization
-	CurveIsogeny = SIDH_curve_allocate(CurveIsogenyData);
-	if (CurveIsogeny == NULL) {
-		Status = CRYPTO_ERROR_NO_MEMORY;
-		//goto cleanup;
-	}
-    
-	Status = SIDH_curve_initialize(CurveIsogeny, &random_bytes_test, CurveIsogenyData);
-	if (Status != CRYPTO_SUCCESS) {
-		//goto cleanup;
-	}	
 
 	// Run the ZKP rounds
 	int r;
@@ -230,7 +201,6 @@ CRYPTO_STATUS isogeny_sign(PCurveIsogenyStaticData CurveIsogenyData, unsigned ch
 	hashdata(pbytes, sig->Commitments1, sig->Commitments2, sig->HashResp, HashLength, DataLength, datastring, cHash, cHashLength);
 
 cleanup:
-		SIDH_curve_free(CurveIsogeny);
 		free(signBatchA->invArray);
 		free(signBatchA->invDest);
 		free(signBatchB->invArray);
@@ -380,27 +350,14 @@ void *verify_thread(void *TPV, int compressed) {
 }
 
 
-CRYPTO_STATUS isogeny_verify(PCurveIsogenyStaticData CurveIsogenyData, unsigned char *PublicKey, struct Signature *sig, int compressed) {
-    unsigned int pbytes = (CurveIsogenyData->pwordbits + 7)/8;      // Number of bytes in a field element 
-    unsigned int n, obytes = (CurveIsogenyData->owordbits + 7)/8;   // Number of bytes in an element in [1, order]
-    PCurveIsogenyStruct CurveIsogeny = {0};
+CRYPTO_STATUS isogeny_verify(PCurveIsogenyStruct CurveIsogeny, unsigned char *PublicKey, struct Signature *sig, int compressed) {
+    unsigned int pbytes = (CurveIsogeny->pwordbits + 7)/8;      // Number of bytes in a field element 
+    unsigned int n, obytes = (CurveIsogeny->owordbits + 7)/8;   // Number of bytes in an element in [1, order]
     unsigned long long cycles, cycles1, cycles2, totcycles=0;
     CRYPTO_STATUS Status = CRYPTO_SUCCESS;
     bool passed;
 
     int r;
-
-
-    // Curve isogeny system initialization
-    CurveIsogeny = SIDH_curve_allocate(CurveIsogenyData);
-    if (CurveIsogeny == NULL) {
-        Status = CRYPTO_ERROR_NO_MEMORY;
-        //goto cleanup;
-    }
-    Status = SIDH_curve_initialize(CurveIsogeny, &random_bytes_test, CurveIsogenyData);
-    if (Status != CRYPTO_SUCCESS) {
-        //goto cleanup;
-    }
 
     // compute challenge hash
     int HashLength = 32;
@@ -411,7 +368,6 @@ CRYPTO_STATUS isogeny_verify(PCurveIsogenyStaticData CurveIsogenyData, unsigned 
     cHash = calloc(1, cHashLength);
 
     hashdata(pbytes, sig->Commitments1, sig->Commitments2, sig->HashResp, HashLength, DataLength, datastring, cHash, cHashLength);
-
 
     // Run the verifying rounds
     pthread_t verify_threads[NUM_THREADS];
@@ -461,7 +417,6 @@ CRYPTO_STATUS isogeny_verify(PCurveIsogenyStaticData CurveIsogenyData, unsigned 
   	}
 
 cleanup:
-    SIDH_curve_free(CurveIsogeny);
     free(verifyBatchA->invArray);
 		free(verifyBatchA->invDest);
 		free(verifyBatchB->invArray);
