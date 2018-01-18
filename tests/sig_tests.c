@@ -115,6 +115,8 @@ CRYPTO_STATUS cryptotest_signature_compressed() {
 		return Status;
 	} else { printf("  SIGNATURE VERIFY........... SUCCESSFUL\n"); }
 	
+cleanup:
+	
 	return Status;
 }
 
@@ -165,6 +167,10 @@ CRYPTO_STATUS cryptorun_signature() {
 	scycles = cycles2 - cycles1;
 		
 	printf("%10lld\n", scycles);
+	
+cleanup:
+
+	return Status;
 
 }
 
