@@ -316,24 +316,25 @@ CRYPTO_STATUS EphemeralKeyGeneration_B(unsigned char* PrivateKeyB, unsigned char
     eval_3_isog(R, phiD);
 
     inv_3_way(phiP->Z, phiQ->Z, phiD->Z);
-    fp2mul751_mont(phiP->X, phiP->Z, phiP->X);
-    fp2mul751_mont(phiQ->X, phiQ->Z, phiQ->X);
-    fp2mul751_mont(phiD->X, phiD->Z, phiD->X);
-                                   
-    from_fp2mont(phiP->X, ((f2elm_t*)PublicKey)[0]);                               // Converting back to standard representation
-    from_fp2mont(phiQ->X, ((f2elm_t*)PublicKey)[1]);
-    from_fp2mont(phiD->X, ((f2elm_t*)PublicKey)[2]);
+		fp2mul751_mont(phiP->X, phiP->Z, phiP->X);
+		fp2mul751_mont(phiQ->X, phiQ->Z, phiQ->X);
+		fp2mul751_mont(phiD->X, phiD->Z, phiD->X);
+    
+    // Converting back to standard representation
+		from_fp2mont(phiP->X, ((f2elm_t*)PublicKey)[0]);
+		from_fp2mont(phiQ->X, ((f2elm_t*)PublicKey)[1]);
+		from_fp2mont(phiD->X, ((f2elm_t*)PublicKey)[2]);
 
 // Cleanup:
-    clear_words((void*)R, 2*2*pwords);
-    clear_words((void*)phiP, 2*2*pwords);
-    clear_words((void*)phiQ, 2*2*pwords);
-    clear_words((void*)phiD, 2*2*pwords);
-    clear_words((void*)pts, MAX_INT_POINTS_BOB*2*2*pwords);
-    clear_words((void*)A, 2*pwords);
-    clear_words((void*)C, 2*pwords);
+		clear_words((void*)R, 2*2*pwords);
+		clear_words((void*)phiP, 2*2*pwords);
+		clear_words((void*)phiQ, 2*2*pwords);
+		clear_words((void*)phiD, 2*2*pwords);
+		clear_words((void*)pts, MAX_INT_POINTS_BOB*2*2*pwords);
+		clear_words((void*)A, 2*pwords);
+		clear_words((void*)C, 2*pwords);
       
-    return Status;
+		return Status;
 }
 
 CRYPTO_STATUS KeyGeneration_B(unsigned char* pPrivateKeyB, unsigned char* pPublicKeyB, PCurveIsogenyStruct CurveIsogeny)

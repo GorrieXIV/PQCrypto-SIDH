@@ -42,16 +42,19 @@ CRYPTO_STATUS cryptotest_signature() {
 		goto cleanup;
 	}
 	
+	//generate signing keypair using KeyGeneration_B
 	Status = isogeny_keygen(CurveIsogeny, PrivateKey, PublicKey);
 	if (Status != CRYPTO_SUCCESS) {
 		return Status;
 	} else { printf("  SIGNATURE KEYGEN........... SUCCESSFUL\n"); }
 	
+	//signing procedure
 	Status = isogeny_sign(CurveIsogeny, PrivateKey, PublicKey, &sig, 0);
 	if (Status != CRYPTO_SUCCESS) {
 		return Status;
 	} else { printf("  SIGNATURE SIGN............. SUCCESSFUL\n"); }
 
+	//verifying procedure
 	Status = isogeny_verify(CurveIsogeny, PublicKey, &sig, 0);
 	if (Status != CRYPTO_SUCCESS) {
 		return Status;
@@ -92,30 +95,28 @@ CRYPTO_STATUS cryptotest_signature_compressed() {
 		goto cleanup;
 	}
 	
+	//generate signing keypair using KeyGeneration_B
 	Status = isogeny_keygen(&CurveIsogeny_SIDHp751, PrivateKey, PublicKey);
 	if (Status != CRYPTO_SUCCESS) {
 		return Status;
 	} else { printf("  SIGNATURE KEYGEN........... SUCCESSFUL\n"); }
 	
-	Status = isogeny_sign(&CurveIsogeny_SIDHp751, PrivateKey, PublicKey, &sig, 0);
+	//signing procedure
+	Status = isogeny_sign(&CurveIsogeny_SIDHp751, PrivateKey, PublicKey, &sig, 1);
 	if (Status != CRYPTO_SUCCESS) {
 		return Status;
 	} else { printf("  SIGNATURE SIGN............. SUCCESSFUL\n"); }
-	
-	//Here we will loop through the psi(S) elements of sig and compress them
-	//Or potentially with a flag at the end of isogeny_sign
-	//PublicKeyCompression_B(PublicKey, CompressedPublicKey, CurveIsogeny);
-	
-	//Here we will loop through the psi(S) elements of sig and decompress them
-	//Or potentially with a flag at the beginning of isogeny_verify
-	//PublicKeyDecompression_B(PublicKey, CompressedPublicKey, CurveIsogeny);
 
-	Status = isogeny_verify(&CurveIsogeny_SIDHp751, PublicKey, &sig, 0);
+	//verifying procedure
+	Status = isogeny_verify(&CurveIsogeny_SIDHp751, PublicKey, &sig, 1);
 	if (Status != CRYPTO_SUCCESS) {
 		return Status;
 	} else { printf("  SIGNATURE VERIFY........... SUCCESSFUL\n"); }
 	
 cleanup:
+		SIDH_curve_free(CurveIsogeny);    
+		free(PrivateKey);
+		free(PublicKey);
 	
 	return Status;
 }

@@ -11,16 +11,30 @@
 
 #include "SIDH_internal.h"
 
-#define NUM_ROUNDS     248
+#define NUM_ROUNDS       248
+#define COMPRESS_ROUNDS  83
 
 //signature structure
 struct Signature {
+		int compressed;
     unsigned char *Commitments1[NUM_ROUNDS];
     unsigned char *Commitments2[NUM_ROUNDS];
     unsigned char *HashResp;
     unsigned char *Randoms[NUM_ROUNDS];
     point_proj *psiS[NUM_ROUNDS];
 };
+
+typedef struct thread_params_compress {
+	PCurveIsogenyStruct *CurveIsogeny;
+	unsigned char *PublicKey;
+	struct Signature *sig;
+	
+	unsigned int pbytes;
+	unsigned int n;
+	unsigned int obytes;
+} thread_params_compress;
+
+//compressed signature structure
 
 CRYPTO_STATUS isogeny_keygen(PCurveIsogenyStruct CurveIsogeny, unsigned char *PrivateKey, unsigned char *PublicKey);
 
@@ -31,3 +45,5 @@ CRYPTO_STATUS isogeny_sign(PCurveIsogenyStruct CurveIsogeny, unsigned char *Priv
 void *verify_thread(void *TPV, int compressed);
 
 CRYPTO_STATUS isogeny_verify(PCurveIsogenyStruct CurveIsogeny, unsigned char *PublicKey, struct Signature *sig, int compressed);
+
+void *compress_thread(void *PK);

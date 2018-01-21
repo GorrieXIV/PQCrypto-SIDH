@@ -27,6 +27,7 @@ invBatch* signBatchB;
 invBatch* verifyBatchA;
 invBatch* verifyBatchB;
 invBatch* verifyBatchC;
+invBatch* compressionBatch;
 pthread_mutex_t RLOCK;
 pthread_mutex_t BLOCK;
 
@@ -106,6 +107,7 @@ void *sign_thread(void *TPS, int compressed) {
 		tps->sig->Commitments1[r] = (unsigned char*)calloc(1, 2*tps->pbytes);
 		tps->sig->Commitments2[r] = (unsigned char*)calloc(1, 2*tps->pbytes);
 		tps->sig->psiS[r] = calloc(1, sizeof(point_proj));
+		tps->sig->compressed = compressed;
 
 		// Pick random point R and compute E/<R>
 		f2elm_t A;
@@ -199,6 +201,38 @@ CRYPTO_STATUS isogeny_sign(PCurveIsogenyStruct CurveIsogeny, unsigned char *Priv
 	cHash = calloc(1, cHashLength);
     
 	hashdata(pbytes, sig->Commitments1, sig->Commitments2, sig->HashResp, HashLength, DataLength, datastring, cHash, cHashLength);
+	
+	pthread_t compress_threads[NUM_THREADS/3];
+	
+	//if compression is set to true, compress PsiS with batched inversions
+	if (compressed) {
+		/*compressionBatch->batchSize = 248 / 3;
+		compressionBatch->cntr = 0;
+		compressionBatch->invArray = (f2elm_t*) malloc (248/3 * sizeof(f2elm_t));
+		compressionBatch->invDest = (f2elm_t*) malloc (248/3 * sizeof(f2elm_t));
+		pthread_mutex_init(&compressionBatch->arrayLock, NULL);
+		sem_init(&compressionBatch->sign_sem, 0, 0);*/
+		
+		unsigned char *psiSpubKey = (unsigned char*) malloc(3*2*(tps.pbytes));
+		
+		for (t=0; t<NUM_THREADS/3; t++) {
+			
+			from_fp2mont(sig->psiS[t], ((f2elm_t*)psiSpubKey)[0]);
+			from_fp2mont(sig->psiS[t+1], ((f2elm_t*)psiSpubKey)[1]);
+			from_fp2mont(sig->psiS[t+2], ((f2elm_t*)psiSpubKey)[2]);
+			/*if (pthread_create(&compress_threads[t], NULL, compress_thread, &psiSpubKey)) {
+				printf("ERROR: Failed to create thread %d\n", t);
+			}*/	
+		}
+		
+		//compresspubkey_A
+		
+		//decompress to compare
+		
+		/*for (t=0; t<NUM_THREADS/3; t++) {
+    	pthread_join(compress_threads[t], NULL);
+  	}*/
+	}
 
 cleanup:
 		free(signBatchA->invArray);
@@ -425,5 +459,9 @@ cleanup:
 		free(verifyBatchC->invDest);
 
     return Status;
+}
+
+void *compress_thread(void *PK) {
+
 }
 
