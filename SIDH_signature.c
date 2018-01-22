@@ -135,8 +135,9 @@ void *sign_thread(void *TPS, int compressed) {
 
 
 CRYPTO_STATUS isogeny_sign(PCurveIsogenyStruct CurveIsogeny, unsigned char *PrivateKey, unsigned char *PublicKey, struct Signature *sig, int compressed) {		
-	unsigned int pbytes = (CurveIsogeny->pwordbits + 7)/8;      // Number of bytes in a field element 
-	unsigned int n, obytes = (CurveIsogeny->owordbits + 7)/8;   // Number of bytes in an element in [1, order]
+	unsigned int pbytes = (CurveIsogeny->pwordbits + 7)/8;          // Number of bytes in a field element
+	unsigned int pwords = NBITS_TO_NWORDS(CurveIsogeny->pwordbits); // Number of words in a curve element
+	unsigned int n, obytes = (CurveIsogeny->owordbits + 7)/8;       // Number of bytes in an element in [1, order]
 	unsigned long long cycles, cycles1, cycles2, totcycles=0;
 
 	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
@@ -214,16 +215,23 @@ CRYPTO_STATUS isogeny_sign(PCurveIsogenyStruct CurveIsogeny, unsigned char *Priv
 		sem_init(&compressionBatch->sign_sem, 0, 0);*/
 		
 		unsigned char *psiSpubKey = (unsigned char*) malloc(3*2*(tps.pbytes));
+		unsigned char *compressedPsiS = (unsigned char*)calloc(1, 3*obytes + 2*pbytes); //need to figure out byte size of an element in Z_orderB
+		unsigned char *decompressResult = (unsigned char*) malloc(3*2*(tps.pbytes));
+		//unsigned char *seshSecKey = 
 		
-		for (t=0; t<NUM_THREADS/3; t++) {
-			
-			from_fp2mont(sig->psiS[t], ((f2elm_t*)psiSpubKey)[0]);
-			from_fp2mont(sig->psiS[t+1], ((f2elm_t*)psiSpubKey)[1]);
-			from_fp2mont(sig->psiS[t+2], ((f2elm_t*)psiSpubKey)[2]);
+		//for (t=0; t<NUM_THREADS/3; t++) {
+			copy_words((f2elm_t*)sig->psiS[0], ((f2elm_t*)psiSpubKey)[0], pwords);
+			copy_words((f2elm_t*)sig->psiS[1], ((f2elm_t*)psiSpubKey)[1], pwords);
+			copy_words((f2elm_t*)sig->psiS[2], ((f2elm_t*)psiSpubKey)[2], pwords);
 			/*if (pthread_create(&compress_threads[t], NULL, compress_thread, &psiSpubKey)) {
 				printf("ERROR: Failed to create thread %d\n", t);
-			}*/	
-		}
+			}*/
+			
+			PublicKeyCompression_A(psiSpubKey, compressedPsiS, CurveIsogeny);
+			
+			//need privatekeyB to decompress (don't know which private key this is supposed to be yet)
+			//PublicKeyADecompression_B()
+		//}
 		
 		//compresspubkey_A
 		
