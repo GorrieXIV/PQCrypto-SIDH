@@ -107,6 +107,12 @@ void PublicKeyBDecompression_A(const unsigned char* SecretKeyA, const unsigned c
 // CurveIsogeny must be set up in advance using SIDH_curve_initialize().                       
 CRYPTO_STATUS EphemeralSecretAgreement_Compression_B(const unsigned char* PrivateKeyB, const unsigned char* point_R, const unsigned char* param_A, unsigned char* SharedSecretB, PCurveIsogenyStruct CurveIsogeny);
 
+// Compression of value psi(S) for isogeny based signatures
+CRYPTO_STATUS compressPsiS();
+
+// Decompression of value psi(S) and calculation of the points degree
+CRYPTO_STATUS decompressPsiS();
+
 /*********************** SIDH 1.0 Key exchange API ***********************/ 
 
 // Alice's key-pair generation

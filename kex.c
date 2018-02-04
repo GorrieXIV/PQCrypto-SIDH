@@ -691,6 +691,7 @@ CRYPTO_STATUS SecretAgreement_B(unsigned char* pPrivateKeyB, unsigned char* pPub
     fpcopy751(CurveIsogeny->C, C[0]);
     to_mont(C[0], C[0]);
 
+		//will probably need an additional parameter flag for compressed signatures, to determine the order of compressed psiS by some other means
     if (kerngen == NULL) {
         Status = ladder_3_pt(PKA2, PKA3, PKA4, (digit_t*)pPrivateKeyB, BOB, R, A, CurveIsogeny);
         if (Status != CRYPTO_SUCCESS) {
@@ -1142,4 +1143,35 @@ CRYPTO_STATUS EphemeralSecretAgreement_Compression_B(const unsigned char* Privat
     clear_words((void*)jinv, 2*pwords);
       
     return CRYPTO_SUCCESS;
+}
+
+///////////////////////////////////////////////////////////////////////////////////
+///////////////             COMPRESSION FOR SIGNATURES              ///////////////
+
+CRYPTO_STATUS compressPsiS(const unsigned char* psiS, unsigned char* CompressedPsiS, PCurveIsogenyStruct CurveIsogeny) {
+// Inputs:
+//
+// Outputs:
+// 
+
+	point_full_proj_t P, Q, phP, phQ, phX;
+	point_t R1, R2, phiP, phiQ;
+	publickey_t PK;
+	digit_t* comp = (digit_t*)CompressedPKA;
+	digit_t inv[NWORDS_ORDER];
+	f2elm_t A, vec[4], Zinv[4];
+	digit_t a0[NWORDS_ORDER], b0[NWORDS_ORDER], a1[NWORDS_ORDER], b1[NWORDS_ORDER];
+	uint64_t Montgomery_Rprime[NWORDS64_ORDER] = {0x1A55482318541298, 0x070A6370DFA12A03, 0xCB1658E0E3823A40, 0xB3B7384EB5DEF3F9, 0xCBCA952F7006EA33, 0x00569EF8EC94864C}; // Value (2^384)^2 mod 3^239
+	uint64_t Montgomery_rprime[NWORDS64_ORDER] = {0x48062A91D3AB563D, 0x6CE572751303C2F5, 0x5D1319F3F160EC9D, 0xE35554E8C2D5623A, 0xCA29300232BC79A5, 0x8AAD843D646D78C5}; // Value -(3^239)^-1 mod 2^384
+	unsigned int bit;
+
+	to_fp2mont(((f2elm_t*)PublicKeyA)[0], ((f2elm_t*)&PK)[0]);    // Converting to Montgomery representation
+	to_fp2mont(((f2elm_t*)PublicKeyA)[1], ((f2elm_t*)&PK)[1]); 
+	to_fp2mont(((f2elm_t*)PublicKeyA)[2], ((f2elm_t*)&PK)[2]); 
+}
+
+CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, unsigned char* point_R, unsigned char* param_A, PCurveIsogenyStruct CurveIsogeny) {
+// Inputs:
+//
+// Outputs:
 }
