@@ -108,7 +108,7 @@ void PublicKeyBDecompression_A(const unsigned char* SecretKeyA, const unsigned c
 CRYPTO_STATUS EphemeralSecretAgreement_Compression_B(const unsigned char* PrivateKeyB, const unsigned char* point_R, const unsigned char* param_A, unsigned char* SharedSecretB, PCurveIsogenyStruct CurveIsogeny);
 
 // Compression of value psi(S) for isogeny based signatures
-CRYPTO_STATUS compressPsiS(const unsigned char* psiS, unsigned char* CompressedPsiS, PCurveIsogenyStruct CurveIsogeny, invBatch* batch);
+CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS, PCurveIsogenyStruct CurveIsogeny, invBatch* batch);
 
 // Decompression of value psi(S) and calculation of the points degree
 CRYPTO_STATUS decompressPsiS();
