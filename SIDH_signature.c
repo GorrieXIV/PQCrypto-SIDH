@@ -227,6 +227,8 @@ CRYPTO_STATUS isogeny_sign(PCurveIsogenyStruct CurveIsogeny, unsigned char *Priv
 				printf("ERROR: Failed to create thread %d\n", t);
 			}*/
 			
+			//Status = compressPsiS(psiS, CompressedPsiS, CurveIsogeny, NULL);
+			
 			PublicKeyCompression_A(psiSpubKey, compressedPsiS, CurveIsogeny);
 			
 			//need privatekeyB to decompress (don't know which private key this is supposed to be yet)

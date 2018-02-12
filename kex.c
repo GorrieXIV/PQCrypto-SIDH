@@ -1148,12 +1148,18 @@ CRYPTO_STATUS EphemeralSecretAgreement_Compression_B(const unsigned char* Privat
 ///////////////////////////////////////////////////////////////////////////////////
 ///////////////             COMPRESSION FOR SIGNATURES              ///////////////
 
-CRYPTO_STATUS compressPsiS(const unsigned char* psiS, unsigned char* CompressedPsiS, PCurveIsogenyStruct CurveIsogeny) {
+CRYPTO_STATUS compressPsiS(const unsigned char* psiS, unsigned char* CompressedPsiS, PCurveIsogenyStruct CurveIsogeny, invBatch* batch) {
 // Inputs:
 //
 // Outputs:
 // 
 
+	//we need to:
+	//comput the basis {R1,R2}
+	//represent psiS as [alpa]R1 + [beta]R2
+	// 
+
+/*
 	point_full_proj_t P, Q, phP, phQ, phX;
 	point_t R1, R2, phiP, phiQ;
 	publickey_t PK;
@@ -1168,6 +1174,7 @@ CRYPTO_STATUS compressPsiS(const unsigned char* psiS, unsigned char* CompressedP
 	to_fp2mont(((f2elm_t*)PublicKeyA)[0], ((f2elm_t*)&PK)[0]);    // Converting to Montgomery representation
 	to_fp2mont(((f2elm_t*)PublicKeyA)[1], ((f2elm_t*)&PK)[1]); 
 	to_fp2mont(((f2elm_t*)PublicKeyA)[2], ((f2elm_t*)&PK)[2]); 
+	*/
 }
 
 CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, unsigned char* point_R, unsigned char* param_A, PCurveIsogenyStruct CurveIsogeny) {
