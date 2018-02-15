@@ -364,7 +364,7 @@ void *verify_thread(void *TPV, int compressed) {
 			fpcopy751((*(tpv->CurveIsogeny))->C, C[0]);
 			int t;
 			for (t=0; t<238; t++) {
-				xTPL(triple, triple, A, C);
+				xTPL(triple, triple, A, C); //triple psiS to check if order(psiS) = 3
 				if (is_felm_zero(((felm_t*)triple->Z)[0]) && is_felm_zero(((felm_t*)triple->Z)[1])) {
 					printf("ERROR: psi(S) has order 3^%d\n", t+1);
 				}
@@ -375,6 +375,8 @@ void *verify_thread(void *TPV, int compressed) {
 			TempPubKey = calloc(1, 4*2*tpv->pbytes);
 			from_fp2mont(tpv->sig->Commitments1[r], ((f2elm_t*)TempPubKey)[0]);
 
+			//if this secretagreement is successful, we know psiS has order la^ea and generates the kernel of E1 -> E2
+			//can we do this in a method simpler and quicker using only a & b where psiS = [a]R1 + [b]R
 			Status = SecretAgreement_B(NULL, TempPubKey, TempSharSec, *(tpv->CurveIsogeny), tpv->sig->psiS[r], NULL, verifyBatchC);
 			if(Status != CRYPTO_SUCCESS) {
 				printf("Computing E/<R> -> E/<R,S> failed");

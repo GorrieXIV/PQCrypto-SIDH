@@ -772,76 +772,76 @@ void generate_2_torsion_basis(const f2elm_t A, point_full_proj_t R1, point_full_
 { // Produces points R1 and R2 such that {R1, R2} is a basis for E[2^372].                    
   // Input:   curve constant A.
   // Outputs: R1 = (X1:Y1:Z1) and R2 = (X2:Y2:Z2).
-    point_proj_t P, Q, P1 = {0}, P2 = {0};
-    felm_t *X1 = (felm_t*)P1->X, *Z1 = (felm_t*)P1->Z;
-    felm_t *X2 = (felm_t*)P2->X, *Z2 = (felm_t*)P2->Z;
-    felm_t *XP = (felm_t*)P->X,  *ZP = (felm_t*)P->Z;
-    felm_t *XQ = (felm_t*)Q->X,  *ZQ = (felm_t*)Q->Z;
-    felm_t *Y1 = (felm_t*)R1->Y, *Y2 = (felm_t*)R2->Y;
-    felm_t zero, alpha = {0};
+	point_proj_t P, Q, P1 = {0}, P2 = {0};
+	felm_t *X1 = (felm_t*)P1->X, *Z1 = (felm_t*)P1->Z;
+	felm_t *X2 = (felm_t*)P2->X, *Z2 = (felm_t*)P2->Z;
+	felm_t *XP = (felm_t*)P->X,  *ZP = (felm_t*)P->Z;
+	felm_t *XQ = (felm_t*)Q->X,  *ZQ = (felm_t*)Q->Z;
+	felm_t *Y1 = (felm_t*)R1->Y, *Y2 = (felm_t*)R2->Y;
+	felm_t zero, alpha = {0};
 	f2elm_t t0, t1, one = {0};
 	felm_t four, value47 = {0}, value52 = {0};
 
 	fpzero751(zero);
-    fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
+	fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
     
 	value47[0] = 47;
 	value52[0] = 52;
-    to_mont(value47, value47);
-    to_mont(value52, value52);
-    fpadd751(one[0], one[0], four);
-    fpadd751(four, four, four);
+	to_mont(value47, value47);
+	to_mont(value52, value52);
+	fpadd751(one[0], one[0], four);
+	fpadd751(four, four, four);
 
-    get_point_notin_2E(alpha, A, one[0], four, value47, value52);
+	get_point_notin_2E(alpha, A, one[0], four, value47, value52);
 	fpcopy751(alpha, X1[1]);
-    fpadd751(alpha, alpha, X1[0]);
-    fpadd751(X1[0], X1[0], X1[0]);                   // X1 = alpha*i + alpha*4
+	fpadd751(alpha, alpha, X1[0]);
+	fpadd751(X1[0], X1[0], X1[0]);                   // X1 = alpha*i + alpha*4
 	fpcopy751(one[0], Z1[0]);                        // Z1 = 1 
 
-    xTPLe(P1, P1, A, one, 239);                      // xTPL assumes projective constant, but this is minor
-    xDBLe(P1, P, A, one, 371);
+	xTPLe(P1, P1, A, one, 239);                      // xTPL assumes projective constant, but this is minor
+	xDBLe(P1, P, A, one, 371);
 
-   // This loop is necessary to ensure that the order of the WeilPairing is oA and not smaller. 
-   // This ensures that we have a basis.
-    do {
-        get_point_notin_2E(alpha, A, one[0], four, value47, value52);  
-        fpcopy751(alpha, X2[1]);
-        fpadd751(alpha, alpha, X2[0]);
-        fpadd751(X2[0], X2[0], X2[0]);               // X2 = alpha*i + alpha*4
-        fpzero751(Z2[1]);                             
-        fpcopy751(one[0], Z2[0]);                    // Z2 = 1 
-        xTPLe(P2, P2, A, one, 239);                  // xTPL assumes projective constant, but this is minor
-        xDBLe(P2, Q, A, one, 371);  
-        fp2mul751_mont(XP, ZQ, t0);                  // t0 = XP*ZQ
-        fp2mul751_mont(XQ, ZP, t1);                  // t1 = XQ*ZP
-        fp2sub751(t0, t1, t0);                       // t0 = XP*ZQ-XQ*ZP
+	// This loop is necessary to ensure that the order of the WeilPairing is oA and not smaller. 
+	// This ensures that we have a basis.
+	do {
+		get_point_notin_2E(alpha, A, one[0], four, value47, value52);  
+		fpcopy751(alpha, X2[1]);
+		fpadd751(alpha, alpha, X2[0]);
+		fpadd751(X2[0], X2[0], X2[0]);               // X2 = alpha*i + alpha*4
+		fpzero751(Z2[1]);                             
+		fpcopy751(one[0], Z2[0]);                    // Z2 = 1 
+		xTPLe(P2, P2, A, one, 239);                  // xTPL assumes projective constant, but this is minor
+		xDBLe(P2, Q, A, one, 371);  
+		fp2mul751_mont(XP, ZQ, t0);                  // t0 = XP*ZQ
+		fp2mul751_mont(XQ, ZP, t1);                  // t1 = XQ*ZP
+		fp2sub751(t0, t1, t0);                       // t0 = XP*ZQ-XQ*ZP
 		fp2correction751(t0);
-    } while (fpequal751_non_constant_time(t0[0], zero) == true && fpequal751_non_constant_time(t0[1], zero) == true);
+	} while (fpequal751_non_constant_time(t0[0], zero) == true && fpequal751_non_constant_time(t0[1], zero) == true);
     
-    fp2copy751(X1, R1->X);
-    fp2copy751(Z1, R1->Z);
-    fp2copy751(X2, R2->X);
-    fp2copy751(Z2, R2->Z);
+	fp2copy751(X1, R1->X);
+	fp2copy751(Z1, R1->Z);
+	fp2copy751(X2, R2->X);
+	fp2copy751(Z2, R2->Z);
 
-    // Recover the y-coordinates.
-    fp2sqr751_mont(Z1, t0);                          // t0 = Z1^2
-    fp2mul751_mont(A, Z1, Y1);                       // Y1 = A*Z1
+	// Recover the y-coordinates.
+	fp2sqr751_mont(Z1, t0);                          // t0 = Z1^2
+	fp2mul751_mont(A, Z1, Y1);                       // Y1 = A*Z1
 	fp2add751(X1, Y1, Y1);                           // Y1 = X1+Y1
-    fp2mul751_mont(X1, Y1, Y1);                      // Y1 = Y1*X1
+	fp2mul751_mont(X1, Y1, Y1);                      // Y1 = Y1*X1
 	fp2add751(t0, Y1, Y1);                           // Y1 = Y1+t0
-    fp2mul751_mont(X1, Y1, Y1);                      // Y1 = Y1*X1
+	fp2mul751_mont(X1, Y1, Y1);                      // Y1 = Y1*X1
 	fp2mul751_mont(t0, Z1, t0);                      // t0 = t0*Z1
-    sqrt_Fp2_frac(Y1, t0, t1);                       // t1 = sqrt(Y1/t0)
+	sqrt_Fp2_frac(Y1, t0, t1);                       // t1 = sqrt(Y1/t0)
     
 	fp2sqr751_mont(Z2, t0);                          // t0 = Z2^2
-    fp2mul751_mont(A, Z2, Y2);                       // Y2 = A*Z2
-    fp2add751(X2, Y2, Y2);                           // Y2 = X2+Y2
-    fp2mul751_mont(Y2, X2, Y2);                      // Y2 = Y2*X2
-    fp2add751(t0, Y2, Y2);                           // Y2 = Y2+t0
-    fp2mul751_mont(Y2, X2, Y2);                      // Y2 = Y2*X2
+	fp2mul751_mont(A, Z2, Y2);                       // Y2 = A*Z2
+	fp2add751(X2, Y2, Y2);                           // Y2 = X2+Y2
+	fp2mul751_mont(Y2, X2, Y2);                      // Y2 = Y2*X2
+	fp2add751(t0, Y2, Y2);                           // Y2 = Y2+t0
+	fp2mul751_mont(Y2, X2, Y2);                      // Y2 = Y2*X2
 	fp2mul751_mont(t0, Z2, t0);                      // t0 = t0*Z2
-    fp2mul751_mont(t1, Z1, Y1);                      // Y1 = t1*Z1
-    sqrt_Fp2_frac(Y2, t0, t1);                       // t1 = sqrt(Y2/t0)    
+	fp2mul751_mont(t1, Z1, Y1);                      // Y1 = t1*Z1
+	sqrt_Fp2_frac(Y2, t0, t1);                       // t1 = sqrt(Y2/t0)    
 	fp2mul751_mont(Z2, t1, Y2);                      // Y2 = t1*Z2
 }
 
@@ -2041,23 +2041,23 @@ void ph3(point_t phiP, point_t phiQ, point_t PS, point_t QS, f2elm_t A, uint64_t
   // This function computes the five pairings e(QS, PS), e(QS, phiP), e(QS, phiQ), e(PS, phiP), e(PS,phiQ),
   // computes the lookup tables for the Pohlig-Hellman functions,
   // and then computes the discrete logarithms of the last four pairing values to the base of the first pairing value.                                                                 
-    f2elm_t t_ori[5], n[5], LUT[4], LUT_0[4], LUT_1[5];
-    felm_t one = {0};
+	f2elm_t t_ori[5], n[5], LUT[4], LUT_0[4], LUT_1[5];
+	felm_t one = {0};
 
-    fpcopy751(CurveIsogeny->Montgomery_one, one);
+	fpcopy751(CurveIsogeny->Montgomery_one, one);
 
 	// Compute the pairings
-    Tate_pairings_3_torsion(QS, PS, phiP, phiQ, A, n, CurveIsogeny);
+	Tate_pairings_3_torsion(QS, PS, phiP, phiQ, A, n, CurveIsogeny);
 
 	// Build the look-up tables
 	build_LUTs_3(n[0], t_ori, LUT, LUT_0, LUT_1, one);
 
-    // Finish computation
-    phn61(n[1], t_ori, LUT, LUT_0, LUT_1, one, a0);
-    phn61(n[3], t_ori, LUT, LUT_0, LUT_1, one, b0);
+	// Finish computation
+	phn61(n[1], t_ori, LUT, LUT_0, LUT_1, one, a0);
+	phn61(n[3], t_ori, LUT, LUT_0, LUT_1, one, b0);
 	mp_sub(CurveIsogeny->Border, (digit_t*)b0, (digit_t*)b0, NWORDS_ORDER);
-    phn61(n[2], t_ori, LUT, LUT_0, LUT_1, one, a1);
-    phn61(n[4], t_ori, LUT, LUT_0, LUT_1, one, b1);
+	phn61(n[2], t_ori, LUT, LUT_0, LUT_1, one, a1);
+	phn61(n[4], t_ori, LUT, LUT_0, LUT_1, one, b1);
 	mp_sub(CurveIsogeny->Border, (digit_t*)b1, (digit_t*)b1, NWORDS_ORDER);
 }
 
