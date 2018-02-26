@@ -1184,32 +1184,8 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	//do ph3 or ph2 depending on if S has order 3 or 2
 	half_ph3(psiSa, R1, R2, A, (uint64_t*)a, (uint64_t*)b, CurveIsogeny);
 	
-	/*
-	bit = mod3(a0);
-	to_Montgomery_mod_order(a0, a0, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);    // Converting to Montgomery representation
-	to_Montgomery_mod_order(a1, a1, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime); 
-	to_Montgomery_mod_order(b0, b0, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);  
-	to_Montgomery_mod_order(b1, b1, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime); 
-    
-	if (bit != 0) {  // Storing [b1*a0inv, a1*a0inv, b0*a0inv] and setting bit384 to 0               
-		Montgomery_inversion_mod_order_bingcd(a0, inv, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
-		Montgomery_multiply_mod_order(b0, inv, &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
-		Montgomery_multiply_mod_order(a1, inv, &comp[NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
-		Montgomery_multiply_mod_order(b1, inv, &comp[2*NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
-		from_Montgomery_mod_order(&comp[0], &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);                           // Converting back from Montgomery representation
-		from_Montgomery_mod_order(&comp[NWORDS_ORDER], &comp[NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
-		from_Montgomery_mod_order(&comp[2*NWORDS_ORDER], &comp[2*NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
-		comp[3*NWORDS_ORDER-1] &= (digit_t)(-1) >> 1;
-	} else {  // Storing [b1*b0inv, a1*b0inv, a0*b0inv] and setting bit384 to 1
-		Montgomery_inversion_mod_order_bingcd(b0, inv, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);         
-		Montgomery_multiply_mod_order(a0, inv, &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
-		Montgomery_multiply_mod_order(a1, inv, &comp[NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
-		Montgomery_multiply_mod_order(b1, inv, &comp[2*NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
-		from_Montgomery_mod_order(&comp[0], &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);                           // Converting back from Montgomery representation 
-		from_Montgomery_mod_order(&comp[NWORDS_ORDER], &comp[NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
-		from_Montgomery_mod_order(&comp[2*NWORDS_ORDER], &comp[2*NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
-		comp[3*NWORDS_ORDER-1] |= (digit_t)1 << (sizeof(digit_t)*8 - 1);
-	}*/
+	fp2copy751(a, CompressedPsiS[0]);
+	fp2copy751(b, CompressedPsiS[1]);
 }
 
 CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, unsigned char* point_R, unsigned char* param_A, PCurveIsogenyStruct CurveIsogeny) {

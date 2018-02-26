@@ -214,25 +214,17 @@ CRYPTO_STATUS isogeny_sign(PCurveIsogenyStruct CurveIsogeny, unsigned char *Priv
 		pthread_mutex_init(&compressionBatch->arrayLock, NULL);
 		sem_init(&compressionBatch->sign_sem, 0, 0);*/
 		
-		unsigned char *psiSpubKey = (unsigned char*) malloc(3*2*(tps.pbytes));
-		unsigned char *compressedPsiS = (unsigned char*)calloc(1, 3*obytes + 2*pbytes); //need to figure out byte size of an element in Z_orderB
-		unsigned char *decompressResult = (unsigned char*) malloc(3*2*(tps.pbytes));
-		//unsigned char *seshSecKey = 
+		//unsigned char *psiSpubKey = (unsigned char*) malloc(3*2*(tps.pbytes));
+		unsigned char *compressedPsiS = (unsigned char*)calloc(1, 2*obytes); //need to figure out byte size of an element in Z_orderB
+		//unsigned char *decompressResult = (unsigned char*) malloc(3*2*(tps.pbytes));
 		
 		//for (t=0; t<NUM_THREADS/3; t++) {
-			copy_words((f2elm_t*)sig->psiS[0], ((f2elm_t*)psiSpubKey)[0], pwords);
-			copy_words((f2elm_t*)sig->psiS[1], ((f2elm_t*)psiSpubKey)[1], pwords);
-			copy_words((f2elm_t*)sig->psiS[2], ((f2elm_t*)psiSpubKey)[2], pwords);
 			/*if (pthread_create(&compress_threads[t], NULL, compress_thread, &psiSpubKey)) {
 				printf("ERROR: Failed to create thread %d\n", t);
 			}*/
 			
-			//Status = compressPsiS(psiS, CompressedPsiS, CurveIsogeny, NULL);
+			Status = compressPsiS(sig->psiS[0], compressedPsiS, CurveIsogeny, NULL);
 			
-			PublicKeyCompression_A(psiSpubKey, compressedPsiS, CurveIsogeny);
-			
-			//need privatekeyB to decompress (don't know which private key this is supposed to be yet)
-			//PublicKeyADecompression_B()
 		//}
 		
 		//compresspubkey_A
@@ -242,6 +234,7 @@ CRYPTO_STATUS isogeny_sign(PCurveIsogenyStruct CurveIsogeny, unsigned char *Priv
 		/*for (t=0; t<NUM_THREADS/3; t++) {
     	pthread_join(compress_threads[t], NULL);
   	}*/
+  	free(compressedPsiS);
 	}
 
 cleanup:
@@ -249,6 +242,7 @@ cleanup:
 		free(signBatchA->invDest);
 		free(signBatchB->invArray);
 		free(signBatchB->invDest);
+		
 
 	return Status;
 }
