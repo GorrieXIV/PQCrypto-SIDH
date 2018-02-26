@@ -1164,7 +1164,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	digit_t* comp = (digit_t*)CompressedPsiS;
 	f2elm_t* A = (f2elm_t*)CurveIsogeny->A;
 	f2elm_t vec[2], Zinv[2];
-	digit_t a0[NWORDS_ORDER], b0[NWORDS_ORDER], a1[NWORDS_ORDER], b1[NWORDS_ORDER]; //for pohlig-hellman results
+	digit_t a[NWORDS_ORDER], b[NWORDS_ORDER]; //for pohlig-hellman results
   
 	generate_3_torsion_basis(A, P, Q, CurveIsogeny);
 	
@@ -1182,7 +1182,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	from_fp2mont(psiS->Z, psiSa->y); //point_proj has no member Y?
 	
 	//do ph3 or ph2 depending on if S has order 3 or 2
-	ph3(psiSa, psiSa, R1, R2, A, (uint64_t*)a0, (uint64_t*)b0, (uint64_t*)a1, (uint64_t*)b1, CurveIsogeny);
+	half_ph3(psiSa, R1, R2, A, (uint64_t*)a, (uint64_t*)b, CurveIsogeny);
 	
 	/*
 	bit = mod3(a0);

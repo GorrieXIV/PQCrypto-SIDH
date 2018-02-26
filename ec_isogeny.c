@@ -2061,6 +2061,23 @@ void ph3(point_t phiP, point_t phiQ, point_t PS, point_t QS, f2elm_t A, uint64_t
 	mp_sub(CurveIsogeny->Border, (digit_t*)b1, (digit_t*)b1, NWORDS_ORDER);
 }
 
+void half_ph3(point_t P, point_t R1, point_t R2, f2elm_t A, uint64_t* a, uint64_t* b, PCurveIsogenyStruct CurveIsogeny)
+{ // 3-torsion pohlig-hellman for only one point
+	f2elm_t t_ori[5], n[5], LUT[4], LUT_0[4], LUT_1[5];
+	felm_t one = {0};
+
+	fpcopy751(CurveIsogeny->Montgomery_one, one);
+
+	// Compute the pairings
+	Tate_pairings_3_torsion(R2, R1, P, P, A, n, CurveIsogeny); //could write a custom pairings function for half the computations
+	
+	build_LUTs_3(n[0], t_ori, LUT, LUT_0, LUT_1, one); //same as for tate pairings?
+
+	phn61(n[1], t_ori, LUT, LUT_0, LUT_1, one, a);
+	phn61(n[3], t_ori, LUT, LUT_0, LUT_1, one, b);
+	mp_sub(CurveIsogeny->Border, (digit_t*)b, (digit_t*)b, NWORDS_ORDER);
+}
+
 
 unsigned int mod3(digit_t* a) 
 { // Computes the input modulo 3

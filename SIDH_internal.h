@@ -521,6 +521,9 @@ void phn84(f2elm_t r, const f2elm_t* t_ori, const f2elm_t* LUT, const f2elm_t* L
 // 3-torsion Pohlig-Hellman function       
 void ph3(point_t phiP, point_t phiQ, point_t PS, point_t QS, f2elm_t A, uint64_t* a0, uint64_t* b0, uint64_t* a1, uint64_t* b1, PCurveIsogenyStruct CurveIsogeny);
 
+// 3-torsion Pohlig-Hellman function for 1 point P
+void half_ph3(point_t P, point_t R1, point_t R2, f2elm_t A, uint64_t* a, uint64_t* b, PCurveIsogenyStruct CurveIsogeny);
+
 // Lookup table generation for 3-torsion PH
 void build_LUTs_3(f2elm_t g, f2elm_t* t_ori, f2elm_t* LUT, f2elm_t* LUT_0, f2elm_t* LUT_1, const felm_t one);
 
