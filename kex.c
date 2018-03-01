@@ -1149,9 +1149,9 @@ CRYPTO_STATUS EphemeralSecretAgreement_Compression_B(const unsigned char* Privat
 ///////////////             COMPRESSION FOR SIGNATURES              ///////////////
 
 CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS, PCurveIsogenyStruct CurveIsogeny, invBatch* batch) {
-// Inputs:
-// 
-// Outputs:
+// Inputs:  a point psiS in point_proj form
+//          curve CurveIsogeny (SIDHp751)
+// Outputs: compressed psiS of the form ainv*b where psiS = R1 + [ainv*b]R2
 // 
 	point_full_proj_t P, Q;                    //points used in the construction of {R1,R2}
 	point_t psiSa, R1, R2;
@@ -1200,14 +1200,10 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 		Montgomery_inversion_mod_order_bingcd(a, inv, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
 		Montgomery_multiply_mod_order(b, inv, &comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);  
 		from_Montgomery_mod_order(&comp, &comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);                           // Converting back from Montgomery representation
-		//what does this do?
-		//comp[3*NWORDS_ORDER-1] &= (digit_t)(-1) >> 1;
 	} else {  // Storing a*binv and setting bit384 to 1
 		Montgomery_inversion_mod_order_bingcd(b, inv, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);         
 		Montgomery_multiply_mod_order(a, inv, &comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
 		from_Montgomery_mod_order(&comp, &comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);                           // Converting back from Montgomery representation 
-		//what does this do?
-		//comp[3*NWORDS_ORDER-1] |= (digit_t)1 << (sizeof(digit_t)*8 - 1);
 	}
 }
 
