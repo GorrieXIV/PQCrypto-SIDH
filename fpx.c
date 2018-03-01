@@ -659,85 +659,88 @@ void mont_n_way_inv(const f2elm_t* vec, const int n, f2elm_t* out)
 	f2elm_t t1;
 	int i;
 
-    fp2copy751(vec[0], out[0]);                      // out[0] = vec[0]
-    for (i = 1; i < n; i++) {
-        fp2mul751_mont(out[i-1], vec[i], out[i]);    // out[i] = out[i-1]*vec[i]
-    }
+	fp2copy751(vec[0], out[0]);                      // out[0] = vec[0]
+	for (i = 1; i < n; i++) {
+		  fp2mul751_mont(out[i-1], vec[i], out[i]);    // out[i] = out[i-1]*vec[i]
+	}
 
-    fp2copy751(out[n-1], t1);                        // t1 = 1/out[n-1]
-    fp2inv751_mont_bingcd(t1);
-    
-    for (i = n-1; i >= 1; i--) {
+	fp2copy751(out[n-1], t1);                        // t1 = 1/out[n-1]
+	fp2inv751_mont_bingcd(t1);
+
+	for (i = n-1; i >= 1; i--) {
 		fp2mul751_mont(out[i-1], t1, out[i]);        // out[i] = t1*out[i-1]
-        fp2mul751_mont(t1, vec[i], t1);              // t1 = t1*vec[i]
-    }
-    fp2copy751(t1, out[0]);                          // out[0] = t1
+		fp2mul751_mont(t1, vec[i], t1);              // t1 = t1*vec[i]
+	}
+	fp2copy751(t1, out[0]);                          // out[0] = t1
 }
 
 
 void sqrt_Fp2_frac(const f2elm_t u, const f2elm_t v, f2elm_t y)
 { // Computes square roots of elements in (Fp2)^2 using Hamburg's trick. 
-    felm_t t0, t1, t2, t3, t4, t;
-    digit_t *u0 = (digit_t*)u[0], *u1 = (digit_t*)u[1];
-    digit_t *v0 = (digit_t*)v[0], *v1 = (digit_t*)v[1];
-    digit_t *y0 = (digit_t*)y[0], *y1 = (digit_t*)y[1];
-    unsigned int i;
+	felm_t t0, t1, t2, t3, t4, t;
+	digit_t *u0 = (digit_t*)u[0], *u1 = (digit_t*)u[1];
+	digit_t *v0 = (digit_t*)v[0], *v1 = (digit_t*)v[1];
+	digit_t *y0 = (digit_t*)y[0], *y1 = (digit_t*)y[1];
+	unsigned int i;
 
-    fpsqr751_mont(v0, t0);                  // t0 = v0^2
-    fpsqr751_mont(v1, t1);                  // t1 = v1^2
-    fpadd751(t0, t1, t0);                   // t0 = t0+t1   
-    fpmul751_mont(u0, v0, t1);              // t1 = u0*v0
-    fpmul751_mont(u1, v1, t2);              // t2 = u1*v1 
-    fpadd751(t1, t2, t1);                   // t1 = t1+t2  
-    fpmul751_mont(u1, v0, t2);              // t2 = u1*v0
-    fpmul751_mont(u0, v1, t3);              // t3 = u0*v1
-    fpsub751(t2, t3, t2);                   // t2 = t2-t3    
-    fpsqr751_mont(t1, t3);                  // t3 = t1^2    
-    fpsqr751_mont(t2, t4);                  // t4 = t2^2
-    fpadd751(t3, t4, t3);                   // t3 = t3+t4
-    fpcopy751(t3, t);
-    for (i = 0; i < 370; i++) {             // t = t3^((p+1)/4)
-        fpsqr751_mont(t, t);
-    }
-    for (i = 0; i < 239; i++) {
-        fpsqr751_mont(t, t3);                                         
-        fpmul751_mont(t, t3, t);                                      
-    }    
-    fpadd751(t1, t, t);                     // t = t+t1
-    fpadd751(t, t, t);                      // t = 2*t  
-    fpsqr751_mont(t0, t3);                  // t3 = t0^2      
-    fpmul751_mont(t0, t3, t3);              // t3 = t3*t0   
-    fpmul751_mont(t, t3, t3);               // t3 = t3*t
-    fpinv751_chain_mont(t3);                // t3 = t3^((p-3)/4)
-    fpmul751_mont(t0, t3, t3);              // t3 = t3*t0             
-    fpmul751_mont(t, t3, t1);               // t1 = t*t3 
-    fpdiv2_751(t1, y0);                     // y0 = t1/2         
-    fpmul751_mont(t2, t3, y1);              // y1 = t3*t2 
-    fpsqr751_mont(t1, t1);                  // t1 = t1^2
-    fpmul751_mont(t0, t1, t1);              // t1 = t1*t0
+	fpsqr751_mont(v0, t0);                  // t0 = v0^2
+	fpsqr751_mont(v1, t1);                  // t1 = v1^2
+	fpadd751(t0, t1, t0);                   // t0 = t0+t1   
+	fpmul751_mont(u0, v0, t1);              // t1 = u0*v0
+	fpmul751_mont(u1, v1, t2);              // t2 = u1*v1 
+	fpadd751(t1, t2, t1);                   // t1 = t1+t2  
+	fpmul751_mont(u1, v0, t2);              // t2 = u1*v0
+	fpmul751_mont(u0, v1, t3);              // t3 = u0*v1
+	fpsub751(t2, t3, t2);                   // t2 = t2-t3    
+	fpsqr751_mont(t1, t3);                  // t3 = t1^2    
+	fpsqr751_mont(t2, t4);                  // t4 = t2^2
+	fpadd751(t3, t4, t3);                   // t3 = t3+t4
+	fpcopy751(t3, t);
+	
+	for (i = 0; i < 370; i++) {             // t = t3^((p+1)/4)
+		  fpsqr751_mont(t, t);
+	}
+	
+	for (i = 0; i < 239; i++) {
+		  fpsqr751_mont(t, t3);                                         
+		  fpmul751_mont(t, t3, t);                                      
+	}
+    
+	fpadd751(t1, t, t);                     // t = t+t1
+	fpadd751(t, t, t);                      // t = 2*t  
+	fpsqr751_mont(t0, t3);                  // t3 = t0^2      
+	fpmul751_mont(t0, t3, t3);              // t3 = t3*t0   
+	fpmul751_mont(t, t3, t3);               // t3 = t3*t
+	fpinv751_chain_mont(t3);                // t3 = t3^((p-3)/4)
+	fpmul751_mont(t0, t3, t3);              // t3 = t3*t0             
+	fpmul751_mont(t, t3, t1);               // t1 = t*t3 
+	fpdiv2_751(t1, y0);                     // y0 = t1/2         
+	fpmul751_mont(t2, t3, y1);              // y1 = t3*t2 
+	fpsqr751_mont(t1, t1);                  // t1 = t1^2
+	fpmul751_mont(t0, t1, t1);              // t1 = t1*t0
 	fpcorrection751(t);
 	fpcorrection751(t1);
 
-    if (fpequal751_non_constant_time(t1, t) == false) {
-        fpcopy751(y0, t);                   
-        fpcopy751(y1, y0);                  // Swap y0 and y1 
-        fpcopy751(t, y1); 
-    }
+	if (fpequal751_non_constant_time(t1, t) == false) {
+		fpcopy751(y0, t);                   
+		fpcopy751(y1, y0);                  // Swap y0 and y1 
+		fpcopy751(t, y1); 
+	}
 
-    fpsqr751_mont(y0, t0);                  // t0 = y0^2
-    fpsqr751_mont(y1, t1);                  // t1 = y1^2
-    fpsub751(t0, t1, t0);                   // t0 = t0-t1
-    fpmul751_mont(t0, v0, t0);              // t0 = t0*v0
-    fpmul751_mont(y0, y1, t1);              // t1 = y0*y1
-    fpmul751_mont(v1, t1, t1);              // t1 = t1*v1
-    fpadd751(t1, t1, t1);                   // t1 = t1+t1
-    fpsub751(t0, t1, t0);                   // t0 = t0-t1
+	fpsqr751_mont(y0, t0);                  // t0 = y0^2
+	fpsqr751_mont(y1, t1);                  // t1 = y1^2
+	fpsub751(t0, t1, t0);                   // t0 = t0-t1
+	fpmul751_mont(t0, v0, t0);              // t0 = t0*v0
+	fpmul751_mont(y0, y1, t1);              // t1 = y0*y1
+	fpmul751_mont(v1, t1, t1);              // t1 = t1*v1
+	fpadd751(t1, t1, t1);                   // t1 = t1+t1
+	fpsub751(t0, t1, t0);                   // t0 = t0-t1
 	fpcorrection751(t0);
 	fpcorrection751(u0);
 	
-    if (fpequal751_non_constant_time(t0, u0) == false) {
-        fpneg751(y1);                       // y1 = -y1
-    }
+	if (fpequal751_non_constant_time(t0, u0) == false) {
+		fpneg751(y1);                       // y1 = -y1
+	}
 }
 
 

@@ -1153,39 +1153,62 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 // 
 // Outputs:
 // 
-
-	//we need to:
-	//comput the basis {R1,R2}
-	//represent psiS as [alpa]R1 + [beta]R2
-	//what is the difference between a point_proj and a point_t
-
-	point_full_proj_t P, Q;    //points used in the construction of {R1,R2}
+	point_full_proj_t P, Q;                    //points used in the construction of {R1,R2}
 	point_t psiSa, R1, R2;
 	digit_t* comp = (digit_t*)CompressedPsiS;
 	f2elm_t* A = (f2elm_t*)CurveIsogeny->A;
-	f2elm_t vec[2], Zinv[2];
-	digit_t a[NWORDS_ORDER], b[NWORDS_ORDER]; //for pohlig-hellman results
+	f2elm_t vec[3], Zinv[3];
+	digit_t a[NWORDS_ORDER], b[NWORDS_ORDER];  //for pohlig-hellman results
+	digit_t inv[NWORDS_ORDER];                 //for storing the inverse of alpha
+	uint64_t Montgomery_Rprime[NWORDS64_ORDER] = {0x1A55482318541298, 0x070A6370DFA12A03, 0xCB1658E0E3823A40, 0xB3B7384EB5DEF3F9, 0xCBCA952F7006EA33, 0x00569EF8EC94864C}; // Value (2^384)^2 mod 3^239
+	uint64_t Montgomery_rprime[NWORDS64_ORDER] = {0x48062A91D3AB563D, 0x6CE572751303C2F5, 0x5D1319F3F160EC9D, 0xE35554E8C2D5623A, 0xCA29300232BC79A5, 0x8AAD843D646D78C5}; // Value -(3^239)^-1 mod 2^384
+	unsigned int bit;
+	f2elm_t tmp, one = {0};
   
 	generate_3_torsion_basis(A, P, Q, CurveIsogeny);
 	
 	fp2copy751(P->Z, vec[0]);
 	fp2copy751(Q->Z, vec[1]);
-	mont_n_way_inv(vec, 2, Zinv);
+	fp2copy751(psiS->Z, vec[2]);
+	mont_n_way_inv(vec, 3, Zinv);
 	
 	fp2mul751_mont(P->X, Zinv[0], R1->x);
 	fp2mul751_mont(P->Y, Zinv[0], R1->y);
 	fp2mul751_mont(Q->X, Zinv[1], R2->x);
 	fp2mul751_mont(Q->Y, Zinv[1], R2->y);
 	
-	//conversion of projective point to affine representation
-	from_fp2mont(psiS->X, psiSa->x);
-	from_fp2mont(psiS->Z, psiSa->y); //point_proj has no member Y?
+	//recover affine x of psiS
+	fp2mul751_mont(psiS->X, Zinv[2], psiSa->x);
+	
+	//recover affine y of psiS
+	fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
+	fp2add751(psiSa->x, A, tmp);
+	fp2mul751_mont(psiSa->x, tmp, tmp);
+	fp2add751(tmp, one, tmp);                 
+	fp2mul751_mont(psiSa->x, tmp, tmp);
+	sqrt_Fp2(tmp, psiSa->y);
 	
 	//do ph3 or ph2 depending on if S has order 3 or 2
 	half_ph3(psiSa, R1, R2, A, (uint64_t*)a, (uint64_t*)b, CurveIsogeny);
 	
-	fp2copy751(a, CompressedPsiS[0]);
-	fp2copy751(b, CompressedPsiS[1]);
+	//check if a has order 3
+	bit = mod3(a);
+	to_Montgomery_mod_order(a, a, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);    // Converting to Montgomery representation
+	to_Montgomery_mod_order(b, b, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);  
+    
+	if (bit != 0) {  // Storing b*ainv and setting bit384 to 0               
+		Montgomery_inversion_mod_order_bingcd(a, inv, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+		Montgomery_multiply_mod_order(b, inv, &comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);  
+		from_Montgomery_mod_order(&comp, &comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);                           // Converting back from Montgomery representation
+		//what does this do?
+		//comp[3*NWORDS_ORDER-1] &= (digit_t)(-1) >> 1;
+	} else {  // Storing a*binv and setting bit384 to 1
+		Montgomery_inversion_mod_order_bingcd(b, inv, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);         
+		Montgomery_multiply_mod_order(a, inv, &comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
+		from_Montgomery_mod_order(&comp, &comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);                           // Converting back from Montgomery representation 
+		//what does this do?
+		//comp[3*NWORDS_ORDER-1] |= (digit_t)1 << (sizeof(digit_t)*8 - 1);
+	}
 }
 
 CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, unsigned char* point_R, unsigned char* param_A, PCurveIsogenyStruct CurveIsogeny) {
