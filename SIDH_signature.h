@@ -14,14 +14,19 @@
 #define NUM_ROUNDS       248
 #define COMPRESS_ROUNDS  83
 
+typedef union response2 {
+	point_proj *psiS[NUM_ROUNDS];
+	f2elm_t *compPsiS[NUM_ROUNDS];
+} response2;
+
 //signature structure
 struct Signature {
-		int compressed;
-    unsigned char *Commitments1[NUM_ROUNDS];
-    unsigned char *Commitments2[NUM_ROUNDS];
-    unsigned char *HashResp;
-    unsigned char *Randoms[NUM_ROUNDS];
-    point_proj *psiS[NUM_ROUNDS];
+	int compressed;
+	unsigned char *Commitments1[NUM_ROUNDS];
+	unsigned char *Commitments2[NUM_ROUNDS];
+	unsigned char *HashResp;
+	unsigned char *Randoms[NUM_ROUNDS];
+	response2 resp2;
 };
 
 typedef struct thread_params_compress {
