@@ -124,8 +124,18 @@ void *sign_thread(void *TPS, int compressed) {
 		to_fp2mont(((f2elm_t*)TempPubKey)[0], A);
     fp2copy751(A, *(f2elm_t*)tps->sig->Commitments1[r]);     //commitment1[r] = A = tempPubKey[0]
 		
+		point_proj tempPsiS[1];
+		
 		//although SecretAgreement_A runs faster than B, B appears necessary for the time being to ensure success of system
-		Status = SecretAgreement_B(tps->PrivateKey, TempPubKey, tps->sig->Commitments2[r], *(tps->CurveIsogeny), NULL, tps->sig->psiS[r], signBatchB);
+		Status = SecretAgreement_B(tps->PrivateKey, TempPubKey, tps->sig->Commitments2[r], *(tps->CurveIsogeny), NULL, tempPsiS, signBatchB);
+		
+		if(compressed) {
+			
+		} else {
+			fp2copy751(tempPsiS->X, tps->sig->psiS[r]->X);
+			fp2copy751(tempPsiS->Z, tps->sig->psiS[r]->Z);
+		}
+		
 		//check success of SecretAgreementB
 		if(Status != CRYPTO_SUCCESS) {
 			printf("Random point generation failed"); 

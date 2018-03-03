@@ -159,7 +159,7 @@ extern "C" {
 typedef digit_t felm_t[NWORDS_FIELD];                                 // Datatype for representing 751-bit field elements (768-bit max.)
 typedef digit_t dfelm_t[2*NWORDS_FIELD];                              // Datatype for representing double-precision 2x751-bit field elements (2x768-bit max.) 
 typedef felm_t  f2elm_t[2];                                           // Datatype for representing quadratic extension field elements GF(p751^2)
-typedef f2elm_t publickey_t[3];                                       // Datatype for representing public keys equivalent to three GF(p751^2) elements
+typedef f2elm_t publickey_t[3];                                     // Datatype for representing public keys equivalent to three GF(p751^2) elements
         
 typedef struct { f2elm_t x; f2elm_t y; } point_affine;                // Point representation in affine coordinates on Montgomery curve.
 typedef point_affine point_t[1]; 
