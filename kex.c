@@ -1189,7 +1189,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	sqrt_Fp2(tmp, psiSa->y);
 	
 	//do ph3 or ph2 depending on if S has order 3 or 2
-	half_ph3(psiSa, R1, R2, A, (uint64_t*)a, (uint64_t*)b, CurveIsogeny);
+	half_ph2(psiSa, R1, R2, A, (uint64_t*)a, (uint64_t*)b, CurveIsogeny);
 	
 	//check if a has order 3
 	bit = mod3(a);
@@ -1209,8 +1209,34 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	return CRYPTO_SUCCESS;
 }
 
-CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, unsigned char* psiS, PCurveIsogenyStruct CurveIsogeny) {
+CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* psiS, PCurveIsogenyStruct CurveIsogeny) {
 // Inputs:
 //
 // Outputs:
+//
+	point_full_proj_t P, Q;                    //points used in the construction of {R1,R2}
+	point_t psiSa, R1, R2;
+	digit_t* comp = (digit_t*)CompressedPsiS;
+	f2elm_t* A = (f2elm_t*)CurveIsogeny->A;
+	f2elm_t vec[2], Zinv[2];
+	digit_t a[NWORDS_ORDER], b[NWORDS_ORDER];  //for pohlig-hellman results
+	digit_t inv[NWORDS_ORDER];                 //for storing the inverse of alpha
+	uint64_t Montgomery_Rprime[NWORDS64_ORDER] = {0x1A55482318541298, 0x070A6370DFA12A03, 0xCB1658E0E3823A40, 0xB3B7384EB5DEF3F9, 0xCBCA952F7006EA33, 0x00569EF8EC94864C}; // Value (2^384)^2 mod 3^239
+	uint64_t Montgomery_rprime[NWORDS64_ORDER] = {0x48062A91D3AB563D, 0x6CE572751303C2F5, 0x5D1319F3F160EC9D, 0xE35554E8C2D5623A, 0xCA29300232BC79A5, 0x8AAD843D646D78C5}; // Value -(3^239)^-1 mod 2^384
+	unsigned int bit;
+	f2elm_t tmp, one = {0};
+	
+	generate_2_torsion_basis(A, P, Q, CurveIsogeny);
+	
+	fp2copy751(P->Z, vec[0]);
+	fp2copy751(Q->Z, vec[1]);
+	mont_n_way_inv(vec, 2, Zinv);
+	
+	fp2mul751_mont(P->X, Zinv[0], R1->x);
+	fp2mul751_mont(P->Y, Zinv[0], R1->y);
+	fp2mul751_mont(Q->X, Zinv[1], R2->x);
+	fp2mul751_mont(Q->Y, Zinv[1], R2->y);
+	
+	
 }
+

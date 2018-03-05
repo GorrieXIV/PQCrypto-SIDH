@@ -1626,24 +1626,44 @@ void ph2(const point_t phiP, const point_t phiQ, const point_t PS, const point_t
   // This function computes the five pairings e(QS, PS), e(QS, phiP), e(QS, phiQ), e(PS, phiP), e(PS,phiQ),
   // computes the lookup tables for the Pohlig-Hellman functions,
   // and then computes the discrete logarithms of the last four pairing values to the base of the first pairing value.                                                                    
-    f2elm_t t_ori[5], n[5], LUT[5], LUT_0[4], LUT_1[4], LUT_3[6];
-    felm_t one = {0};
+	f2elm_t t_ori[5], n[5], LUT[5], LUT_0[4], LUT_1[4], LUT_3[6];
+	felm_t one = {0};
     
-    fpcopy751(CurveIsogeny->Montgomery_one, one);
+	fpcopy751(CurveIsogeny->Montgomery_one, one);
 	
 	// Compute the pairings.
-    Tate_pairings_2_torsion(QS, PS, phiP, phiQ, A, n, CurveIsogeny);
+	Tate_pairings_2_torsion(QS, PS, phiP, phiQ, A, n, CurveIsogeny);
 
 	// Build the lookup tables from element n[0] of order 2^372.
 	build_LUTs(n[0], t_ori, LUT, LUT_0, LUT_1, LUT_3, one);
 
-    // Finish computation
-    phn84(n[1], t_ori, LUT, LUT_0, LUT_1, LUT_3, one, a0);
-    phn84(n[3], t_ori, LUT, LUT_0, LUT_1, LUT_3, one, b0);
+	// Finish computation
+	phn84(n[1], t_ori, LUT, LUT_0, LUT_1, LUT_3, one, a0);
+	phn84(n[3], t_ori, LUT, LUT_0, LUT_1, LUT_3, one, b0);
 	mp_sub(CurveIsogeny->Aorder, (digit_t*)b0, (digit_t*)b0, NWORDS_ORDER);
-    phn84(n[2], t_ori, LUT, LUT_0, LUT_1, LUT_3, one, a1);
-    phn84(n[4], t_ori, LUT, LUT_0, LUT_1, LUT_3, one, b1);
+	phn84(n[2], t_ori, LUT, LUT_0, LUT_1, LUT_3, one, a1);
+	phn84(n[4], t_ori, LUT, LUT_0, LUT_1, LUT_3, one, b1);
 	mp_sub(CurveIsogeny->Aorder, (digit_t*)b1, (digit_t*)b1, NWORDS_ORDER);
+}
+
+
+void half_ph2(const point_t P, const point_t R1, const point_t R2, const f2elm_t A, uint64_t* a, uint64_t* b, PCurveIsogenyStruct CurveIsogeny)
+{
+	f2elm_t t_ori[5], n[5], LUT[5], LUT_0[4], LUT_1[4], LUT_3[6];
+	felm_t one = {0};
+    
+	fpcopy751(CurveIsogeny->Montgomery_one, one);
+	
+	// Compute the pairings.
+	Tate_pairings_2_torsion(R1, R2, P, P, A, n, CurveIsogeny);
+
+	// Build the lookup tables from element n[0] of order 2^372.
+	build_LUTs(n[0], t_ori, LUT, LUT_0, LUT_1, LUT_3, one);
+
+	// Finish computation
+	phn84(n[1], t_ori, LUT, LUT_0, LUT_1, LUT_3, one, a);
+	phn84(n[3], t_ori, LUT, LUT_0, LUT_1, LUT_3, one, b);
+	mp_sub(CurveIsogeny->Aorder, (digit_t*)b, (digit_t*)b, NWORDS_ORDER);
 }
 
 

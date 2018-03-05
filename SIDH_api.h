@@ -111,7 +111,7 @@ CRYPTO_STATUS EphemeralSecretAgreement_Compression_B(const unsigned char* Privat
 CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS, PCurveIsogenyStruct CurveIsogeny, invBatch* batch);
 
 // Decompression of value psi(S) and calculation of the points degree
-CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, unsigned char* psiS, PCurveIsogenyStruct CurveIsogeny);
+CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* psiS, PCurveIsogenyStruct CurveIsogeny);
 
 /*********************** SIDH 1.0 Key exchange API ***********************/ 
 

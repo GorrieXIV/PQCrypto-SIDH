@@ -503,6 +503,9 @@ void ADD(const point_full_proj_t P, const f2elm_t QX, const f2elm_t QY, const f2
 // 2-torsion Pohlig-Hellman function
 void ph2(const point_t phiP, const point_t phiQ, const point_t PS, const point_t QS, const f2elm_t A, uint64_t* a0, uint64_t* b0, uint64_t* a1, uint64_t* b1, PCurveIsogenyStruct CurveIsogeny);
 
+// 2-torsion Pohlig-Hellman for one point P
+void half_ph2(const point_t P, const point_t R1, const point_t R2, const f2elm_t A, uint64_t* a, uint64_t* b, PCurveIsogenyStruct CurveIsogeny);
+
 // Lookup table generation for 2-torsion PH
 void build_LUTs(const f2elm_t u, f2elm_t* t_ori, f2elm_t* LUT, f2elm_t* LUT_0, f2elm_t* LUT_1, f2elm_t* LUT_3, const felm_t one);
 
