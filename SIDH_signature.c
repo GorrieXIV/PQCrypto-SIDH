@@ -46,24 +46,19 @@ CRYPTO_STATUS isogeny_keygen(PCurveIsogenyStruct CurveIsogeny, unsigned char *Pr
     unsigned int pbytes = (CurveIsogeny->pwordbits + 7)/8;      // Number of bytes in a field element 
     unsigned int n, obytes = (CurveIsogeny->owordbits + 7)/8;   // Number of bytes in an element in [1, order]
     bool valid_PublicKey = false;
-    unsigned long long cycles, cycles1, cycles2;
     CRYPTO_STATUS Status = CRYPTO_SUCCESS;
     bool passed;
 
     // Generate Peggy(Bob)'s keys
     passed = true;
-    cycles1 = cpucycles();
     Status = KeyGeneration_B(PrivateKey, PublicKey, CurveIsogeny);
     if (Status != CRYPTO_SUCCESS) {                  
         passed = false;
     }
-    cycles2 = cpucycles();
-    cycles = cycles2 - cycles1;
-    if (passed) {
-        printf("  Key generated in ................... %10lld cycles\n", cycles);
-    } else { 
-        printf("  Key generation failed\n"); goto cleanup; 
-    }
+
+    if (!passed) {
+    	printf("  Key generation failed\n"); goto cleanup;
+    } 
   
 cleanup:
 
@@ -79,10 +74,12 @@ typedef struct thread_params_sign {
 	unsigned int pbytes;
 	unsigned int n;
 	unsigned int obytes;
+	
+	int compressed;
 } thread_params_sign;
 
 
-void *sign_thread(void *TPS, int compressed) {
+void *sign_thread(void *TPS) {
 	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
 	thread_params_sign *tps = (thread_params_sign*) TPS;
 
@@ -107,7 +104,7 @@ void *sign_thread(void *TPS, int compressed) {
 		tps->sig->Commitments1[r] = (unsigned char*)calloc(1, 2*tps->pbytes);
 		tps->sig->Commitments2[r] = (unsigned char*)calloc(1, 2*tps->pbytes);
 		tps->sig->psiS[r] = calloc(1, sizeof(point_proj));
-		tps->sig->compressed = compressed;
+		tps->sig->compressed = tps->compressed;
 
 		// Pick random point R and compute E/<R>
 		f2elm_t A;
@@ -118,7 +115,7 @@ void *sign_thread(void *TPS, int compressed) {
 		Status = KeyGeneration_A(tps->sig->Randoms[r], TempPubKey, *(tps->CurveIsogeny), true, signBatchA);
     //check success of KeyGeneration_A
     if(Status != CRYPTO_SUCCESS) {
-    	printf("Random point generation failed");
+    	printf("Random point generation failed\n");
 		}
 
 		to_fp2mont(((f2elm_t*)TempPubKey)[0], A);
@@ -129,8 +126,11 @@ void *sign_thread(void *TPS, int compressed) {
 		//although SecretAgreement_A runs faster than B, B appears necessary for the time being to ensure success of system
 		Status = SecretAgreement_B(tps->PrivateKey, TempPubKey, tps->sig->Commitments2[r], *(tps->CurveIsogeny), NULL, tempPsiS, signBatchB);
 		
-		if(compressed) {
-			
+		if (tps->compressed) {
+			Status = compressPsiS(tempPsiS, tps->sig->compPsiS[r], *(tps->CurveIsogeny), NULL);
+			if (Status != CRYPTO_SUCCESS) {
+				printf("Error in psi(S) compression\n");
+			}
 		} else {
 			fp2copy751(tempPsiS->X, tps->sig->psiS[r]->X);
 			fp2copy751(tempPsiS->Z, tps->sig->psiS[r]->Z);
@@ -163,7 +163,7 @@ CRYPTO_STATUS isogeny_sign(PCurveIsogenyStruct CurveIsogeny, unsigned char *Priv
 		return 1;
 	}
 	
-	thread_params_sign tps = {&CurveIsogeny, PrivateKey, PublicKey, sig, pbytes, n, obytes};
+	thread_params_sign tps = {&CurveIsogeny, PrivateKey, PublicKey, sig, pbytes, n, obytes, compressed};
 
 	signBatchA = (invBatch*) malloc (sizeof(invBatch));
 
@@ -215,37 +215,6 @@ CRYPTO_STATUS isogeny_sign(PCurveIsogenyStruct CurveIsogeny, unsigned char *Priv
 	
 	pthread_t compress_threads[NUM_THREADS/3];
 	
-	//if compression is set to true, compress PsiS with batched inversions
-	if (compressed) {
-		/*compressionBatch->batchSize = 248 / 3;
-		compressionBatch->cntr = 0;
-		compressionBatch->invArray = (f2elm_t*) malloc (248/3 * sizeof(f2elm_t));
-		compressionBatch->invDest = (f2elm_t*) malloc (248/3 * sizeof(f2elm_t));
-		pthread_mutex_init(&compressionBatch->arrayLock, NULL);
-		sem_init(&compressionBatch->sign_sem, 0, 0);*/
-		
-		//unsigned char *psiSpubKey = (unsigned char*) malloc(3*2*(tps.pbytes));
-		unsigned char *compressedPsiS = (unsigned char*)calloc(1, 2*obytes); //need to figure out byte size of an element in Z_orderB
-		//unsigned char *decompressResult = (unsigned char*) malloc(3*2*(tps.pbytes));
-		
-		//for (t=0; t<NUM_THREADS/3; t++) {
-			/*if (pthread_create(&compress_threads[t], NULL, compress_thread, &psiSpubKey)) {
-				printf("ERROR: Failed to create thread %d\n", t);
-			}*/
-			
-			Status = compressPsiS(sig->psiS[0], compressedPsiS, CurveIsogeny, NULL);
-			
-		//}
-		
-		//compresspubkey_A
-		
-		//decompress to compare
-		
-		/*for (t=0; t<NUM_THREADS/3; t++) {
-    	pthread_join(compress_threads[t], NULL);
-  	}*/
-  	free(compressedPsiS);
-	}
 
 cleanup:
 		free(signBatchA->invArray);
@@ -361,6 +330,15 @@ void *verify_thread(void *TPV, int compressed) {
 
 			// Check psi(S) has order 3^239 (need to triple it 239 times)
 			point_proj_t triple = {0};
+			
+			////////////////////////////////////////////////////////////////////////////
+			//                  psi(S) decompression under construction               //
+			
+			
+			
+			
+			////////////////////////////////////////////////////////////////////////////
+			
 			copy_words((digit_t*)tpv->sig->psiS[r], (digit_t*)triple, 2*2*NWORDS_FIELD);
 
 			f2elm_t A,C={0};

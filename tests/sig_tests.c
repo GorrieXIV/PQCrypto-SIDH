@@ -76,7 +76,7 @@ CRYPTO_STATUS cryptotest_signature_compressed() {
 	unsigned int n, obytes = (CurveIsogeny_SIDHp751.owordbits + 7)/8;
 
 	// Allocate space for keys
-	unsigned char *PrivateKey, *PublicKey, *CompressedPublicKey;
+	unsigned char *PrivateKey, *PublicKey;
 	PrivateKey = (unsigned char*)calloc(1, obytes);        // One element in [1, order]  
 	PublicKey = (unsigned char*)calloc(1, 4*2*pbytes);     // Four elements in GF(p^2)
 
@@ -96,19 +96,19 @@ CRYPTO_STATUS cryptotest_signature_compressed() {
 	}
 	
 	//generate signing keypair using KeyGeneration_B
-	Status = isogeny_keygen(&CurveIsogeny_SIDHp751, PrivateKey, PublicKey);
+	Status = isogeny_keygen(CurveIsogeny, PrivateKey, PublicKey);
 	if (Status != CRYPTO_SUCCESS) {
 		return Status;
 	} else { printf("  SIGNATURE KEYGEN........... SUCCESSFUL\n"); }
 	
 	//signing procedure
-	Status = isogeny_sign(&CurveIsogeny_SIDHp751, PrivateKey, PublicKey, &sig, 1);
+	Status = isogeny_sign(CurveIsogeny, PrivateKey, PublicKey, &sig, 1);
 	if (Status != CRYPTO_SUCCESS) {
 		return Status;
 	} else { printf("  SIGNATURE SIGN............. SUCCESSFUL\n"); }
 
 	//verifying procedure
-	Status = isogeny_verify(&CurveIsogeny_SIDHp751, PublicKey, &sig, 1);
+	Status = isogeny_verify(CurveIsogeny, PublicKey, &sig, 1);
 	if (Status != CRYPTO_SUCCESS) {
 		return Status;
 	} else { printf("  SIGNATURE VERIFY........... SUCCESSFUL\n"); }
@@ -195,6 +195,12 @@ int main (int argc, char** argv) {
 		//printf("\n\n   Error detected: %s \n\n", SIDH_get_error_message(Status));
 		//return -1;	
 	//}
+	
+	Status = cryptotest_signature_compressed();
+	if (Status != CRYPTO_SUCCESS) {
+		printf("\n\n   Error detected: %s \n\n", SIDH_get_error_message(Status));
+		return -1;
+	} else { printf("\n  ISOGENY-BASED SIGNATURE RUN WITH COMPRESSION SUCCESSFUL\n\n"); }
 
 	return 0;
 }

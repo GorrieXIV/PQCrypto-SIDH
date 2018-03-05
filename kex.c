@@ -1165,7 +1165,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	unsigned int bit;
 	f2elm_t tmp, one = {0};
   
-	generate_3_torsion_basis(A, P, Q, CurveIsogeny);
+	generate_2_torsion_basis(A, P, Q, CurveIsogeny);
 	
 	fp2copy751(P->Z, vec[0]);
 	fp2copy751(Q->Z, vec[1]);
@@ -1206,10 +1206,10 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 		from_Montgomery_mod_order(&comp, &comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);                           // Converting back from Montgomery representation 
 	}
 	
-	printf("compression not currently tested for correctness\n");
+	return CRYPTO_SUCCESS;
 }
 
-CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, unsigned char* point_R, unsigned char* param_A, PCurveIsogenyStruct CurveIsogeny) {
+CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, unsigned char* psiS, PCurveIsogenyStruct CurveIsogeny) {
 // Inputs:
 //
 // Outputs:

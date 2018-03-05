@@ -16,7 +16,6 @@
 
 //signature structure
 struct Signature {
-	int compressed;
 	unsigned char *Commitments1[NUM_ROUNDS];
 	unsigned char *Commitments2[NUM_ROUNDS];
 	unsigned char *HashResp;
@@ -29,6 +28,8 @@ struct Signature {
 		point_proj *psiS[NUM_ROUNDS];
 		f2elm_t *compPsiS[NUM_ROUNDS];
 	};
+	
+	int compressed;
 };
 
 typedef struct thread_params_compress {
@@ -45,7 +46,7 @@ typedef struct thread_params_compress {
 
 CRYPTO_STATUS isogeny_keygen(PCurveIsogenyStruct CurveIsogeny, unsigned char *PrivateKey, unsigned char *PublicKey);
 
-void *sign_thread(void *TPS, int compressed);
+void *sign_thread(void *TPS);
 
 CRYPTO_STATUS isogeny_sign(PCurveIsogenyStruct CurveIsogeny, unsigned char *PrivateKey, unsigned char *PublicKey, struct Signature *sig, int compressed);
 
