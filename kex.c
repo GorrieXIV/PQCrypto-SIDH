@@ -1237,6 +1237,6 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* ps
 	fp2mul751_mont(Q->X, Zinv[1], R2->x);
 	fp2mul751_mont(Q->Y, Zinv[1], R2->y);
 	
-	
+	//ladder_3_pt(const f2elm_t xP, const f2elm_t xQ, const f2elm_t xPQ, const digit_t* m, const unsigned int AliceOrBob, point_proj_t W, const f2elm_t A, PCurveIsogenyStruct CurveIsogeny)
 }
 
