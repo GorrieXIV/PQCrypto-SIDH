@@ -435,6 +435,9 @@ void xDBLADD_basefield(point_basefield_proj_t P, point_basefield_proj_t Q, const
 // The Montgomery ladder
 void ladder(const felm_t x, digit_t* m, point_basefield_proj_t P, point_basefield_proj_t Q, const felm_t A24, const unsigned int order_bits, const unsigned int order_fullbits, PCurveIsogenyStruct CurveIsogeny);
 
+// Montgomery ladder for extension field elements
+void fp2_ladder(const f2elm_t x, digit_t* m, point_proj_t P, point_proj_t Q, const f2elm_t A24, const unsigned int order_bits, const unsigned int order_fullbits, PCurveIsogenyStruct CurveIsogeny);
+
 // Computes key generation entirely in the base field
 CRYPTO_STATUS secret_pt(const point_basefield_t P, const digit_t* m, const unsigned int AliceOrBob, point_proj_t R, PCurveIsogenyStruct CurveIsogeny);
 

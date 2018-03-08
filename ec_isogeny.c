@@ -276,13 +276,13 @@ void fp2_ladder(const f2elm_t x, digit_t* m, point_proj_t P, point_proj_t Q, con
 	}
 		
 	for (i = order_bits; i > 0; i--) {
-		bit = (unsigned int)(m[owords-1] >> (RADIX-1));
-		mp_shiftl1(m, owords);
-		mask = 0-(digit_t)bit;
+		//bit = (unsigned int)(m[owords-1] >> (RADIX-1));
+		//mp_shiftl1(m, owords);
+		//mask = 0-(digit_t)bit;
 
-		swap_points(P, Q, mask);
-		xDBLADD(P, Q, x, A24);           // If bit=0 then P <- 2*P and Q <- P+Q, 
-		swap_points(P, Q, mask);         // else if bit=1 then Q <- 2*Q and P <- P+Q
+		//swap_points(P, Q, mask);
+		//xDBLADD(P, Q, x, A24);           // If bit=0 then P <- 2*P and Q <- P+Q, 
+		//swap_points(P, Q, mask);         // else if bit=1 then Q <- 2*Q and P <- P+Q
 	}
 }
 
