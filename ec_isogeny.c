@@ -257,6 +257,35 @@ void ladder(const felm_t x, digit_t* m, point_basefield_proj_t P, point_basefiel
     }
 }
 
+void fp2_ladder(const f2elm_t x, digit_t* m, point_proj_t P, point_proj_t Q, const f2elm_t A24, const unsigned int order_bits, const unsigned int order_fullbits, PCurveIsogenyStruct CurveIsogeny)
+{	//The Montgomery ladder for field extension elements
+	// Inputs: 
+	// 
+	// Output: 
+	unsigned int bit = 0, owords = NBITS_TO_NWORDS(order_fullbits);
+	digit_t mask;
+	int i;
+		
+	//fp2copy751(CurveIsogeny->Montgomery_one, (digit_t*)P->X);
+	//fp2zero751(P->Z);
+	//fp2copy751(x, Q->X);
+	//fp2copy751(CurveIsogeny->Montgomery_one, (digit_t*)Q->Z);
+		
+	for (i = order_fullbits-order_bits; i > 0; i--) {
+		//mp_shiftl1(m, owords);
+	}
+		
+	for (i = order_bits; i > 0; i--) {
+		bit = (unsigned int)(m[owords-1] >> (RADIX-1));
+		mp_shiftl1(m, owords);
+		mask = 0-(digit_t)bit;
+
+		swap_points(P, Q, mask);
+		xDBLADD(P, Q, x, A24);           // If bit=0 then P <- 2*P and Q <- P+Q, 
+		swap_points(P, Q, mask);         // else if bit=1 then Q <- 2*Q and P <- P+Q
+	}
+}
+
 
 CRYPTO_STATUS BigMont_ladder(unsigned char* x, digit_t* m, unsigned char* xout, PCurveIsogenyStruct CurveIsogeny)
 { // BigMont's scalar multiplication using the Montgomery ladder

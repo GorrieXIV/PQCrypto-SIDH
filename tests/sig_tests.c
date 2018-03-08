@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+
 CRYPTO_STATUS cryptotest_signature() {
 	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
 	// Number of bytes in a field element 
@@ -67,6 +68,12 @@ cleanup:
 
 	return Status;		
 }
+
+
+CRYPTO_STATUS cryptotest_signature_batchedinv() {
+	
+}
+
 
 CRYPTO_STATUS cryptotest_signature_compressed() {
 	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
@@ -175,26 +182,39 @@ cleanup:
 
 }
 
+
+CRYPTO_STATUS cryptorun_signature_batchedinv() {
+	
+}
+
+
 CRYPTO_STATUS cryptorun_signature_compressed() {
 
 }
+
 
 int main (int argc, char** argv) {
 	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
 
 	int compression = 0; //1 = compressed, 0 = uncompressed
+			
+	//signature tests
 	
 	Status = cryptotest_signature();
 	if (Status != CRYPTO_SUCCESS) { 
 		printf("\n\n   Error detected: %s \n\n", SIDH_get_error_message(Status));
 		return -1;	
 	} else { printf("\n  ISOGENY-BASED SIGNATURE RUN SUCCESSFUL\n\n"); }
-	
+
 	//Status = cryptorun_signature();
 	//if (Status != CRYPTO_SUCCESS) { 
 		//printf("\n\n   Error detected: %s \n\n", SIDH_get_error_message(Status));
 		//return -1;	
 	//}
+	
+	//signature tests with inversion batching
+	
+	//signature tests with compressed psi(S)
 	
 	Status = cryptotest_signature_compressed();
 	if (Status != CRYPTO_SUCCESS) {
@@ -203,4 +223,6 @@ int main (int argc, char** argv) {
 	} else { printf("\n  ISOGENY-BASED SIGNATURE RUN WITH COMPRESSION SUCCESSFUL\n\n"); }
 
 	return 0;
+	
+	//signature tests with inversion batching and compressed psi(S)
 }

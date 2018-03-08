@@ -34,7 +34,7 @@ CRYPTO_STATUS EphemeralKeyGeneration_A(unsigned char* PrivateKeyA, unsigned char
     }  
 
     // Choose a random even number in the range [2, oA-2] as secret key for Alice
-    Status = random_mod_order((digit_t*)PrivateKeyA, ALICE, CurveIsogeny);    
+    Status = random_mod_order((digit_t*)PrivateKeyA, ALICE, CurveIsogeny);
     if (Status != CRYPTO_SUCCESS) {
         clear_words((void*)PrivateKeyA, owords);
         return Status;
