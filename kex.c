@@ -1061,28 +1061,28 @@ void PublicKeyBDecompression_A(const unsigned char* SecretKeyA, const unsigned c
 
     if (bit == 0) {
 		multiply((digit_t*)SecretKeyA, &comp[NWORDS_ORDER], tmp1, NWORDS_ORDER);
-        mp_add(tmp1, vone, tmp1, NWORDS_ORDER);
+		mp_add(tmp1, vone, tmp1, NWORDS_ORDER);
 		tmp1[NWORDS_ORDER-1] &= mask;
-        inv_mod_orderA(tmp1, tmp2);  
+		inv_mod_orderA(tmp1, tmp2);  
 		multiply((digit_t*)SecretKeyA, &comp[2*NWORDS_ORDER], tmp1, NWORDS_ORDER);
-        mp_add(&comp[0], tmp1, tmp1, NWORDS_ORDER);  
+		mp_add(&comp[0], tmp1, tmp1, NWORDS_ORDER);  
 		multiply(tmp1, tmp2, vone, NWORDS_ORDER);  
 		vone[NWORDS_ORDER-1] &= mask;  
-        mont_twodim_scalarmult(vone, R1, R2, A, A24, P, CurveIsogeny);
-    } else {
+		mont_twodim_scalarmult(vone, R1, R2, A, A24, P, CurveIsogeny);
+	} else {
 		multiply((digit_t*)SecretKeyA, &comp[2*NWORDS_ORDER], tmp1, NWORDS_ORDER);
-        mp_add(tmp1, vone, tmp1, NWORDS_ORDER);
+		mp_add(tmp1, vone, tmp1, NWORDS_ORDER);
 		tmp1[NWORDS_ORDER-1] &= mask;
-        inv_mod_orderA(tmp1, tmp2);  
+		inv_mod_orderA(tmp1, tmp2);  
 		multiply((digit_t*)SecretKeyA, &comp[NWORDS_ORDER], tmp1, NWORDS_ORDER);
-        mp_add(&comp[0], tmp1, tmp1, NWORDS_ORDER);  
+		mp_add(&comp[0], tmp1, tmp1, NWORDS_ORDER);  
 		multiply(tmp1, tmp2, vone, NWORDS_ORDER);  
 		vone[NWORDS_ORDER-1] &= mask;   
-        mont_twodim_scalarmult(vone, R2, R1, A, A24, P, CurveIsogeny);
-    }
+		mont_twodim_scalarmult(vone, R2, R1, A, A24, P, CurveIsogeny);
+	}
 
-    fp2copy751(P->X, R[0]->X);               
-    fp2copy751(P->Z, R[0]->Z);
+	fp2copy751(P->X, R[0]->X);               
+	fp2copy751(P->Z, R[0]->Z);
 }
 
 
@@ -1209,13 +1209,14 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	return CRYPTO_SUCCESS;
 }
 
-CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* psiS, PCurveIsogenyStruct CurveIsogeny) {
-// Inputs:
-//
-// Outputs:
+CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S, PCurveIsogenyStruct CurveIsogeny) {
+// Inputs: CompressedPsiS: x s.t. psi(S) = R1 + [x]R2
+//         PCurveIsogenyStruct
+// Outputs: point S generating the same kernel as the original psi(S)
 //
 	point_full_proj_t P, Q;                    //points used in the construction of {R1,R2}
-	point_t psiSa, R1, R2;
+	point_full_proj_t S_temp;
+	point_t S_affine, R1, R2;
 	digit_t* comp = (digit_t*)CompressedPsiS;
 	f2elm_t* A = (f2elm_t*)CurveIsogeny->A;
 	f2elm_t vec[2], Zinv[2];
@@ -1225,6 +1226,7 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* ps
 	uint64_t Montgomery_rprime[NWORDS64_ORDER] = {0x48062A91D3AB563D, 0x6CE572751303C2F5, 0x5D1319F3F160EC9D, 0xE35554E8C2D5623A, 0xCA29300232BC79A5, 0x8AAD843D646D78C5}; // Value -(3^239)^-1 mod 2^384
 	unsigned int bit;
 	f2elm_t tmp, one = {0};
+	f2elm_t A24;
 	
 	generate_2_torsion_basis(A, P, Q, CurveIsogeny);
 	
@@ -1237,9 +1239,18 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* ps
 	fp2mul751_mont(Q->X, Zinv[1], R2->x);
 	fp2mul751_mont(Q->Y, Zinv[1], R2->y);
 	
+	//construct (A+2)/4 from A
+	fp2add751(A, one, A24);
+	fp2add751(A24, one, A24);
+	fp2div2_751(A24, A24);
+  fp2div2_751(A24, A24);
+  
+  //need to swap R1 and R2 in the following function call depending on the order of psi(S)
+  mont_twodim_scalarmult(comp, R1, R2, A, A24, S_temp, CurveIsogeny);
+	
 	//fp2_ladder(const f2elm_t x, digit_t* m, point_proj_t P, point_proj_t Q, const f2elm_t A24, const unsigned int order_bits, const unsigned int order_fullbits, PCurveIsogenyStruct CurveIsogeny)
 	
-	//add R1 to out put of fp2ladder
-	//construct psiS from R1 + [ainvb]R2
+	fp2copy751(S_temp->X, S->X);
+	fp2copy751(S_temp->Z, S->Z);
 }
 
