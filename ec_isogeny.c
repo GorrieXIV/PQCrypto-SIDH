@@ -21,24 +21,24 @@ void j_inv(const f2elm_t A, const f2elm_t C, f2elm_t jinv)
 { // Computes the j-invariant of a Montgomery curve with projective constant.
   // Input: A,C in GF(p^2).
   // Output: j=256*(A^2-3*C^2)^3/(C^4*(A^2-4*C^2)), which is the j-invariant of the Montgomery curve B*y^2=x^3+(A/C)*x^2+x or (equivalently) j-invariant of B'*y^2=C*x^3+A*x^2+C*x.
-    f2elm_t t0, t1;
-    
-    fp2sqr751_mont(A, jinv);                           // jinv = A^2        
-    fp2sqr751_mont(C, t1);                             // t1 = C^2
-    fp2add751(t1, t1, t0);                             // t0 = t1+t1
-    fp2sub751(jinv, t0, t0);                           // t0 = jinv-t0
-    fp2sub751(t0, t1, t0);                             // t0 = t0-t1
-    fp2sub751(t0, t1, jinv);                           // jinv = t0-t1
-    fp2sqr751_mont(t1, t1);                            // t1 = t1^2
-    fp2mul751_mont(jinv, t1, jinv);                    // jinv = jinv*t1
-    fp2add751(t0, t0, t0);                             // t0 = t0+t0
-    fp2add751(t0, t0, t0);                             // t0 = t0+t0
-    fp2sqr751_mont(t0, t1);                            // t1 = t0^2
-    fp2mul751_mont(t0, t1, t0);                        // t0 = t0*t1
-    fp2add751(t0, t0, t0);                             // t0 = t0+t0
-    fp2add751(t0, t0, t0);                             // t0 = t0+t0
-    fp2inv751_mont(jinv);                              // jinv = 1/jinv 
-    fp2mul751_mont(jinv, t0, jinv);                    // jinv = t0*jinv
+	f2elm_t t0, t1;
+
+	fp2sqr751_mont(A, jinv);                           // jinv = A^2        
+	fp2sqr751_mont(C, t1);                             // t1 = C^2
+	fp2add751(t1, t1, t0);                             // t0 = t1+t1
+	fp2sub751(jinv, t0, t0);                           // t0 = jinv-t0
+	fp2sub751(t0, t1, t0);                             // t0 = t0-t1
+	fp2sub751(t0, t1, jinv);                           // jinv = t0-t1
+	fp2sqr751_mont(t1, t1);                            // t1 = t1^2
+	fp2mul751_mont(jinv, t1, jinv);                    // jinv = jinv*t1
+	fp2add751(t0, t0, t0);                             // t0 = t0+t0
+	fp2add751(t0, t0, t0);                             // t0 = t0+t0
+	fp2sqr751_mont(t0, t1);                            // t1 = t0^2
+	fp2mul751_mont(t0, t1, t0);                        // t0 = t0*t1
+	fp2add751(t0, t0, t0);                             // t0 = t0+t0
+	fp2add751(t0, t0, t0);                             // t0 = t0+t0
+	fp2inv751_mont(jinv);                              // jinv = 1/jinv 
+	fp2mul751_mont(jinv, t0, jinv);                    // jinv = t0*jinv
 }
 
 void j_inv_batch(f2elm_t A, f2elm_t C, f2elm_t jinv, invBatch* batch) {	
@@ -1019,66 +1019,66 @@ void generate_3_torsion_basis(f2elm_t A, point_full_proj_t R1, point_full_proj_t
 { // Produces points R1 and R2 such that {R1, R2} is a basis for E[3^239].       
   // Input:   curve constant A.
   // Outputs: R1 = (X1:Y1:Z1) and R2 = (X2:Y2:Z2).
-    point_proj_t R, R3, R4;
-    felm_t *X  = (felm_t*)R->X,  *Z  = (felm_t*)R->Z;
-    felm_t *X3 = (felm_t*)R3->X, *Z3 = (felm_t*)R3->Z;
+	point_proj_t R, R3, R4;
+	felm_t *X  = (felm_t*)R->X,  *Z  = (felm_t*)R->Z;
+	felm_t *X3 = (felm_t*)R3->X, *Z3 = (felm_t*)R3->Z;
 	felm_t *X4 = (felm_t*)R4->X, *Z4 = (felm_t*)R4->Z;
-    felm_t *X1 = (felm_t*)R1->X, *Y1 = (felm_t*)R1->Y, *Z1 = (felm_t*)R1->Z;
-    felm_t *X2 = (felm_t*)R2->X, *Y2 = (felm_t*)R2->Y, *Z2 = (felm_t*)R2->Z;
-    f2elm_t u, v, c, f, t0, f0, fX, fY, Y, Y3, one = {0};
+	felm_t *X1 = (felm_t*)R1->X, *Y1 = (felm_t*)R1->Y, *Z1 = (felm_t*)R1->Z;
+	felm_t *X2 = (felm_t*)R2->X, *Y2 = (felm_t*)R2->Y, *Z2 = (felm_t*)R2->Z;
+	f2elm_t u, v, c, f, t0, f0, fX, fY, Y, Y3, one = {0};
 	felm_t zero = {0};
-    unsigned int r = 1;         
-    unsigned int triples = 0, pts_found = 0;
+	unsigned int r = 1;         
+	unsigned int triples = 0, pts_found = 0;
 
-    get_3_torsion_elt(A, &r, R, R3, &triples, CurveIsogeny);        
-    fpcopy751(CurveIsogeny->Montgomery_one, one[0]); 
+	get_3_torsion_elt(A, &r, R, R3, &triples, CurveIsogeny);        
+	fpcopy751(CurveIsogeny->Montgomery_one, one[0]); 
 	fpzero751(zero);
 
-    if (triples == 239) {
-        pts_found = 1;
-        fp2copy751(X, X1);                           // X1 = X
-        fp2copy751(Z, Z1);                           // Z1 = Z 
-        fp2mul751_mont(A, Z1, u);                    // u = A*Z1
-        fp2add751(u, X1, u);                         // u = u+X1
-        fp2mul751_mont(u, X1, u);                    // u = u*X1
-        fp2sqr751_mont(Z1, v);                       // v = Z1^2
-        fp2add751(u, v, u);                          // u = u+v
-        fp2mul751_mont(u, X1, u);                    // u = u*X1
-        fp2mul751_mont(v, Z1, v);                    // v = v*Z1
-        sqrt_Fp2_frac(u, v, Y1);                     // Y1 = sqrt(u/v)
-        fp2mul751_mont(Y1, Z1, Y1);                  // Y1 = Y1*Z1
-    }
+	if (triples == 239) {
+		pts_found = 1;
+		fp2copy751(X, X1);                           // X1 = X
+		fp2copy751(Z, Z1);                           // Z1 = Z 
+		fp2mul751_mont(A, Z1, u);                    // u = A*Z1
+		fp2add751(u, X1, u);                         // u = u+X1
+		fp2mul751_mont(u, X1, u);                    // u = u*X1
+		fp2sqr751_mont(Z1, v);                       // v = Z1^2
+		fp2add751(u, v, u);                          // u = u+v
+		fp2mul751_mont(u, X1, u);                    // u = u*X1
+		fp2mul751_mont(v, Z1, v);                    // v = v*Z1
+		sqrt_Fp2_frac(u, v, Y1);                     // Y1 = sqrt(u/v)
+		fp2mul751_mont(Y1, Z1, Y1);                  // Y1 = Y1*Z1
+	}
 
-    fp2mul751_mont(A, Z3, u);                        // u = A*Z3
-    fp2add751(u, X3, u);                             // u = u+X3
-    fp2mul751_mont(u, X3, u);                        // u = u*X3
-    fp2sqr751_mont(Z3, v);                           // v = Z3^2
-    fp2add751(u, v, u);                              // u = u+v
-    fp2mul751_mont(u, X3, u);                        // u = u*X3
-    fp2mul751_mont(v, Z3, v);                        // v = v*Z3
-    sqrt_Fp2_frac(u, v, Y3);                         // Y3 = sqrt(u/v)
-    fp2mul751_mont(Y3, Z3, Y3);                      // Y3 = Y3*Z3
-    fp2sqr751_mont(X3, f0);                          // f0 = X3^2
-    fp2sqr751_mont(Z3, t0);                          // t0 = Z3^2
-    fp2mul751_mont(X3, Z3, fX);                      // fX = X3*Z3
-    fp2mul751_mont(A, fX, fX);                       // fX = A*fX
-    fp2add751(fX, fX, fX);                           // fX = fX+fX
-    fp2add751(fX, t0, fX);                           // fX = fX+t0
-    fp2add751(fX, f0, fX);                           // fX = fX+f0
-    fp2add751(fX, f0, fX);                           // fX = fX+f0
-    fp2add751(fX, f0, fX);                           // fX = fX+f0
-    fp2sub751(t0, f0, f0);                           // f0 = t0-f0
-    fp2mul751_mont(fX, Z3, fX);                      // fX = fX*Z3
-    fp2mul751_mont(Y3, Z3, fY);                      // fY = Y3*Z3
-    fp2add751(fY, fY, fY);                           // fY = fY+fY
-    fp2neg751(fY);                                   // fY = -fY
-    fp2add751(fY, fY, c);                            // c = fY+fY
-    fp2mul751_mont(fY, Z3, fY);                      // fY = fY*Z3
-    fp2mul751_mont(f0, X3, f0);                      // f0 = f0*X3
-    fp2mul751_mont(c, Y3, c);                        // c = c*Y3
-    fp2mul751_mont(fX, c, fX);                       // fX = c*fX
-    fp2mul751_mont(fY, c, fY);                       // fY = c*fY
-    fp2mul751_mont(f0, c, f0);                       // f0 = c*f0
+	fp2mul751_mont(A, Z3, u);                        // u = A*Z3
+	fp2add751(u, X3, u);                             // u = u+X3
+	fp2mul751_mont(u, X3, u);                        // u = u*X3
+	fp2sqr751_mont(Z3, v);                           // v = Z3^2
+	fp2add751(u, v, u);                              // u = u+v
+	fp2mul751_mont(u, X3, u);                        // u = u*X3
+	fp2mul751_mont(v, Z3, v);                        // v = v*Z3
+	sqrt_Fp2_frac(u, v, Y3);                         // Y3 = sqrt(u/v)
+	fp2mul751_mont(Y3, Z3, Y3);                      // Y3 = Y3*Z3
+	fp2sqr751_mont(X3, f0);                          // f0 = X3^2
+	fp2sqr751_mont(Z3, t0);                          // t0 = Z3^2
+	fp2mul751_mont(X3, Z3, fX);                      // fX = X3*Z3
+	fp2mul751_mont(A, fX, fX);                       // fX = A*fX
+	fp2add751(fX, fX, fX);                           // fX = fX+fX
+	fp2add751(fX, t0, fX);                           // fX = fX+t0
+	fp2add751(fX, f0, fX);                           // fX = fX+f0
+	fp2add751(fX, f0, fX);                           // fX = fX+f0
+	fp2add751(fX, f0, fX);                           // fX = fX+f0
+	fp2sub751(t0, f0, f0);                           // f0 = t0-f0
+	fp2mul751_mont(fX, Z3, fX);                      // fX = fX*Z3
+	fp2mul751_mont(Y3, Z3, fY);                      // fY = Y3*Z3
+	fp2add751(fY, fY, fY);                           // fY = fY+fY
+	fp2neg751(fY);                                   // fY = -fY
+	fp2add751(fY, fY, c);                            // c = fY+fY
+	fp2mul751_mont(fY, Z3, fY);                      // fY = fY*Z3
+	fp2mul751_mont(f0, X3, f0);                      // f0 = f0*X3
+	fp2mul751_mont(c, Y3, c);                        // c = c*Y3
+	fp2mul751_mont(fX, c, fX);                       // fX = c*fX
+	fp2mul751_mont(fY, c, fY);                       // fY = c*fY
+	fp2mul751_mont(f0, c, f0);                       // f0 = c*f0
 
 	do {
 		while (pts_found < 2) {

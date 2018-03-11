@@ -1243,12 +1243,10 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 	fp2add751(A, one, A24);
 	fp2add751(A24, one, A24);
 	fp2div2_751(A24, A24);
-  fp2div2_751(A24, A24);
+	fp2div2_751(A24, A24);
   
-  //need to swap R1 and R2 in the following function call depending on the order of psi(S)
-  mont_twodim_scalarmult(comp, R1, R2, A, A24, S_temp, CurveIsogeny);
-	
-	//fp2_ladder(const f2elm_t x, digit_t* m, point_proj_t P, point_proj_t Q, const f2elm_t A24, const unsigned int order_bits, const unsigned int order_fullbits, PCurveIsogenyStruct CurveIsogeny)
+	//need to swap R1 and R2 in the following function call depending on the order of psi(S)
+	mont_twodim_scalarmult(comp, R1, R2, A, A24, S_temp, CurveIsogeny);
 	
 	fp2copy751(S_temp->X, S->X);
 	fp2copy751(S_temp->Z, S->Z);

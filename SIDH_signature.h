@@ -48,10 +48,8 @@ CRYPTO_STATUS isogeny_keygen(PCurveIsogenyStruct CurveIsogeny, unsigned char *Pr
 
 void *sign_thread(void *TPS);
 
-CRYPTO_STATUS isogeny_sign(PCurveIsogenyStruct CurveIsogeny, unsigned char *PrivateKey, unsigned char *PublicKey, struct Signature *sig, int compressed);
+CRYPTO_STATUS isogeny_sign(PCurveIsogenyStruct CurveIsogeny, unsigned char *PrivateKey, unsigned char *PublicKey, struct Signature *sig, int batched, int compressed);
 
-void *verify_thread(void *TPV, int compressed);
+void *verify_thread(void *TPV);
 
-CRYPTO_STATUS isogeny_verify(PCurveIsogenyStruct CurveIsogeny, unsigned char *PublicKey, struct Signature *sig, int compressed);
-
-void *compress_thread(void *PK);
+CRYPTO_STATUS isogeny_verify(PCurveIsogenyStruct CurveIsogeny, unsigned char *PublicKey, struct Signature *sig, int batched, int compressed);

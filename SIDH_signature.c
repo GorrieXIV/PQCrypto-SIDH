@@ -113,13 +113,13 @@ void *sign_thread(void *TPS) {
 		TempPubKey = (unsigned char*)calloc(1, 4*2*tps->pbytes);
 
 		Status = KeyGeneration_A(tps->sig->Randoms[r], TempPubKey, *(tps->CurveIsogeny), true, signBatchA);
-    //check success of KeyGeneration_A
-    if(Status != CRYPTO_SUCCESS) {
-    	printf("Random point generation failed\n");
+		//check success of KeyGeneration_A
+		if(Status != CRYPTO_SUCCESS) {
+			printf("Random point generation failed\n");
 		}
 
 		to_fp2mont(((f2elm_t*)TempPubKey)[0], A);
-    fp2copy751(A, *(f2elm_t*)tps->sig->Commitments1[r]);     //commitment1[r] = A = tempPubKey[0]
+		fp2copy751(A, *(f2elm_t*)tps->sig->Commitments1[r]);     //commitment1[r] = A = tempPubKey[0]
 		
 		point_proj tempPsiS[1];
 		
@@ -139,12 +139,12 @@ void *sign_thread(void *TPS) {
 		//check success of SecretAgreementB
 		if(Status != CRYPTO_SUCCESS) {
 			printf("Random point generation failed"); 
-    }
+		}
 	}
 }
 
 
-CRYPTO_STATUS isogeny_sign(PCurveIsogenyStruct CurveIsogeny, unsigned char *PrivateKey, unsigned char *PublicKey, struct Signature *sig, int compressed) {		
+CRYPTO_STATUS isogeny_sign(PCurveIsogenyStruct CurveIsogeny, unsigned char *PrivateKey, unsigned char *PublicKey, struct Signature *sig, int batched, int compressed) {		
 	unsigned int pbytes = (CurveIsogeny->pwordbits + 7)/8;          // Number of bytes in a field element
 	unsigned int pwords = NBITS_TO_NWORDS(CurveIsogeny->pwordbits); // Number of words in a curve element
 	unsigned int n, obytes = (CurveIsogeny->owordbits + 7)/8;       // Number of bytes in an element in [1, order]
@@ -165,23 +165,27 @@ CRYPTO_STATUS isogeny_sign(PCurveIsogenyStruct CurveIsogeny, unsigned char *Priv
 	
 	thread_params_sign tps = {&CurveIsogeny, PrivateKey, PublicKey, sig, pbytes, n, obytes, compressed};
 
-	signBatchA = (invBatch*) malloc (sizeof(invBatch));
+	if (batched) {
+		signBatchA = (invBatch*) malloc (sizeof(invBatch));
+		signBatchA->batchSize = 248;
+		signBatchA->cntr = 0;
+		signBatchA->invArray = (f2elm_t*) malloc (248 * sizeof(f2elm_t));
+		signBatchA->invDest = (f2elm_t*) malloc (248 * sizeof(f2elm_t));
+		pthread_mutex_init(&signBatchA->arrayLock, NULL);
+		sem_init(&signBatchA->sign_sem, 0, 0);
 
-	signBatchA->batchSize = 248;
-	signBatchA->cntr = 0;
-	signBatchA->invArray = (f2elm_t*) malloc (248 * sizeof(f2elm_t));
-	signBatchA->invDest = (f2elm_t*) malloc (248 * sizeof(f2elm_t));
-	pthread_mutex_init(&signBatchA->arrayLock, NULL);
-	sem_init(&signBatchA->sign_sem, 0, 0);
-
-	signBatchB = (invBatch*) malloc (sizeof(invBatch));
-
-	signBatchB->batchSize = 248;
-	signBatchB->cntr = 0;
-	signBatchB->invArray = (f2elm_t*) malloc (248 * sizeof(f2elm_t));
-	signBatchB->invDest = (f2elm_t*) malloc (248 * sizeof(f2elm_t));
-	pthread_mutex_init(&signBatchB->arrayLock, NULL);
-	sem_init(&signBatchB->sign_sem, 0, 0);
+		signBatchB = (invBatch*) malloc (sizeof(invBatch));
+		signBatchB->batchSize = 248;
+		signBatchB->cntr = 0;
+		signBatchB->invArray = (f2elm_t*) malloc (248 * sizeof(f2elm_t));
+		signBatchB->invDest = (f2elm_t*) malloc (248 * sizeof(f2elm_t));
+		pthread_mutex_init(&signBatchB->arrayLock, NULL);
+		sem_init(&signBatchB->sign_sem, 0, 0);
+	} else {
+		signBatchA = NULL;
+		signBatchB = NULL;
+	}
+	
 
 	int t;
 	for (t=0; t<NUM_THREADS; t++) {
@@ -217,10 +221,12 @@ CRYPTO_STATUS isogeny_sign(PCurveIsogenyStruct CurveIsogeny, unsigned char *Priv
 	
 
 cleanup:
-		free(signBatchA->invArray);
-		free(signBatchA->invDest);
-		free(signBatchB->invArray);
-		free(signBatchB->invDest);
+		if (batched) {
+			free(signBatchA->invArray);
+			free(signBatchA->invDest);
+			free(signBatchB->invArray);
+			free(signBatchB->invDest);
+		}
 		
 
 	return Status;
@@ -239,9 +245,11 @@ typedef struct thread_params_verify {
 	unsigned int pbytes;
 	unsigned int n;
 	unsigned int obytes;
+	
+	int compressed;
 } thread_params_verify;
 
-void *verify_thread(void *TPV, int compressed) {
+void *verify_thread(void *TPV) {
 	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
 	thread_params_verify *tpv = (thread_params_verify*) TPV;
 
@@ -272,8 +280,10 @@ void *verify_thread(void *TPV, int compressed) {
 
 		if (bit == 0) {
 			pthread_mutex_lock(&BLOCK);
-			verifyBatchA->batchSize++;
-			verifyBatchB->batchSize++;
+			if (verifyBatchA != NULL && verifyBatchB != NULL) {
+				verifyBatchA->batchSize++;
+				verifyBatchB->batchSize++;
+			}
 			pthread_mutex_unlock(&BLOCK);
 			//printf("round %d: bit 0 - ", r);
 
@@ -325,7 +335,9 @@ void *verify_thread(void *TPV, int compressed) {
 
 		} else {
 			pthread_mutex_lock(&BLOCK);
-			verifyBatchC->batchSize++;
+			if (verifyBatchC != NULL) {
+				verifyBatchC->batchSize++;
+			}
 			pthread_mutex_unlock(&BLOCK);
 
 			// Check psi(S) has order 3^239 (need to triple it 239 times)
@@ -335,11 +347,16 @@ void *verify_thread(void *TPV, int compressed) {
 			//                  psi(S) decompression under construction               //
 			
 			
-			
-			
 			////////////////////////////////////////////////////////////////////////////
 			
-			copy_words((digit_t*)tpv->sig->psiS[r], (digit_t*)triple, 2*2*NWORDS_FIELD);
+			if (tpv->compressed) {
+				Status = decompressPsiS(tpv->sig->compPsiS[r], triple, *(tpv->CurveIsogeny));
+				if (Status != CRYPTO_SUCCESS) {
+					printf("Error in psi(S) decompression\n");
+				}				
+			} else {
+				copy_words((digit_t*)tpv->sig->psiS[r], (digit_t*)triple, 2*2*NWORDS_FIELD);
+			}
 
 			f2elm_t A,C={0};
 			to_fp2mont(((f2elm_t*)tpv->PublicKey)[0],A);
@@ -351,7 +368,7 @@ void *verify_thread(void *TPV, int compressed) {
 					printf("ERROR: psi(S) has order 3^%d\n", t+1);
 				}
 			}
-
+			
 			unsigned char *TempSharSec, *TempPubKey;
 			TempSharSec = calloc(1, 2*tpv->pbytes);
 			TempPubKey = calloc(1, 4*2*tpv->pbytes);
@@ -378,7 +395,7 @@ void *verify_thread(void *TPV, int compressed) {
 }
 
 
-CRYPTO_STATUS isogeny_verify(PCurveIsogenyStruct CurveIsogeny, unsigned char *PublicKey, struct Signature *sig, int compressed) {
+CRYPTO_STATUS isogeny_verify(PCurveIsogenyStruct CurveIsogeny, unsigned char *PublicKey, struct Signature *sig, int batched, int compressed) {
     unsigned int pbytes = (CurveIsogeny->pwordbits + 7)/8;      // Number of bytes in a field element 
     unsigned int n, obytes = (CurveIsogeny->owordbits + 7)/8;   // Number of bytes in an element in [1, order]
     unsigned long long cycles, cycles1, cycles2, totcycles=0;
@@ -404,10 +421,10 @@ CRYPTO_STATUS isogeny_verify(PCurveIsogenyStruct CurveIsogeny, unsigned char *Pu
     	printf("ERROR: mutex init failed\n");
     	return 1;
     }
-    thread_params_verify tpv = {&CurveIsogeny, PublicKey, sig, cHashLength, cHash, pbytes, n, obytes};
+    thread_params_verify tpv = {&CurveIsogeny, PublicKey, sig, cHashLength, cHash, pbytes, n, obytes, compressed};
 
+	if (batched) {
 		verifyBatchA = (invBatch*) malloc (sizeof(invBatch));
-
 		verifyBatchA->batchSize = 0;
 		verifyBatchA->cntr = 0;
 		verifyBatchA->invArray = (f2elm_t*) malloc (batchSize * sizeof(f2elm_t));
@@ -416,7 +433,6 @@ CRYPTO_STATUS isogeny_verify(PCurveIsogenyStruct CurveIsogeny, unsigned char *Pu
 		sem_init(&verifyBatchA->sign_sem, 0, 0);
 
 		verifyBatchB = (invBatch*) malloc (sizeof(invBatch));
-
 		verifyBatchB->batchSize = 0;
 		verifyBatchB->cntr = 0;
 		verifyBatchB->invArray = (f2elm_t*) malloc (batchSize * sizeof(f2elm_t));
@@ -425,13 +441,17 @@ CRYPTO_STATUS isogeny_verify(PCurveIsogenyStruct CurveIsogeny, unsigned char *Pu
 		sem_init(&verifyBatchB->sign_sem, 0, 0);
 
 		verifyBatchC = (invBatch*) malloc (sizeof(invBatch));
-
 		verifyBatchC->batchSize = 0;
 		verifyBatchC->cntr = 0;
 		verifyBatchC->invArray = (f2elm_t*) malloc (batchSize * sizeof(f2elm_t));
 		verifyBatchC->invDest = (f2elm_t*) malloc (batchSize * sizeof(f2elm_t));
 		pthread_mutex_init(&verifyBatchC->arrayLock, NULL);
 		sem_init(&verifyBatchC->sign_sem, 0, 0);
+	} else {
+		verifyBatchA = NULL;
+		verifyBatchB = NULL;
+		verifyBatchC = NULL;
+	}
 
     int t;
     for (t=0; t<NUM_THREADS; t++) {
@@ -445,17 +465,15 @@ CRYPTO_STATUS isogeny_verify(PCurveIsogenyStruct CurveIsogeny, unsigned char *Pu
   	}
 
 cleanup:
-    free(verifyBatchA->invArray);
-		free(verifyBatchA->invDest);
-		free(verifyBatchB->invArray);
-		free(verifyBatchB->invDest);
-		free(verifyBatchC->invArray);
-		free(verifyBatchC->invDest);
+		if (batched) {
+			free(verifyBatchA->invArray);
+			free(verifyBatchA->invDest);
+			free(verifyBatchB->invArray);
+			free(verifyBatchB->invDest);
+			free(verifyBatchC->invArray);
+			free(verifyBatchC->invDest);
+		}
 
     return Status;
-}
-
-void *compress_thread(void *PK) {
-
 }
 
