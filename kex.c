@@ -1148,15 +1148,16 @@ CRYPTO_STATUS EphemeralSecretAgreement_Compression_B(const unsigned char* Privat
 ///////////////////////////////////////////////////////////////////////////////////
 ///////////////             COMPRESSION FOR SIGNATURES              ///////////////
 
-CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS, PCurveIsogenyStruct CurveIsogeny, invBatch* batch) {
+CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS, f2elm_t A, PCurveIsogenyStruct CurveIsogeny, invBatch* batch) {
 // Inputs:  a point psiS in point_proj form
 //          curve CurveIsogeny (SIDHp751)
 // Outputs: compressed psiS of the form ainv*b where psiS = R1 + [ainv*b]R2
 // 
+	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
+	
 	point_full_proj_t P, Q;                    //points used in the construction of {R1,R2}
 	point_t psiSa, R1, R2;
 	digit_t* comp = (digit_t*)CompressedPsiS;
-	f2elm_t* A = (f2elm_t*)CurveIsogeny->A;
 	f2elm_t vec[3], Zinv[3];
 	digit_t a[NWORDS_ORDER], b[NWORDS_ORDER];  //for pohlig-hellman results
 	digit_t inv[NWORDS_ORDER];                 //for storing the inverse of alpha
@@ -1165,7 +1166,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	unsigned int bit;
 	f2elm_t tmp, one = {0};
   
-	generate_2_torsion_basis(A, P, Q, CurveIsogeny);
+	generate_3_torsion_basis(A, P, Q, CurveIsogeny);
 	
 	fp2copy751(P->Z, vec[0]);
 	fp2copy751(Q->Z, vec[1]);
@@ -1189,7 +1190,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	sqrt_Fp2(tmp, psiSa->y);
 	
 	//do ph3 or ph2 depending on if S has order 3 or 2
-	half_ph2(psiSa, R1, R2, A, (uint64_t*)a, (uint64_t*)b, CurveIsogeny);
+	half_ph3(psiSa, R1, R2, A, (uint64_t*)a, (uint64_t*)b, CurveIsogeny);
 	
 	//check if a has order 3
 	bit = mod3(a);
@@ -1206,19 +1207,20 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 		from_Montgomery_mod_order(&comp, &comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);                           // Converting back from Montgomery representation 
 	}
 	
-	return CRYPTO_SUCCESS;
+	return Status;
 }
 
-CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S, PCurveIsogenyStruct CurveIsogeny) {
+CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S, f2elm_t A, PCurveIsogenyStruct CurveIsogeny) {
 // Inputs: CompressedPsiS: x s.t. psi(S) = R1 + [x]R2
 //         PCurveIsogenyStruct
 // Outputs: point S generating the same kernel as the original psi(S)
 //
+	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
+	
 	point_full_proj_t P, Q;                    //points used in the construction of {R1,R2}
 	point_full_proj_t S_temp;
 	point_t S_affine, R1, R2;
 	digit_t* comp = (digit_t*)CompressedPsiS;
-	f2elm_t* A = (f2elm_t*)CurveIsogeny->A;
 	f2elm_t vec[2], Zinv[2];
 	digit_t a[NWORDS_ORDER], b[NWORDS_ORDER];  //for pohlig-hellman results
 	digit_t inv[NWORDS_ORDER];                 //for storing the inverse of alpha
@@ -1228,7 +1230,7 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 	f2elm_t tmp, one = {0};
 	f2elm_t A24;
 	
-	generate_2_torsion_basis(A, P, Q, CurveIsogeny);
+	generate_3_torsion_basis(A, P, Q, CurveIsogeny);
 	
 	fp2copy751(P->Z, vec[0]);
 	fp2copy751(Q->Z, vec[1]);
@@ -1245,10 +1247,12 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 	fp2div2_751(A24, A24);
 	fp2div2_751(A24, A24);
   
-	//need to swap R1 and R2 in the following function call depending on the order of psi(S)
+	//need to swap R1 and R2 in the following function call depending on the order of a in psi(S) = [a]R1 + [b]R2
 	mont_twodim_scalarmult(comp, R1, R2, A, A24, S_temp, CurveIsogeny);
 	
 	fp2copy751(S_temp->X, S->X);
 	fp2copy751(S_temp->Z, S->Z);
+	
+	return Status;
 }
 

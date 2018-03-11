@@ -126,8 +126,11 @@ void *sign_thread(void *TPS) {
 		//although SecretAgreement_A runs faster than B, B appears necessary for the time being to ensure success of system
 		Status = SecretAgreement_B(tps->PrivateKey, TempPubKey, tps->sig->Commitments2[r], *(tps->CurveIsogeny), NULL, tempPsiS, signBatchB);
 		
+		f2elm_t Ab = {0};
+		to_fp2mont(((f2elm_t*)tps->PublicKey)[0],Ab);
+		
 		if (tps->compressed) {
-			Status = compressPsiS(tempPsiS, tps->sig->compPsiS[r], *(tps->CurveIsogeny), NULL);
+			Status = compressPsiS(tempPsiS, tps->sig->compPsiS[r], Ab, *(tps->CurveIsogeny), NULL);
 			if (Status != CRYPTO_SUCCESS) {
 				printf("Error in psi(S) compression\n");
 			}
@@ -342,6 +345,9 @@ void *verify_thread(void *TPV) {
 
 			// Check psi(S) has order 3^239 (need to triple it 239 times)
 			point_proj_t triple = {0};
+			point_proj_t newPsiS = {0};
+			f2elm_t A,C={0};
+			to_fp2mont(((f2elm_t*)tpv->PublicKey)[0],A);
 			
 			////////////////////////////////////////////////////////////////////////////
 			//                  psi(S) decompression under construction               //
@@ -350,16 +356,17 @@ void *verify_thread(void *TPV) {
 			////////////////////////////////////////////////////////////////////////////
 			
 			if (tpv->compressed) {
-				Status = decompressPsiS(tpv->sig->compPsiS[r], triple, *(tpv->CurveIsogeny));
+				Status = decompressPsiS(tpv->sig->compPsiS[r], triple, A, *(tpv->CurveIsogeny));
 				if (Status != CRYPTO_SUCCESS) {
 					printf("Error in psi(S) decompression\n");
-				}				
+				} else {
+					copy_words((digit_t*)triple, (digit_t*)newPsiS, 2*2*NWORDS_FIELD);
+				}			
 			} else {
 				copy_words((digit_t*)tpv->sig->psiS[r], (digit_t*)triple, 2*2*NWORDS_FIELD);
+				copy_words((digit_t*)tpv->sig->psiS[r], (digit_t*)newPsiS, 2*2*NWORDS_FIELD);
 			}
-
-			f2elm_t A,C={0};
-			to_fp2mont(((f2elm_t*)tpv->PublicKey)[0],A);
+			
 			fpcopy751((*(tpv->CurveIsogeny))->C, C[0]);
 			int t;
 			for (t=0; t<238; t++) {
@@ -376,7 +383,7 @@ void *verify_thread(void *TPV) {
 
 			//if this secretagreement is successful, we know psiS has order la^ea and generates the kernel of E1 -> E2
 			//can we do this in a method simpler and quicker using only a & b where psiS = [a]R1 + [b]R
-			Status = SecretAgreement_B(NULL, TempPubKey, TempSharSec, *(tpv->CurveIsogeny), tpv->sig->psiS[r], NULL, verifyBatchC);
+			Status = SecretAgreement_B(NULL, TempPubKey, TempSharSec, *(tpv->CurveIsogeny), newPsiS, NULL, verifyBatchC);
 			if(Status != CRYPTO_SUCCESS) {
 				printf("Computing E/<R> -> E/<R,S> failed");
 			}
