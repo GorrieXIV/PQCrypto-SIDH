@@ -29,6 +29,7 @@ struct Signature {
 		f2elm_t *compPsiS[NUM_ROUNDS];
 	};
 	
+	int compBit[NUM_ROUNDS];
 	int compressed;
 };
 

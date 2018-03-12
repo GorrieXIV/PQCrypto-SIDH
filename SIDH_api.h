@@ -108,10 +108,10 @@ void PublicKeyBDecompression_A(const unsigned char* SecretKeyA, const unsigned c
 CRYPTO_STATUS EphemeralSecretAgreement_Compression_B(const unsigned char* PrivateKeyB, const unsigned char* point_R, const unsigned char* param_A, unsigned char* SharedSecretB, PCurveIsogenyStruct CurveIsogeny);
 
 // Compression of value psi(S) for isogeny based signatures
-CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS, f2elm_t A, PCurveIsogenyStruct CurveIsogeny, invBatch* batch);
+CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS, int* compBit, f2elm_t A, PCurveIsogenyStruct CurveIsogeny, invBatch* batch);
 
 // Decompression of value psi(S) and calculation of the points degree
-CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* psiS, f2elm_t A, PCurveIsogenyStruct CurveIsogeny);
+CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* psiS, int compBit, f2elm_t A, PCurveIsogenyStruct CurveIsogeny);
 
 /*********************** SIDH 1.0 Key exchange API ***********************/ 
 

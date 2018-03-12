@@ -130,7 +130,7 @@ void *sign_thread(void *TPS) {
 		to_fp2mont(((f2elm_t*)tps->PublicKey)[0],Ab);
 		
 		if (tps->compressed) {
-			Status = compressPsiS(tempPsiS, tps->sig->compPsiS[r], Ab, *(tps->CurveIsogeny), NULL);
+			Status = compressPsiS(tempPsiS, tps->sig->compPsiS[r], &(tps->sig->compBit[r]), Ab, *(tps->CurveIsogeny), NULL);
 			if (Status != CRYPTO_SUCCESS) {
 				printf("Error in psi(S) compression\n");
 			}
@@ -356,7 +356,7 @@ void *verify_thread(void *TPV) {
 			////////////////////////////////////////////////////////////////////////////
 			
 			if (tpv->compressed) {
-				Status = decompressPsiS(tpv->sig->compPsiS[r], triple, A, *(tpv->CurveIsogeny));
+				Status = decompressPsiS(tpv->sig->compPsiS[r], triple, tpv->sig->compBit[r], A, *(tpv->CurveIsogeny));
 				if (Status != CRYPTO_SUCCESS) {
 					printf("Error in psi(S) decompression\n");
 				} else {
@@ -370,9 +370,9 @@ void *verify_thread(void *TPV) {
 			fpcopy751((*(tpv->CurveIsogeny))->C, C[0]);
 			int t;
 			for (t=0; t<238; t++) {
-				xTPL(triple, triple, A, C); //triple psiS to check if order(psiS) = 3
+				xTPL(triple, triple, A, C); //triple psiS to check if order(psiS) = 3^239
 				if (is_felm_zero(((felm_t*)triple->Z)[0]) && is_felm_zero(((felm_t*)triple->Z)[1])) {
-					printf("ERROR: psi(S) has order 3^%d\n", t+1);
+					//printf("ERROR: psi(S) has order 3^%d\n", t+1);
 				}
 			}
 			
@@ -391,7 +391,7 @@ void *verify_thread(void *TPV) {
 			int cmp = memcmp(TempSharSec, tpv->sig->Commitments2[r], 2*tpv->pbytes);
 			if (cmp != 0) {
 				verified = false;
-				printf("verifying E/<R> -> E/<R,S> failed\n");
+				//printf("verifying E/<R> -> E/<R,S> failed\n");
 			}
 		}
 	}
