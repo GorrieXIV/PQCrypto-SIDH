@@ -1221,7 +1221,7 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 	
 	point_full_proj_t P, Q;                    //points used in the construction of {R1,R2}
 	point_full_proj_t S_temp;
-	point_t S_affine, R1, R2;
+	point_t R1, R2;
 	digit_t* comp = (digit_t*)CompressedPsiS;
 	f2elm_t vec[2], Zinv[2];
 	digit_t a[NWORDS_ORDER], b[NWORDS_ORDER];  //for pohlig-hellman results
