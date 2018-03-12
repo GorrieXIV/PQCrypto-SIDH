@@ -1251,9 +1251,9 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
   
 	//need to swap R1 and R2 in the following function call depending on the order of a in psi(S) = [a]R1 + [b]R2
 	if (compBit) {
-		mont_twodim_scalarmult(comp, R1, R2, A, A24, S_temp, CurveIsogeny);
-	} else {
 		mont_twodim_scalarmult(comp, R2, R1, A, A24, S_temp, CurveIsogeny);
+	} else {
+		mont_twodim_scalarmult(comp, R1, R2, A, A24, S_temp, CurveIsogeny);
 	}
 	
 	fp2copy751(S_temp->X, S->X);

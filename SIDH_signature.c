@@ -126,11 +126,11 @@ void *sign_thread(void *TPS) {
 		//although SecretAgreement_A runs faster than B, B appears necessary for the time being to ensure success of system
 		Status = SecretAgreement_B(tps->PrivateKey, TempPubKey, tps->sig->Commitments2[r], *(tps->CurveIsogeny), NULL, tempPsiS, signBatchB);
 		
-		f2elm_t Ab = {0};
-		to_fp2mont(((f2elm_t*)tps->PublicKey)[0],Ab);
+		//f2elm_t Ab = {0};
+		//to_fp2mont(((f2elm_t*)tps->PublicKey)[0],Ab);
 		
 		if (tps->compressed) {
-			Status = compressPsiS(tempPsiS, tps->sig->compPsiS[r], &(tps->sig->compBit[r]), Ab, *(tps->CurveIsogeny), NULL);
+			Status = compressPsiS(tempPsiS, tps->sig->compPsiS[r], &(tps->sig->compBit[r]), A, *(tps->CurveIsogeny), NULL);
 			if (Status != CRYPTO_SUCCESS) {
 				printf("Error in psi(S) compression\n");
 			}
@@ -347,7 +347,8 @@ void *verify_thread(void *TPV) {
 			point_proj_t triple = {0};
 			point_proj_t newPsiS = {0};
 			f2elm_t A,C={0};
-			to_fp2mont(((f2elm_t*)tpv->PublicKey)[0],A);
+			fp2copy751(tpv->sig->Commitments1[r], A);
+			//to_fp2mont(((f2elm_t*)tpv->PublicKey)[0],A);
 			
 			////////////////////////////////////////////////////////////////////////////
 			//                  psi(S) decompression under construction               //
@@ -367,12 +368,13 @@ void *verify_thread(void *TPV) {
 				copy_words((digit_t*)tpv->sig->psiS[r], (digit_t*)newPsiS, 2*2*NWORDS_FIELD);
 			}
 			
+			to_fp2mont(((f2elm_t*)tpv->PublicKey)[0],A);
 			fpcopy751((*(tpv->CurveIsogeny))->C, C[0]);
 			int t;
 			for (t=0; t<238; t++) {
 				xTPL(triple, triple, A, C); //triple psiS to check if order(psiS) = 3^239
 				if (is_felm_zero(((felm_t*)triple->Z)[0]) && is_felm_zero(((felm_t*)triple->Z)[1])) {
-					//printf("ERROR: psi(S) has order 3^%d\n", t+1);
+					printf("ERROR: psi(S) has order 3^%d\n", t+1);
 				}
 			}
 			
@@ -391,7 +393,7 @@ void *verify_thread(void *TPV) {
 			int cmp = memcmp(TempSharSec, tpv->sig->Commitments2[r], 2*tpv->pbytes);
 			if (cmp != 0) {
 				verified = false;
-				//printf("verifying E/<R> -> E/<R,S> failed\n");
+				printf("verifying E/<R> -> E/<R,S> failed\n");
 			}
 		}
 	}
