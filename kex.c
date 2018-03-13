@@ -1155,6 +1155,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 // 
 	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
 	
+	point_proj_t psiS_temp;
 	point_full_proj_t P, Q;                    //points used in the construction of {R1,R2}
 	point_t psiSa, R1, R2;
 	digit_t* comp = (digit_t*)CompressedPsiS;
@@ -1165,12 +1166,15 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	uint64_t Montgomery_rprime[NWORDS64_ORDER] = {0x48062A91D3AB563D, 0x6CE572751303C2F5, 0x5D1319F3F160EC9D, 0xE35554E8C2D5623A, 0xCA29300232BC79A5, 0x8AAD843D646D78C5}; // Value -(3^239)^-1 mod 2^384
 	unsigned int bit;
 	f2elm_t tmp, one = {0};
+
+	to_fp2mont(((f2elm_t*)psiS->X), ((f2elm_t*)psiS_temp->X));
+	to_fp2mont(((f2elm_t*)psiS->Z), ((f2elm_t*)psiS_temp->Z));
   
 	generate_3_torsion_basis(A, P, Q, CurveIsogeny);
 	
 	fp2copy751(P->Z, vec[0]);
 	fp2copy751(Q->Z, vec[1]);
-	fp2copy751(psiS->Z, vec[2]);
+	fp2copy751(psiS_temp->Z, vec[2]);
 	mont_n_way_inv(vec, 3, Zinv);
 	
 	fp2mul751_mont(P->X, Zinv[0], R1->x);
@@ -1179,7 +1183,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	fp2mul751_mont(Q->Y, Zinv[1], R2->y);
 	
 	//recover affine x of psiS
-	fp2mul751_mont(psiS->X, Zinv[2], psiSa->x);
+	fp2mul751_mont(psiS_temp->X, Zinv[2], psiSa->x);
 	
 	//recover affine y of psiS
 	fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
@@ -1230,7 +1234,7 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 	uint64_t Montgomery_rprime[NWORDS64_ORDER] = {0x48062A91D3AB563D, 0x6CE572751303C2F5, 0x5D1319F3F160EC9D, 0xE35554E8C2D5623A, 0xCA29300232BC79A5, 0x8AAD843D646D78C5}; // Value -(3^239)^-1 mod 2^384
 	unsigned int bit;
 	f2elm_t tmp, one = {0};
-	f2elm_t A24;
+	f2elm_t A_temp, A24;
 	
 	generate_3_torsion_basis(A, P, Q, CurveIsogeny);
 	
@@ -1243,8 +1247,22 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 	fp2mul751_mont(Q->X, Zinv[1], R2->x);
 	fp2mul751_mont(Q->Y, Zinv[1], R2->y);
 	
+	fp2copy751(A, A_temp);
+	
+	to_Montgomery_mod_order(&comp, &comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+	to_Montgomery_mod_order((R1->x)[0], (R1->x)[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+	to_Montgomery_mod_order((R1->x)[0], (R1->x)[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+	to_Montgomery_mod_order(R1->y, R1->y, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+	to_Montgomery_mod_order((R1->x)[0], (R1->x)[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+	to_Montgomery_mod_order(R2->x, R2->x, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+	to_Montgomery_mod_order((R1->x)[0], (R1->x)[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+	to_Montgomery_mod_order(R2->y, R2->y, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+	to_Montgomery_mod_order((R1->x)[0], (R1->x)[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+	to_Montgomery_mod_order(A_temp, A_temp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+	to_Montgomery_mod_order((R1->x)[0], (R1->x)[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+	
 	//construct (A+2)/4 from A
-	fp2add751(A, one, A24);
+	fp2add751(A_temp, one, A24);
 	fp2add751(A24, one, A24);
 	fp2div2_751(A24, A24);
 	fp2div2_751(A24, A24);
@@ -1255,6 +1273,8 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 	} else {
 		mont_twodim_scalarmult(comp, R1, R2, A, A24, S_temp, CurveIsogeny);
 	}
+	
+	from_Montgomery_mod_order(&comp, &comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
 	
 	fp2copy751(S_temp->X, S->X);
 	fp2copy751(S_temp->Z, S->Z);
