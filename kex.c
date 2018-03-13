@@ -243,98 +243,98 @@ CRYPTO_STATUS EphemeralKeyGeneration_B(unsigned char* PrivateKeyB, unsigned char
   // The private key is an integer in the range [1, oB-1], where oA = 3^239. 
   // The public key consists of 3 elements in GF(p751^2).
   // CurveIsogeny must be set up in advance using SIDH_curve_initialize().
-    unsigned int owords = NBITS_TO_NWORDS(CurveIsogeny->owordbits), pwords = NBITS_TO_NWORDS(CurveIsogeny->pwordbits);
-    point_basefield_t P;
-    point_proj_t R, phiP = {0}, phiQ = {0}, phiD = {0}, pts[MAX_INT_POINTS_BOB];
-    publickey_t* PublicKey = (publickey_t*)PublicKeyB;
-    unsigned int i, row, m, index = 0, pts_index[MAX_INT_POINTS_BOB], npts = 0; 
-    f2elm_t A = {0}, C = {0};
-    CRYPTO_STATUS Status = CRYPTO_ERROR_UNKNOWN;  
+	unsigned int owords = NBITS_TO_NWORDS(CurveIsogeny->owordbits), pwords = NBITS_TO_NWORDS(CurveIsogeny->pwordbits);
+	point_basefield_t P;
+	point_proj_t R, phiP = {0}, phiQ = {0}, phiD = {0}, pts[MAX_INT_POINTS_BOB];
+	publickey_t* PublicKey = (publickey_t*)PublicKeyB;
+	unsigned int i, row, m, index = 0, pts_index[MAX_INT_POINTS_BOB], npts = 0; 
+	f2elm_t A = {0}, C = {0};
+	CRYPTO_STATUS Status = CRYPTO_ERROR_UNKNOWN;  
 
-    if (PrivateKeyB == NULL || PublicKey == NULL || is_CurveIsogenyStruct_null(CurveIsogeny)) {
-        return CRYPTO_ERROR_INVALID_PARAMETER;
-    }  
+	if (PrivateKeyB == NULL || PublicKey == NULL || is_CurveIsogenyStruct_null(CurveIsogeny)) {
+		return CRYPTO_ERROR_INVALID_PARAMETER;
+	}  
 
-    // Choose a random number equivalent to 0 (mod 3) in the range [3, oB-3] as secret key for Bob
-    Status = random_mod_order((digit_t*)PrivateKeyB, BOB, CurveIsogeny);
-    if (Status != CRYPTO_SUCCESS) {
-        clear_words((void*)PrivateKeyB, owords);
-        return Status;
-    }
-
-    to_mont((digit_t*)CurveIsogeny->PB, (digit_t*)P);                               // Conversion of Bob's generators to Montgomery representation
-    to_mont(((digit_t*)CurveIsogeny->PB)+NWORDS_FIELD, ((digit_t*)P)+NWORDS_FIELD); 
-
-    Status = secret_pt(P, (digit_t*)PrivateKeyB, BOB, R, CurveIsogeny);
-    if (Status != CRYPTO_SUCCESS) {
-        clear_words((void*)PrivateKeyB, owords);
-        return Status;
-    }
-
-    copy_words((digit_t*)CurveIsogeny->PA, (digit_t*)phiP, pwords);                 // Copy X-coordinates from Alice's public parameters, set Z <- 1
-    fpcopy751((digit_t*)CurveIsogeny->Montgomery_one, (digit_t*)phiP->Z);   
-    to_mont((digit_t*)phiP, (digit_t*)phiP);                                        // Conversion to Montgomery representation
-    copy_words((digit_t*)phiP, (digit_t*)phiQ, pwords);                             // QA = (-XPA:1)
-    fpneg751(phiQ->X[0]); 
-    fpcopy751((digit_t*)CurveIsogeny->Montgomery_one, (digit_t*)phiQ->Z);  
-    distort_and_diff(phiP->X[0], phiD, CurveIsogeny);                               // DA = (x(QA-PA),z(QA-PA))
-
-    fpcopy751(CurveIsogeny->A, A[0]);                                               // Extracting curve parameters A and C
-    fpcopy751(CurveIsogeny->C, C[0]);
-    to_mont(A[0], A[0]);
-    to_mont(C[0], C[0]);
-    
-    index = 0;  
-    for (row = 1; row < MAX_Bob; row++) {
-        while (index < MAX_Bob-row) {
-            fp2copy751(R->X, pts[npts]->X);
-            fp2copy751(R->Z, pts[npts]->Z);
-            pts_index[npts] = index;
-            npts += 1;
-            m = splits_Bob[MAX_Bob-index-row];
-            xTPLe(R, R, A, C, (int)m);
-            index += m;
-        }
-        get_3_isog(R, A, C);        
-
-        for (i = 0; i < npts; i++) {
-            eval_3_isog(R, pts[i]);
-        }     
-        eval_3_isog(R, phiP);
-        eval_3_isog(R, phiQ);
-        eval_3_isog(R, phiD);
-
-        fp2copy751(pts[npts-1]->X, R->X); 
-        fp2copy751(pts[npts-1]->Z, R->Z);
-        index = pts_index[npts-1];
-        npts -= 1;
-    }
-    
-    get_3_isog(R, A, C);    
-    eval_3_isog(R, phiP);
-    eval_3_isog(R, phiQ);
-    eval_3_isog(R, phiD);
-
-    inv_3_way(phiP->Z, phiQ->Z, phiD->Z);
-		fp2mul751_mont(phiP->X, phiP->Z, phiP->X);
-		fp2mul751_mont(phiQ->X, phiQ->Z, phiQ->X);
-		fp2mul751_mont(phiD->X, phiD->Z, phiD->X);
-    
-    // Converting back to standard representation
-		from_fp2mont(phiP->X, ((f2elm_t*)PublicKey)[0]);
-		from_fp2mont(phiQ->X, ((f2elm_t*)PublicKey)[1]);
-		from_fp2mont(phiD->X, ((f2elm_t*)PublicKey)[2]);
-
-// Cleanup:
-		clear_words((void*)R, 2*2*pwords);
-		clear_words((void*)phiP, 2*2*pwords);
-		clear_words((void*)phiQ, 2*2*pwords);
-		clear_words((void*)phiD, 2*2*pwords);
-		clear_words((void*)pts, MAX_INT_POINTS_BOB*2*2*pwords);
-		clear_words((void*)A, 2*pwords);
-		clear_words((void*)C, 2*pwords);
-      
+	// Choose a random number equivalent to 0 (mod 3) in the range [3, oB-3] as secret key for Bob
+	Status = random_mod_order((digit_t*)PrivateKeyB, BOB, CurveIsogeny);
+	if (Status != CRYPTO_SUCCESS) {
+		clear_words((void*)PrivateKeyB, owords);
 		return Status;
+	}
+
+	to_mont((digit_t*)CurveIsogeny->PB, (digit_t*)P);                               // Conversion of Bob's generators to Montgomery representation
+	to_mont(((digit_t*)CurveIsogeny->PB)+NWORDS_FIELD, ((digit_t*)P)+NWORDS_FIELD); 
+
+	Status = secret_pt(P, (digit_t*)PrivateKeyB, BOB, R, CurveIsogeny);
+	if (Status != CRYPTO_SUCCESS) {
+		clear_words((void*)PrivateKeyB, owords);
+		return Status;
+	}
+
+	copy_words((digit_t*)CurveIsogeny->PA, (digit_t*)phiP, pwords);                 // Copy X-coordinates from Alice's public parameters, set Z <- 1
+	fpcopy751((digit_t*)CurveIsogeny->Montgomery_one, (digit_t*)phiP->Z);   
+	to_mont((digit_t*)phiP, (digit_t*)phiP);                                        // Conversion to Montgomery representation
+	copy_words((digit_t*)phiP, (digit_t*)phiQ, pwords);                             // QA = (-XPA:1)
+	fpneg751(phiQ->X[0]); 
+	fpcopy751((digit_t*)CurveIsogeny->Montgomery_one, (digit_t*)phiQ->Z);  
+	distort_and_diff(phiP->X[0], phiD, CurveIsogeny);                               // DA = (x(QA-PA),z(QA-PA))
+
+	fpcopy751(CurveIsogeny->A, A[0]);                                               // Extracting curve parameters A and C
+	fpcopy751(CurveIsogeny->C, C[0]);
+	to_mont(A[0], A[0]);
+	to_mont(C[0], C[0]);
+
+	index = 0;  
+	for (row = 1; row < MAX_Bob; row++) {
+		while (index < MAX_Bob-row) {
+			fp2copy751(R->X, pts[npts]->X);
+			fp2copy751(R->Z, pts[npts]->Z);
+			pts_index[npts] = index;
+			npts += 1;
+			m = splits_Bob[MAX_Bob-index-row];
+			xTPLe(R, R, A, C, (int)m);
+			index += m;
+		}
+		get_3_isog(R, A, C);        
+
+		for (i = 0; i < npts; i++) {
+			eval_3_isog(R, pts[i]);
+		}     
+		eval_3_isog(R, phiP);
+		eval_3_isog(R, phiQ);
+		eval_3_isog(R, phiD);
+
+		fp2copy751(pts[npts-1]->X, R->X); 
+		fp2copy751(pts[npts-1]->Z, R->Z);
+		index = pts_index[npts-1];
+		npts -= 1;
+	}
+
+	get_3_isog(R, A, C);    
+	eval_3_isog(R, phiP);
+	eval_3_isog(R, phiQ);
+	eval_3_isog(R, phiD);
+
+	inv_3_way(phiP->Z, phiQ->Z, phiD->Z);
+	fp2mul751_mont(phiP->X, phiP->Z, phiP->X);
+	fp2mul751_mont(phiQ->X, phiQ->Z, phiQ->X);
+	fp2mul751_mont(phiD->X, phiD->Z, phiD->X);
+
+	// Converting back to standard representation
+	from_fp2mont(phiP->X, ((f2elm_t*)PublicKey)[0]);
+	from_fp2mont(phiQ->X, ((f2elm_t*)PublicKey)[1]);
+	from_fp2mont(phiD->X, ((f2elm_t*)PublicKey)[2]);
+
+	// Cleanup:
+	clear_words((void*)R, 2*2*pwords);
+	clear_words((void*)phiP, 2*2*pwords);
+	clear_words((void*)phiQ, 2*2*pwords);
+	clear_words((void*)phiD, 2*2*pwords);
+	clear_words((void*)pts, MAX_INT_POINTS_BOB*2*2*pwords);
+	clear_words((void*)A, 2*pwords);
+	clear_words((void*)C, 2*pwords);
+
+	return Status;
 }
 
 CRYPTO_STATUS KeyGeneration_B(unsigned char* pPrivateKeyB, unsigned char* pPublicKeyB, PCurveIsogenyStruct CurveIsogeny)
@@ -1148,7 +1148,7 @@ CRYPTO_STATUS EphemeralSecretAgreement_Compression_B(const unsigned char* Privat
 ///////////////////////////////////////////////////////////////////////////////////
 ///////////////             COMPRESSION FOR SIGNATURES              ///////////////
 
-CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS, int* compBit, f2elm_t A, PCurveIsogenyStruct CurveIsogeny, invBatch* batch) {
+CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS, int* compBit, const f2elm_t A, PCurveIsogenyStruct CurveIsogeny, invBatch* batch) {
 // Inputs:  a point psiS in point_proj form
 //          curve CurveIsogeny (SIDHp751)
 // Outputs: compressed psiS of the form ainv*b where psiS = R1 + [ainv*b]R2
@@ -1159,7 +1159,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	point_full_proj_t P, Q;                    //points used in the construction of {R1,R2}
 	point_t psiSa, R1, R2;
 	digit_t* comp = (digit_t*)CompressedPsiS;
-	f2elm_t vec[3], Zinv[3];
+	f2elm_t vec[3], Zinv[3], A_temp;
 	digit_t a[NWORDS_ORDER], b[NWORDS_ORDER];  //for pohlig-hellman results
 	digit_t inv[NWORDS_ORDER];                 //for storing the inverse of alpha
 	uint64_t Montgomery_Rprime[NWORDS64_ORDER] = {0x1A55482318541298, 0x070A6370DFA12A03, 0xCB1658E0E3823A40, 0xB3B7384EB5DEF3F9, 0xCBCA952F7006EA33, 0x00569EF8EC94864C}; // Value (2^384)^2 mod 3^239
@@ -1169,8 +1169,10 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 
 	to_fp2mont(((f2elm_t*)psiS->X), ((f2elm_t*)psiS_temp->X));
 	to_fp2mont(((f2elm_t*)psiS->Z), ((f2elm_t*)psiS_temp->Z));
+	//is A value sent to mont rep in other instances? typically it is constructed using get_A
+	to_fp2mont(A, A_temp);
   
-	generate_3_torsion_basis(A, P, Q, CurveIsogeny);
+	generate_3_torsion_basis(A_temp, P, Q, CurveIsogeny);
 	
 	fp2copy751(P->Z, vec[0]);
 	fp2copy751(Q->Z, vec[1]);
@@ -1187,14 +1189,14 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	
 	//recover affine y of psiS
 	fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
-	fp2add751(psiSa->x, A, tmp);
+	fp2add751(psiSa->x, A_temp, tmp);
 	fp2mul751_mont(psiSa->x, tmp, tmp);
 	fp2add751(tmp, one, tmp);                 
 	fp2mul751_mont(psiSa->x, tmp, tmp);
 	sqrt_Fp2(tmp, psiSa->y);
 	
 	//do ph3 or ph2 depending on if S has order 3 or 2
-	half_ph3(psiSa, R1, R2, A, (uint64_t*)a, (uint64_t*)b, CurveIsogeny);
+	half_ph3(psiSa, R1, R2, A_temp, (uint64_t*)a, (uint64_t*)b, CurveIsogeny);
 	
 	//check if a has order 3
 	bit = mod3(a);
@@ -1216,7 +1218,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	return Status;
 }
 
-CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S, int compBit, f2elm_t A, PCurveIsogenyStruct CurveIsogeny) {
+CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S, int compBit, const f2elm_t A, PCurveIsogenyStruct CurveIsogeny) {
 // Inputs: CompressedPsiS: x s.t. psi(S) = R1 + [x]R2
 //         PCurveIsogenyStruct
 // Outputs: point S generating the same kernel as the original psi(S)

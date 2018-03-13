@@ -985,33 +985,33 @@ static void get_pt_on_curve(f2elm_t A, unsigned int* r, f2elm_t x, f2elm_t y)
 
 static void get_3_torsion_elt(f2elm_t A, unsigned int* r, point_proj_t P, point_proj_t P3, unsigned int* triples, PCurveIsogenyStruct CurveIsogeny)
 {
-    point_proj_t PP;
-    f2elm_t A24, C24, one = {0};
-    felm_t t0, t1, t2, zero = {0};
-    
-    *triples = 0;
-    fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
-    fpadd751(one[0], one[0], C24[0]);
+	point_proj_t PP;
+	f2elm_t A24, C24, one = {0};
+	felm_t t0, t1, t2, zero = {0};
+
+	*triples = 0;
+	fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
+	fpadd751(one[0], one[0], C24[0]);
 	fpzero751(C24[1]);
-    
-    get_X_on_curve(A, r, P->X, t0, t1, t2);
-    fp2copy751(one, P->Z);                           // Z = 1
-    xDBLe(P, P, A, one, 372);
+
+	get_X_on_curve(A, r, P->X, t0, t1, t2);
+	fp2copy751(one, P->Z);                           // Z = 1
+	xDBLe(P, P, A, one, 372);
 
 	fp2copy751(P->X, PP->X);                         // XX = X
-    fp2copy751(P->Z, PP->Z);                         // ZZ = Z
+	fp2copy751(P->Z, PP->Z);                         // ZZ = Z
 
-    fp2add751(A, C24, A24);                          // A24 = A+2
-    fpadd751(C24[0], C24[0], C24[0]);                // C24 = 4
+	fp2add751(A, C24, A24);                          // A24 = A+2
+	fpadd751(C24[0], C24[0], C24[0]);                // C24 = 4
 
 	fp2correction751(PP->Z);
-    while (fpequal751_non_constant_time(PP->Z[0], zero) == false || fpequal751_non_constant_time(PP->Z[1], zero) == false) {
-        fp2copy751(PP->X, P3->X);                    // X3 = XX
-        fp2copy751(PP->Z, P3->Z);                    // Z3 = ZZ
-        xTPL(PP, PP, A24, C24);
-        (*triples)++;
+	while (fpequal751_non_constant_time(PP->Z[0], zero) == false || fpequal751_non_constant_time(PP->Z[1], zero) == false) {
+		fp2copy751(PP->X, P3->X);                    // X3 = XX
+		fp2copy751(PP->Z, P3->Z);                    // Z3 = ZZ
+		xTPL(PP, PP, A24, C24);
+		(*triples)++;
 		fp2correction751(PP->Z);
-    }
+	}
 }
 
 

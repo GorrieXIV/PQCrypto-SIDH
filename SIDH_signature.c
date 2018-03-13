@@ -383,8 +383,8 @@ void *verify_thread(void *TPV) {
 			TempPubKey = calloc(1, 4*2*tpv->pbytes);
 			from_fp2mont(tpv->sig->Commitments1[r], ((f2elm_t*)TempPubKey)[0]);
 
-			//if this secretagreement is successful, we know psiS has order la^ea and generates the kernel of E1 -> E2
-			//can we do this in a method simpler and quicker using only a & b where psiS = [a]R1 + [b]R
+			//if this secret agreement is successful, we know psiS has order la^ea and generates the kernel of E1 -> E2
+			//can we do this in a method simpler and quicker using only a & b where psiS = [a]R1 + [b]R2
 			Status = SecretAgreement_B(NULL, TempPubKey, TempSharSec, *(tpv->CurveIsogeny), newPsiS, NULL, verifyBatchC);
 			if(Status != CRYPTO_SUCCESS) {
 				printf("Computing E/<R> -> E/<R,S> failed");
