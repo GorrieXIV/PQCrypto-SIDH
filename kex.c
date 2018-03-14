@@ -1167,10 +1167,9 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	unsigned int bit;
 	f2elm_t tmp, one = {0};
 
-	to_fp2mont(((f2elm_t*)psiS->X), ((f2elm_t*)psiS_temp->X));
-	to_fp2mont(((f2elm_t*)psiS->Z), ((f2elm_t*)psiS_temp->Z));
+	//to_mont((digit_t*)psiS, (digit_t*)psiS_temp);
 	//is A value sent to mont rep in other instances? typically it is constructed using get_A
-	to_fp2mont(A, A_temp);
+	//to_fp2mont(A, A_temp);
   
 	generate_3_torsion_basis(A_temp, P, Q, CurveIsogeny);
 	
