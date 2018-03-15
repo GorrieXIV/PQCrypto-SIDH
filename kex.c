@@ -1170,7 +1170,8 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	//to_mont((digit_t*)psiS, (digit_t*)psiS_temp);
 	//is A value sent to mont rep in other instances? typically it is constructed using get_A
 	//to_fp2mont(A, A_temp);
-  
+	fp2copy751(A, A_temp); 
+
 	generate_3_torsion_basis(A_temp, P, Q, CurveIsogeny);
 	
 	fp2copy751(P->Z, vec[0]);
@@ -1250,17 +1251,17 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 	
 	fp2copy751(A, A_temp);
 	
-	to_Montgomery_mod_order(&comp, &comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
-	to_Montgomery_mod_order((R1->x)[0], (R1->x)[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
-	to_Montgomery_mod_order((R1->x)[0], (R1->x)[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
-	to_Montgomery_mod_order(R1->y, R1->y, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
-	to_Montgomery_mod_order((R1->x)[0], (R1->x)[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
-	to_Montgomery_mod_order(R2->x, R2->x, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
-	to_Montgomery_mod_order((R1->x)[0], (R1->x)[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
-	to_Montgomery_mod_order(R2->y, R2->y, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
-	to_Montgomery_mod_order((R1->x)[0], (R1->x)[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
-	to_Montgomery_mod_order(A_temp, A_temp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
-	to_Montgomery_mod_order((R1->x)[0], (R1->x)[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+	//to_Montgomery_mod_order(&comp, &comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+	//to_Montgomery_mod_order((R1->x)[0], (R1->x)[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+	//to_Montgomery_mod_order((R1->x)[0], (R1->x)[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+	//to_Montgomery_mod_order(R1->y, R1->y, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+	//to_Montgomery_mod_order((R1->x)[0], (R1->x)[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+	//to_Montgomery_mod_order(R2->x, R2->x, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+	//to_Montgomery_mod_order((R1->x)[0], (R1->x)[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+	//to_Montgomery_mod_order(R2->y, R2->y, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+	//to_Montgomery_mod_order((R1->x)[0], (R1->x)[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+	//to_Montgomery_mod_order(A_temp, A_temp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+	//to_Montgomery_mod_order((R1->x)[0], (R1->x)[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
 	
 	//construct (A+2)/4 from A
 	fp2add751(A_temp, one, A24);
@@ -1275,7 +1276,7 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 		mont_twodim_scalarmult(comp, R1, R2, A, A24, S_temp, CurveIsogeny);
 	}
 	
-	from_Montgomery_mod_order(&comp, &comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
+	//from_Montgomery_mod_order(&comp, &comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
 	
 	fp2copy751(S_temp->X, S->X);
 	fp2copy751(S_temp->Z, S->Z);
