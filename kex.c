@@ -1155,11 +1155,11 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 // 
 	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
 	
-	point_proj_t psiS_temp;
 	point_full_proj_t P, Q;                    //points used in the construction of {R1,R2}
 	point_t psiSa, R1, R2;
 	digit_t* comp = (digit_t*)CompressedPsiS;
-	f2elm_t vec[3], Zinv[3], A_temp;
+	f2elm_t vec[3], Zinv[3];
+	f2elm_t A_temp;
 	digit_t a[NWORDS_ORDER], b[NWORDS_ORDER];  //for pohlig-hellman results
 	digit_t inv[NWORDS_ORDER];                 //for storing the inverse of alpha
 	uint64_t Montgomery_Rprime[NWORDS64_ORDER] = {0x1A55482318541298, 0x070A6370DFA12A03, 0xCB1658E0E3823A40, 0xB3B7384EB5DEF3F9, 0xCBCA952F7006EA33, 0x00569EF8EC94864C}; // Value (2^384)^2 mod 3^239
@@ -1167,17 +1167,23 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	unsigned int bit;
 	f2elm_t tmp, one = {0};
 
-	//to_mont((digit_t*)psiS, (digit_t*)psiS_temp);
 	//is A value sent to mont rep in other instances? typically it is constructed using get_A
-	//to_fp2mont(A, A_temp);
-	fp2copy751(A, A_temp); 
+	fp2copy751(A, A_temp);
 
+	//do we need a curveIsogeny that reflects E/<R> ?
+	//converting A_temp to montgomery representation causes generate_3_torsion_basis to run indefinitely
 	generate_3_torsion_basis(A_temp, P, Q, CurveIsogeny);
+	
+	//do we need
+	//to_fp2mont(A_temp, A_temp);
 	
 	fp2copy751(P->Z, vec[0]);
 	fp2copy751(Q->Z, vec[1]);
-	fp2copy751(psiS_temp->Z, vec[2]);
+	fp2copy751(psiS->Z, vec[2]);
+	
 	mont_n_way_inv(vec, 3, Zinv);
+	
+	printf("n way inv successful\n");
 	
 	fp2mul751_mont(P->X, Zinv[0], R1->x);
 	fp2mul751_mont(P->Y, Zinv[0], R1->y);
@@ -1185,7 +1191,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	fp2mul751_mont(Q->Y, Zinv[1], R2->y);
 	
 	//recover affine x of psiS
-	fp2mul751_mont(psiS_temp->X, Zinv[2], psiSa->x);
+	fp2mul751_mont(psiS->X, Zinv[2], psiSa->x);
 	
 	//recover affine y of psiS
 	fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
@@ -1195,8 +1201,12 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	fp2mul751_mont(psiSa->x, tmp, tmp);
 	sqrt_Fp2(tmp, psiSa->y);
 	
+	printf("prepping ph3\n");
+	
 	//do ph3 or ph2 depending on if S has order 3 or 2
 	half_ph3(psiSa, R1, R2, A_temp, (uint64_t*)a, (uint64_t*)b, CurveIsogeny);
+	
+	printf("pohlig hellman successful\n");
 	
 	//check if a has order 3
 	bit = mod3(a);
