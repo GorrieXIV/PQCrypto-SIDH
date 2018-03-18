@@ -1183,8 +1183,6 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	
 	mont_n_way_inv(vec, 3, Zinv);
 	
-	printf("n way inv successful\n");
-	
 	fp2mul751_mont(P->X, Zinv[0], R1->x);
 	fp2mul751_mont(P->Y, Zinv[0], R1->y);
 	fp2mul751_mont(Q->X, Zinv[1], R2->x);
@@ -1201,12 +1199,8 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	fp2mul751_mont(psiSa->x, tmp, tmp);
 	sqrt_Fp2(tmp, psiSa->y);
 	
-	printf("prepping ph3\n");
-	
 	//do ph3 or ph2 depending on if S has order 3 or 2
 	half_ph3(psiSa, R1, R2, A_temp, (uint64_t*)a, (uint64_t*)b, CurveIsogeny);
-	
-	printf("pohlig hellman successful\n");
 	
 	//check if a has order 3
 	bit = mod3(a);
