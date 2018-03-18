@@ -47,19 +47,19 @@ CRYPTO_STATUS cryptotest_signature() {
 	Status = isogeny_keygen(CurveIsogeny, PrivateKey, PublicKey);
 	if (Status != CRYPTO_SUCCESS) {
 		return Status;
-	} else { printf("  SIGNATURE KEYGEN .......... SUCCESSFUL\n"); }
+	} else { printf("  SIGNATURE KEYGEN ........... SUCCESSFUL\n"); }
 	
 	//signing procedure
 	Status = isogeny_sign(CurveIsogeny, PrivateKey, PublicKey, &sig, 0, 0);
 	if (Status != CRYPTO_SUCCESS) {
 		return Status;
-	} else { printf("  SIGNATURE SIGN............. SUCCESSFUL\n"); }
+	} else { printf("  SIGNATURE SIGN ............. SUCCESSFUL\n"); }
 
 	//verifying procedure
 	Status = isogeny_verify(CurveIsogeny, PublicKey, &sig, 0, 0);
 	if (Status != CRYPTO_SUCCESS) {
 		return Status;
-	} else { printf("  SIGNATURE VERIFY........... SUCCESSFUL\n"); }
+	} else { printf("  SIGNATURE VERIFY ........... SUCCESSFUL\n"); }
 	
 cleanup:
 		SIDH_curve_free(CurveIsogeny);    
