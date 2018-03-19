@@ -1175,7 +1175,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	generate_3_torsion_basis(A_temp, P, Q, CurveIsogeny);
 	
 	//do we need
-	//to_fp2mont(A_temp, A_temp);
+	to_fp2mont(A_temp, A_temp);
 	
 	fp2copy751(P->Z, vec[0]);
 	fp2copy751(Q->Z, vec[1]);
@@ -1201,6 +1201,8 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	
 	//do ph3 or ph2 depending on if S has order 3 or 2
 	half_ph3(psiSa, R1, R2, A_temp, (uint64_t*)a, (uint64_t*)b, CurveIsogeny);
+	
+	//test that psi(S) = [a]R1 + [b]R2
 	
 	//check if a has order 3
 	bit = mod3(a);
@@ -1254,6 +1256,7 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 	fp2mul751_mont(Q->Y, Zinv[1], R2->y);
 	
 	fp2copy751(A, A_temp);
+	to_fp2mont(A_temp, A_temp);
 	
 	//to_Montgomery_mod_order(&comp, &comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
 	//to_Montgomery_mod_order((R1->x)[0], (R1->x)[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);

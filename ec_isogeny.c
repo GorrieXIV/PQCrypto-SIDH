@@ -2146,66 +2146,66 @@ unsigned int mod3(digit_t* a)
 
 void compress_3_torsion(const unsigned char* pPublicKeyB, unsigned char* CompressedPKB, uint64_t* a0, uint64_t* b0, uint64_t* a1, uint64_t* b1, point_t R1, point_t R2, PCurveIsogenyStruct CurveIsogeny)
 { // 3-torsion compression function                                                                          
-    point_full_proj_t P, Q, phP, phQ, phX;
-    point_t phiP, phiQ;
-    publickey_t PK;
-    digit_t* comp = (digit_t*)CompressedPKB;
+	point_full_proj_t P, Q, phP, phQ, phX;
+	point_t phiP, phiQ;
+	publickey_t PK;
+	digit_t* comp = (digit_t*)CompressedPKB;
 	digit_t inv[NWORDS_ORDER];
-    f2elm_t A, vec[4], Zinv[4];
-    uint64_t Montgomery_Rprime[NWORDS64_ORDER] = {0x1A55482318541298, 0x070A6370DFA12A03, 0xCB1658E0E3823A40, 0xB3B7384EB5DEF3F9, 0xCBCA952F7006EA33, 0x00569EF8EC94864C}; // Value (2^384)^2 mod 3^239
-    uint64_t Montgomery_rprime[NWORDS64_ORDER] = {0x48062A91D3AB563D, 0x6CE572751303C2F5, 0x5D1319F3F160EC9D, 0xE35554E8C2D5623A, 0xCA29300232BC79A5, 0x8AAD843D646D78C5}; // Value -(3^239)^-1 mod 2^384
-    unsigned int bit;
+	f2elm_t A, vec[4], Zinv[4];
+	uint64_t Montgomery_Rprime[NWORDS64_ORDER] = {0x1A55482318541298, 0x070A6370DFA12A03, 0xCB1658E0E3823A40, 0xB3B7384EB5DEF3F9, 0xCBCA952F7006EA33, 0x00569EF8EC94864C}; // Value (2^384)^2 mod 3^239
+	uint64_t Montgomery_rprime[NWORDS64_ORDER] = {0x48062A91D3AB563D, 0x6CE572751303C2F5, 0x5D1319F3F160EC9D, 0xE35554E8C2D5623A, 0xCA29300232BC79A5, 0x8AAD843D646D78C5}; // Value -(3^239)^-1 mod 2^384
+	unsigned int bit;
 
-    to_fp2mont(((f2elm_t*)pPublicKeyB)[0], ((f2elm_t*)&PK)[0]);    // Converting to Montgomery representation
-    to_fp2mont(((f2elm_t*)pPublicKeyB)[1], ((f2elm_t*)&PK)[1]); 
-    to_fp2mont(((f2elm_t*)pPublicKeyB)[2], ((f2elm_t*)&PK)[2]); 
+	to_fp2mont(((f2elm_t*)pPublicKeyB)[0], ((f2elm_t*)&PK)[0]);    // Converting to Montgomery representation
+	to_fp2mont(((f2elm_t*)pPublicKeyB)[1], ((f2elm_t*)&PK)[1]); 
+	to_fp2mont(((f2elm_t*)pPublicKeyB)[2], ((f2elm_t*)&PK)[2]); 
 
-    recover_y(PK, phP, phQ, phX, A, CurveIsogeny);
-    generate_3_torsion_basis(A, P, Q, CurveIsogeny);
-    fp2copy751(P->Z, vec[0]);
-    fp2copy751(Q->Z, vec[1]);
-    fp2copy751(phP->Z, vec[2]);
-    fp2copy751(phQ->Z, vec[3]);
-    mont_n_way_inv(vec, 4, Zinv);
+	recover_y(PK, phP, phQ, phX, A, CurveIsogeny);
+	generate_3_torsion_basis(A, P, Q, CurveIsogeny);
+	fp2copy751(P->Z, vec[0]);
+	fp2copy751(Q->Z, vec[1]);
+	fp2copy751(phP->Z, vec[2]);
+	fp2copy751(phQ->Z, vec[3]);
+	mont_n_way_inv(vec, 4, Zinv);
 
-    fp2mul751_mont(P->X, Zinv[0], R1->x);
-    fp2mul751_mont(P->Y, Zinv[0], R1->y);
-    fp2mul751_mont(Q->X, Zinv[1], R2->x);
-    fp2mul751_mont(Q->Y, Zinv[1], R2->y);
-    fp2mul751_mont(phP->X, Zinv[2], phiP->x);
-    fp2mul751_mont(phP->Y, Zinv[2], phiP->y);
-    fp2mul751_mont(phQ->X, Zinv[3], phiQ->x);
-    fp2mul751_mont(phQ->Y, Zinv[3], phiQ->y);
+	fp2mul751_mont(P->X, Zinv[0], R1->x);
+	fp2mul751_mont(P->Y, Zinv[0], R1->y);
+	fp2mul751_mont(Q->X, Zinv[1], R2->x);
+	fp2mul751_mont(Q->Y, Zinv[1], R2->y);
+	fp2mul751_mont(phP->X, Zinv[2], phiP->x);
+	fp2mul751_mont(phP->Y, Zinv[2], phiP->y);
+	fp2mul751_mont(phQ->X, Zinv[3], phiQ->x);
+	fp2mul751_mont(phQ->Y, Zinv[3], phiQ->y);
 
-    ph3(phiP, phiQ, R1, R2, A, a0, b0, a1, b1, CurveIsogeny);
+	ph3(phiP, phiQ, R1, R2, A, a0, b0, a1, b1, CurveIsogeny);
+
+	bit = mod3((digit_t*)a0);
+	to_Montgomery_mod_order((digit_t*)a0, (digit_t*)a0, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);    // Converting to Montgomery representation
+	to_Montgomery_mod_order((digit_t*)a1, (digit_t*)a1, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime); 
+	to_Montgomery_mod_order((digit_t*)b0, (digit_t*)b0, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);  
+	to_Montgomery_mod_order((digit_t*)b1, (digit_t*)b1, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime); 
     
-    bit = mod3((digit_t*)a0);
-    to_Montgomery_mod_order((digit_t*)a0, (digit_t*)a0, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);    // Converting to Montgomery representation
-    to_Montgomery_mod_order((digit_t*)a1, (digit_t*)a1, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime); 
-    to_Montgomery_mod_order((digit_t*)b0, (digit_t*)b0, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);  
-    to_Montgomery_mod_order((digit_t*)b1, (digit_t*)b1, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime); 
-    
-    if (bit != 0) {  // Storing [b1*a0inv, a1*a0inv, b0*a0inv] and setting bit384 to 0               
-        Montgomery_inversion_mod_order_bingcd((digit_t*)a0, inv, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
-        Montgomery_multiply_mod_order((digit_t*)b0, inv, &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
-        Montgomery_multiply_mod_order((digit_t*)a1, inv, &comp[NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
-        Montgomery_multiply_mod_order((digit_t*)b1, inv, &comp[2*NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
-        from_Montgomery_mod_order(&comp[0], &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);                           // Converting back from Montgomery representation
-        from_Montgomery_mod_order(&comp[NWORDS_ORDER], &comp[NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
-        from_Montgomery_mod_order(&comp[2*NWORDS_ORDER], &comp[2*NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
-        comp[3*NWORDS_ORDER-1] &= (digit_t)(-1) >> 1;
-    } else {  // Storing [b1*b0inv, a1*b0inv, a0*b0inv] and setting bit384 to 1
-        Montgomery_inversion_mod_order_bingcd((digit_t*)b0, inv, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);         
-        Montgomery_multiply_mod_order((digit_t*)a0, inv, &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
-        Montgomery_multiply_mod_order((digit_t*)a1, inv, &comp[NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
-        Montgomery_multiply_mod_order((digit_t*)b1, inv, &comp[2*NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
-        from_Montgomery_mod_order(&comp[0], &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);                           // Converting back from Montgomery representation 
-        from_Montgomery_mod_order(&comp[NWORDS_ORDER], &comp[NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
-        from_Montgomery_mod_order(&comp[2*NWORDS_ORDER], &comp[2*NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
-        comp[3*NWORDS_ORDER-1] |= (digit_t)1 << (sizeof(digit_t)*8 - 1);
-    }
-    
-    from_fp2mont(A, (felm_t*)&comp[3*NWORDS_ORDER]);
+	if (bit != 0) {  // Storing [b1*a0inv, a1*a0inv, b0*a0inv] and setting bit384 to 0               
+		Montgomery_inversion_mod_order_bingcd((digit_t*)a0, inv, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+		Montgomery_multiply_mod_order((digit_t*)b0, inv, &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
+		Montgomery_multiply_mod_order((digit_t*)a1, inv, &comp[NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
+		Montgomery_multiply_mod_order((digit_t*)b1, inv, &comp[2*NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
+		from_Montgomery_mod_order(&comp[0], &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);                           // Converting back from Montgomery representation
+		from_Montgomery_mod_order(&comp[NWORDS_ORDER], &comp[NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
+		from_Montgomery_mod_order(&comp[2*NWORDS_ORDER], &comp[2*NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
+		comp[3*NWORDS_ORDER-1] &= (digit_t)(-1) >> 1;
+	} else {  // Storing [b1*b0inv, a1*b0inv, a0*b0inv] and setting bit384 to 1
+		Montgomery_inversion_mod_order_bingcd((digit_t*)b0, inv, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);         
+		Montgomery_multiply_mod_order((digit_t*)a0, inv, &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
+		Montgomery_multiply_mod_order((digit_t*)a1, inv, &comp[NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
+		Montgomery_multiply_mod_order((digit_t*)b1, inv, &comp[2*NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
+		from_Montgomery_mod_order(&comp[0], &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);                           // Converting back from Montgomery representation 
+		from_Montgomery_mod_order(&comp[NWORDS_ORDER], &comp[NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
+		from_Montgomery_mod_order(&comp[2*NWORDS_ORDER], &comp[2*NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
+		comp[3*NWORDS_ORDER-1] |= (digit_t)1 << (sizeof(digit_t)*8 - 1);
+	}
+
+	from_fp2mont(A, (felm_t*)&comp[3*NWORDS_ORDER]);
 }
 
 
