@@ -603,52 +603,52 @@ void fp2inv751_mont_bingcd(f2elm_t a)
 void swap_points_basefield(point_basefield_proj_t P, point_basefield_proj_t Q, const digit_t option)
 { // Swap points over the base field.
   // If option = 0 then P <- P and Q <- Q, else if option = 0xFF...FF then P <- Q and Q <- P
-    digit_t temp;
-    unsigned int i;
+	digit_t temp;
+	unsigned int i;
 
-    for (i = 0; i < NWORDS_FIELD; i++) {
-        temp = option & (P->X[i] ^ Q->X[i]);
-        P->X[i] = temp ^ P->X[i]; 
-        Q->X[i] = temp ^ Q->X[i]; 
-        temp = option & (P->Z[i] ^ Q->Z[i]);
-        P->Z[i] = temp ^ P->Z[i]; 
-        Q->Z[i] = temp ^ Q->Z[i]; 
-    }
+	for (i = 0; i < NWORDS_FIELD; i++) {
+		temp = option & (P->X[i] ^ Q->X[i]);
+		P->X[i] = temp ^ P->X[i]; 
+		Q->X[i] = temp ^ Q->X[i]; 
+		temp = option & (P->Z[i] ^ Q->Z[i]);
+		P->Z[i] = temp ^ P->Z[i]; 
+		Q->Z[i] = temp ^ Q->Z[i]; 
+	}
 }
 
 
 void swap_points(point_proj_t P, point_proj_t Q, const digit_t option)
 { // Swap points.
   // If option = 0 then P <- P and Q <- Q, else if option = 0xFF...FF then P <- Q and Q <- P
-    digit_t temp;
-    unsigned int i;
+	digit_t temp;
+	unsigned int i;
 
-    for (i = 0; i < NWORDS_FIELD; i++) {
-        temp = option & (P->X[0][i] ^ Q->X[0][i]);
-        P->X[0][i] = temp ^ P->X[0][i]; 
-        Q->X[0][i] = temp ^ Q->X[0][i]; 
-        temp = option & (P->Z[0][i] ^ Q->Z[0][i]);
-        P->Z[0][i] = temp ^ P->Z[0][i]; 
-        Q->Z[0][i] = temp ^ Q->Z[0][i]; 
-        temp = option & (P->X[1][i] ^ Q->X[1][i]);
-        P->X[1][i] = temp ^ P->X[1][i]; 
-        Q->X[1][i] = temp ^ Q->X[1][i]; 
-        temp = option & (P->Z[1][i] ^ Q->Z[1][i]);
-        P->Z[1][i] = temp ^ P->Z[1][i]; 
-        Q->Z[1][i] = temp ^ Q->Z[1][i]; 
-    }
+	for (i = 0; i < NWORDS_FIELD; i++) {
+		temp = option & (P->X[0][i] ^ Q->X[0][i]);
+		P->X[0][i] = temp ^ P->X[0][i]; 
+		Q->X[0][i] = temp ^ Q->X[0][i]; 
+		temp = option & (P->Z[0][i] ^ Q->Z[0][i]);
+		P->Z[0][i] = temp ^ P->Z[0][i]; 
+		Q->Z[0][i] = temp ^ Q->Z[0][i]; 
+		temp = option & (P->X[1][i] ^ Q->X[1][i]);
+		P->X[1][i] = temp ^ P->X[1][i]; 
+		Q->X[1][i] = temp ^ Q->X[1][i]; 
+		temp = option & (P->Z[1][i] ^ Q->Z[1][i]);
+		P->Z[1][i] = temp ^ P->Z[1][i]; 
+		Q->Z[1][i] = temp ^ Q->Z[1][i]; 
+	}
 }
 
 
 void select_f2elm(const f2elm_t x, const f2elm_t y, f2elm_t z, const digit_t option)
 { // Select either x or y depending on the value of option.
   // If option = 0 then z <- x, else if option = 0xFF...FF then z <- y.
-    unsigned int i;
+	unsigned int i;
 
-    for (i = 0; i < NWORDS_FIELD; i++) {
-        z[0][i] = (option & (x[0][i] ^ y[0][i])) ^ x[0][i]; 
-        z[1][i] = (option & (x[1][i] ^ y[1][i])) ^ x[1][i]; 
-    }
+	for (i = 0; i < NWORDS_FIELD; i++) {
+		z[0][i] = (option & (x[0][i] ^ y[0][i])) ^ x[0][i]; 
+		z[1][i] = (option & (x[1][i] ^ y[1][i])) ^ x[1][i]; 
+	}
 }
 
 
@@ -746,40 +746,40 @@ void sqrt_Fp2_frac(const f2elm_t u, const f2elm_t v, f2elm_t y)
 
 void sqrt_Fp2(const f2elm_t u, f2elm_t y)
 { // Computes square roots of elements in (Fp2)^2 using Hamburg's trick. 
-    felm_t t0, t1, t2, t3;
-    digit_t *a  = (digit_t*)u[0], *b  = (digit_t*)u[1];
-    unsigned int i;
+	felm_t t0, t1, t2, t3;
+	digit_t *a  = (digit_t*)u[0], *b  = (digit_t*)u[1];
+	unsigned int i;
 
-    fpsqr751_mont(a, t0);                   // t0 = a^2
-    fpsqr751_mont(b, t1);                   // t1 = b^2
-    fpadd751(t0, t1, t0);                   // t0 = t0+t1 
-    fpcopy751(t0, t1);
-    for (i = 0; i < 370; i++) {             // t = t3^((p+1)/4)
-        fpsqr751_mont(t1, t1);
-    }
-    for (i = 0; i < 239; i++) {
-        fpsqr751_mont(t1, t0);                                         
-        fpmul751_mont(t1, t0, t1);                                      
-    }  
-    fpadd751(a, t1, t0);                    // t0 = a+t1      
-    fpdiv2_751(t0, t0);                     // t0 = t0/2 
+	fpsqr751_mont(a, t0);                   // t0 = a^2
+	fpsqr751_mont(b, t1);                   // t1 = b^2
+	fpadd751(t0, t1, t0);                   // t0 = t0+t1 
+	fpcopy751(t0, t1);
+	for (i = 0; i < 370; i++) {             // t = t3^((p+1)/4)
+		fpsqr751_mont(t1, t1);
+	}
+	for (i = 0; i < 239; i++) {
+		fpsqr751_mont(t1, t0);                                         
+		fpmul751_mont(t1, t0, t1);                                      
+	}  
+	fpadd751(a, t1, t0);                    // t0 = a+t1      
+	fpdiv2_751(t0, t0);                     // t0 = t0/2 
 	fpcopy751(t0, t2);
-    fpinv751_chain_mont(t2);                // t2 = t0^((p-3)/4)      
-    fpmul751_mont(t0, t2, t1);              // t1 = t2*t0             
-    fpmul751_mont(t2, b, t2);               // t2 = t2*b       
-    fpdiv2_751(t2, t2);                     // t2 = t2/2 
-    fpsqr751_mont(t1, t3);                  // t3 = t1^2  
+	fpinv751_chain_mont(t2);                // t2 = t0^((p-3)/4)      
+	fpmul751_mont(t0, t2, t1);              // t1 = t2*t0             
+	fpmul751_mont(t2, b, t2);               // t2 = t2*b       
+	fpdiv2_751(t2, t2);                     // t2 = t2/2 
+	fpsqr751_mont(t1, t3);                  // t3 = t1^2  
 	fpcorrection751(t0);
 	fpcorrection751(t3);
 
-    if (fpequal751_non_constant_time(t0, t3) == true) {
-        fpcopy751(t1, y[0]);
-        fpcopy751(t2, y[1]);
-    } else {
-        fpneg751(t1);
-        fpcopy751(t2, y[0]);
-        fpcopy751(t1, y[1]);
-    }
+	if (fpequal751_non_constant_time(t0, t3) == true) {
+		fpcopy751(t1, y[0]);
+		fpcopy751(t2, y[1]);
+	} else {
+		fpneg751(t1);
+		fpcopy751(t2, y[0]);
+		fpcopy751(t1, y[1]);
+	}
 }
 
 
