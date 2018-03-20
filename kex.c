@@ -1256,31 +1256,21 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 	fp2mul751_mont(Q->Y, Zinv[1], R2->y);
 	
 	fp2copy751(A, A_temp);
-	to_fp2mont(A_temp, A_temp);
-	
-	//to_Montgomery_mod_order(&comp, &comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
-	//to_Montgomery_mod_order((R1->x)[0], (R1->x)[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
-	//to_Montgomery_mod_order((R1->x)[0], (R1->x)[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
-	//to_Montgomery_mod_order(R1->y, R1->y, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
-	//to_Montgomery_mod_order((R1->x)[0], (R1->x)[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
-	//to_Montgomery_mod_order(R2->x, R2->x, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
-	//to_Montgomery_mod_order((R1->x)[0], (R1->x)[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
-	//to_Montgomery_mod_order(R2->y, R2->y, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
-	//to_Montgomery_mod_order((R1->x)[0], (R1->x)[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
-	//to_Montgomery_mod_order(A_temp, A_temp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
-	//to_Montgomery_mod_order((R1->x)[0], (R1->x)[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
 	
 	//construct (A+2)/4 from A
 	fp2add751(A_temp, one, A24);
 	fp2add751(A24, one, A24);
 	fp2div2_751(A24, A24);
 	fp2div2_751(A24, A24);
+	
+	to_fp2mont(A24, A24);
+	to_fp2mont(A_temp, A_temp);
   
 	//need to swap R1 and R2 in the following function call depending on the order of a in psi(S) = [a]R1 + [b]R2
 	if (compBit) {
-		mont_twodim_scalarmult(comp, R2, R1, A, A24, S_temp, CurveIsogeny);
+		mont_twodim_scalarmult(comp, R2, R1, A_temp, A24, S_temp, CurveIsogeny);
 	} else {
-		mont_twodim_scalarmult(comp, R1, R2, A, A24, S_temp, CurveIsogeny);
+		mont_twodim_scalarmult(comp, R1, R2, A_temp, A24, S_temp, CurveIsogeny);
 	}
 	
 	//from_Montgomery_mod_order(&comp, &comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
