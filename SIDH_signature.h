@@ -26,7 +26,7 @@ struct Signature {
 	//while ensuring their mutual exclusivity
 	union { 
 		point_proj *psiS[NUM_ROUNDS];
-		f2elm_t *compPsiS[NUM_ROUNDS];
+		digit_t (compPsiS[NWORDS_ORDER])[NUM_ROUNDS];
 	};
 	
 	int compBit[NUM_ROUNDS];

@@ -132,7 +132,7 @@ void *sign_thread(void *TPS) {
 		if (tps->compressed) {
 			Status = compressPsiS(tempPsiS, tps->sig->compPsiS[r], &(tps->sig->compBit[r]), A, *(tps->CurveIsogeny), NULL);
 			if (Status != CRYPTO_SUCCESS) {
-				printf("Error in psi(S) compression\n");
+				printf("Error in psi(S) compression : S multiple of 3\n");
 			}
 		} else {
 			fp2copy751(tempPsiS->X, tps->sig->psiS[r]->X);

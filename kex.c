@@ -1157,7 +1157,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	
 	point_full_proj_t P, Q;                    //points used in the construction of {R1,R2}
 	point_t psiSa, R1, R2;
-	digit_t* comp = (digit_t*)CompressedPsiS;
+	digit_t *comp = CompressedPsiS;
 	f2elm_t vec[3], Zinv[3];
 	f2elm_t A_temp;
 	digit_t a[NWORDS_ORDER], b[NWORDS_ORDER];  //for pohlig-hellman results
@@ -1187,6 +1187,8 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	fp2mul751_mont(P->Y, Zinv[0], R1->y);
 	fp2mul751_mont(Q->X, Zinv[1], R2->x);
 	fp2mul751_mont(Q->Y, Zinv[1], R2->y);
+	
+	//check that R1 and R2 have full order. e.g. they are points of order 2^e or 3^e
 	
 	//recover affine x of psiS
 	fp2mul751_mont(psiS->X, Zinv[2], psiSa->x);
@@ -1221,6 +1223,14 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 		from_Montgomery_mod_order(&comp, &comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);                           // Converting back from Montgomery representation 
 	}
 	
+	//check order of comp
+	//bit = mod3(comp);
+	
+	/*if (bit != 0) {
+		return CRYPTO_ERROR_INVALID_ORDER;
+	} else {
+		return Status;
+	}*/
 	return Status;
 }
 
@@ -1244,6 +1254,8 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 	f2elm_t tmp, one = {0};
 	f2elm_t A_temp, A24;
 	
+	//check the order of compressedPsiS to ensure it equals 3 or 2
+	
 	generate_3_torsion_basis(A, P, Q, CurveIsogeny);
 	
 	fp2copy751(P->Z, vec[0]);
@@ -1254,6 +1266,8 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 	fp2mul751_mont(P->Y, Zinv[0], R1->y);
 	fp2mul751_mont(Q->X, Zinv[1], R2->x);
 	fp2mul751_mont(Q->Y, Zinv[1], R2->y);
+	
+	//check that R1 and R2 have full order. e.g. they are points of order 2^e or 3^e
 	
 	fp2copy751(A, A_temp);
 	
