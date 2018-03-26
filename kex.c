@@ -1189,6 +1189,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	fp2mul751_mont(Q->Y, Zinv[1], R2->y);
 	
 	//check that R1 and R2 have full order. e.g. they are points of order 2^e or 3^e
+	//simply compute [lb^eb]R1 and [lb^eb]R2 and check that both match the identity
 	
 	//recover affine x of psiS
 	fp2mul751_mont(psiS->X, Zinv[2], psiSa->x);
@@ -1205,6 +1206,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	half_ph3(psiSa, R1, R2, A_temp, (uint64_t*)a, (uint64_t*)b, CurveIsogeny);
 	
 	//test that psi(S) = [a]R1 + [b]R2
+	//compute [a]R1 and [b]R2 on the ladder and sum them together; check that the sum = psiS
 	
 	//check if a has order 3
 	bit = mod3(a);
@@ -1214,23 +1216,22 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	if (bit != 0) {  // Storing b*ainv and setting bit384 to 0   
 		*compBit = 0;      
 		Montgomery_inversion_mod_order_bingcd(a, inv, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
-		Montgomery_multiply_mod_order(b, inv, &comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);  
-		from_Montgomery_mod_order(&comp, &comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);                           // Converting back from Montgomery representation
+		Montgomery_multiply_mod_order(b, inv, comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);  
+		from_Montgomery_mod_order(comp, comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);                           // Converting back from Montgomery representation
 	} else {  // Storing a*binv and setting bit384 to 1
 		*compBit = 1;
 		Montgomery_inversion_mod_order_bingcd(b, inv, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);         
-		Montgomery_multiply_mod_order(a, inv, &comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
-		from_Montgomery_mod_order(&comp, &comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);                           // Converting back from Montgomery representation 
+		Montgomery_multiply_mod_order(a, inv, comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
+		from_Montgomery_mod_order(comp, comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);                           // Converting back from Montgomery representation 
 	}
 	
 	//check order of comp
-	//bit = mod3(comp);
-	
-	/*if (bit != 0) {
+	bit = mod3(comp);
+	if (bit != 0) {
 		return CRYPTO_ERROR_INVALID_ORDER;
 	} else {
 		return Status;
-	}*/
+	}
 	return Status;
 }
 

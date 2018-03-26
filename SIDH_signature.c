@@ -22,14 +22,16 @@
 int NUM_THREADS = 248;
 int CUR_ROUND = 0;
 int batchSize = 248;
+int errorCount = 0;
 invBatch* signBatchA;
 invBatch* signBatchB;
 invBatch* verifyBatchA;
 invBatch* verifyBatchB;
 invBatch* verifyBatchC;
 invBatch* compressionBatch;
-pthread_mutex_t RLOCK;
-pthread_mutex_t BLOCK;
+pthread_mutex_t RLOCK;      //lock for round counter
+pthread_mutex_t BLOCK;      //lock for batch size counter
+pthread_mutex_t ELOCK;      //lock for errorCount
 
 void hashdata(unsigned int pbytes, unsigned char** comm1, unsigned char** comm2, uint8_t* HashResp, int hlen, int dlen, uint8_t *data, uint8_t *cHash, int cHashLength) {
     int r;
@@ -132,7 +134,7 @@ void *sign_thread(void *TPS) {
 		if (tps->compressed) {
 			Status = compressPsiS(tempPsiS, tps->sig->compPsiS[r], &(tps->sig->compBit[r]), A, *(tps->CurveIsogeny), NULL);
 			if (Status != CRYPTO_SUCCESS) {
-				printf("Error in psi(S) compression : S multiple of 3\n");
+				printf("Error in psi(S) compression : S not multiple of 3\n");
 			}
 		} else {
 			fp2copy751(tempPsiS->X, tps->sig->psiS[r]->X);
@@ -141,7 +143,7 @@ void *sign_thread(void *TPS) {
 		
 		//check success of SecretAgreementB
 		if(Status != CRYPTO_SUCCESS) {
-			printf("Random point generation failed"); 
+			//printf("Random point generation failed"); 
 		}
 	}
 }
