@@ -1157,6 +1157,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	
 	point_full_proj_t P, Q;                    //points used in the construction of {R1,R2}
 	point_t psiSa, R1, R2;
+	point_t R1not, R2not;
 	digit_t *comp = CompressedPsiS;
 	f2elm_t vec[3], Zinv[3];
 	f2elm_t A_temp;
@@ -1189,7 +1190,13 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	fp2mul751_mont(Q->Y, Zinv[1], R2->y);
 	
 	//check that R1 and R2 have full order. e.g. they are points of order 2^e or 3^e
-	//simply compute [lb^eb]R1 and [lb^eb]R2 and check that both match the identity
+	fp2copy751(R1->x, R1not->x);
+	fp2copy751(R2->x, R2not->x);
+	unsigned int p;
+	unsigned int q;
+	//fp2_ladder(R1not->x, comp, P, Q, A, p, q, CurveIsogeny); //should be A24
+	//loop for 3^eb?
+	//xTPL(R2not, R2not, A, CurveIsogeny->C); //should be A24 and C24?
 	
 	//recover affine x of psiS
 	fp2mul751_mont(psiS->X, Zinv[2], psiSa->x);
