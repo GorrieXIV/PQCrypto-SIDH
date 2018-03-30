@@ -1160,16 +1160,27 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	point_t R1not, R2not;
 	digit_t *comp = CompressedPsiS;
 	f2elm_t vec[3], Zinv[3];
-	f2elm_t A_temp;
+	f2elm_t A_temp, A24;
 	digit_t a[NWORDS_ORDER], b[NWORDS_ORDER];  //for pohlig-hellman results
 	digit_t inv[NWORDS_ORDER];                 //for storing the inverse of alpha
 	uint64_t Montgomery_Rprime[NWORDS64_ORDER] = {0x1A55482318541298, 0x070A6370DFA12A03, 0xCB1658E0E3823A40, 0xB3B7384EB5DEF3F9, 0xCBCA952F7006EA33, 0x00569EF8EC94864C}; // Value (2^384)^2 mod 3^239
 	uint64_t Montgomery_rprime[NWORDS64_ORDER] = {0x48062A91D3AB563D, 0x6CE572751303C2F5, 0x5D1319F3F160EC9D, 0xE35554E8C2D5623A, 0xCA29300232BC79A5, 0x8AAD843D646D78C5}; // Value -(3^239)^-1 mod 2^384
 	unsigned int bit;
-	f2elm_t tmp, one = {0};
+	f2elm_t tmp, t, inf, one = {0};
+	
+	fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
 
 	//is A value sent to mont rep in other instances? typically it is constructed using get_A
 	fp2copy751(A, A_temp);
+	
+	//construct (A+2)/4 from A
+	fp2add751(A_temp, one, A24);
+	fp2add751(A24, one, A24);
+	fp2div2_751(A24, A24);
+	fp2div2_751(A24, A24);
+	
+	to_fp2mont(A24, A24);
+	to_fp2mont(A_temp, A_temp);
 
 	//do we need a curveIsogeny that reflects E/<R> ?
 	//converting A_temp to montgomery representation causes generate_3_torsion_basis to run indefinitely
@@ -1192,12 +1203,19 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	//check that R1 and R2 have full order. e.g. they are points of order 2^e or 3^e
 	fp2copy751(R1->x, R1not->x);
 	fp2copy751(R2->x, R2not->x);
-	unsigned int p;
-	unsigned int q;
-	//fp2_ladder(R1not->x, comp, P, Q, A, p, q, CurveIsogeny); //should be A24
-	//loop for 3^eb?
-	//xTPL(R2not, R2not, A, CurveIsogeny->C); //should be A24 and C24?
-	
+	fp2copy751(psiS->X, t);
+	fp2inv751_mont_bingcd(t);
+	fp2mul751_mont(psiS->X, t, inf); //constructing the identity and storing it in inf
+	for (int i=0; i < 239; i++) {    //check that R1 and R2 have order 3^239
+		xTPL(R1not, R1not, A, CurveIsogeny->C); //should be A24 and C24?
+		xTPL(R2not, R2not, A, CurveIsogeny->C);
+		
+		if ((memcmp(inf, R1not->x, sizeof(f2elm_t)) != 0) || (memcmp(inf, R2not->x, sizeof(f2elm_t)) != 0)) {
+			printf ("Error: order of R1 or R2 falls short of 3^239\n");
+			return CRYPTO_ERROR_INVALID_ORDER;
+		}
+	}
+
 	//recover affine x of psiS
 	fp2mul751_mont(psiS->X, Zinv[2], psiSa->x);
 	
@@ -1236,9 +1254,8 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	bit = mod3(comp);
 	if (bit != 0) {
 		return CRYPTO_ERROR_INVALID_ORDER;
-	} else {
-		return Status;
-	}
+	} 
+	
 	return Status;
 }
 
@@ -1261,6 +1278,8 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 	unsigned int bit;
 	f2elm_t tmp, one = {0};
 	f2elm_t A_temp, A24;
+	
+	fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
 	
 	//check the order of compressedPsiS to ensure it equals 3 or 2
 	
