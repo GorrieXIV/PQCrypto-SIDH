@@ -125,14 +125,14 @@ void *sign_thread(void *TPS) {
 		
 		point_proj tempPsiS[1];
 		
-		//although SecretAgreement_A runs faster than B, B appears necessary for the time being to ensure success of system
+		//although SecretAgreement_A runs faster than B, B appears necessary so that we can generate psiS
 		Status = SecretAgreement_B(tps->PrivateKey, TempPubKey, tps->sig->Commitments2[r], *(tps->CurveIsogeny), NULL, tempPsiS, signBatchB);
 		
-		//f2elm_t Ab = {0};
-		//to_fp2mont(((f2elm_t*)tps->PublicKey)[0],Ab);
+		f2elm_t Ab;
+		to_fp2mont(((f2elm_t*)tps->PublicKey)[0],Ab);
 		
 		if (tps->compressed) {
-			Status = compressPsiS(tempPsiS, tps->sig->compPsiS[r], &(tps->sig->compBit[r]), A, *(tps->CurveIsogeny), NULL);
+			Status = compressPsiS(tempPsiS, tps->sig->compPsiS[r], &(tps->sig->compBit[r]), Ab, *(tps->CurveIsogeny), NULL);
 			if (Status != CRYPTO_SUCCESS) {
 				printf("Error in psi(S) compression : S not multiple of 3\n");
 			}

@@ -1167,6 +1167,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	uint64_t Montgomery_rprime[NWORDS64_ORDER] = {0x48062A91D3AB563D, 0x6CE572751303C2F5, 0x5D1319F3F160EC9D, 0xE35554E8C2D5623A, 0xCA29300232BC79A5, 0x8AAD843D646D78C5}; // Value -(3^239)^-1 mod 2^384
 	unsigned int bit;
 	f2elm_t tmp, t, inf, one = {0};
+	int error;
 	
 	fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
 
@@ -1180,7 +1181,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	fp2div2_751(A24, A24);
 	
 	to_fp2mont(A24, A24);
-	to_fp2mont(A_temp, A_temp);
+	//to_fp2mont(A_temp, A_temp);
 
 	//do we need a curveIsogeny that reflects E/<R> ?
 	//converting A_temp to montgomery representation causes generate_3_torsion_basis to run indefinitely
@@ -1210,10 +1211,18 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 		xTPL(R1not, R1not, A, CurveIsogeny->C); //should be A24 and C24?
 		xTPL(R2not, R2not, A, CurveIsogeny->C);
 		
-		if ((memcmp(inf, R1not->x, sizeof(f2elm_t)) != 0) || (memcmp(inf, R2not->x, sizeof(f2elm_t)) != 0)) {
-			printf ("Error: order of R1 or R2 falls short of 3^239\n");
+		if (memcmp(inf, R1not->x, sizeof(f2elm_t)) != 0) {
+			printf ("Error: order of R1 falls short of 3^239\n");
+			error++;
+		}
+		if (memcmp(inf, R2not->x, sizeof(f2elm_t)) != 0) {
+			printf ("Error: order of R2 falls short of 3^239\n");
+			error++;
+		}
+		if (error) {
 			return CRYPTO_ERROR_INVALID_ORDER;
 		}
+		
 	}
 
 	//recover affine x of psiS
