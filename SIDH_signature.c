@@ -19,10 +19,11 @@
 #include <semaphore.h>
 
 
-int NUM_THREADS = 248;
+int NUM_THREADS = 1;
 int CUR_ROUND = 0;
 int batchSize = 248;
 int errorCount = 0;
+int roundSuccess = 0;
 invBatch* signBatchA;
 invBatch* signBatchB;
 invBatch* verifyBatchA;
@@ -134,18 +135,24 @@ void *sign_thread(void *TPS) {
 		if (tps->compressed) {
 			Status = compressPsiS(tempPsiS, tps->sig->compPsiS[r], &(tps->sig->compBit[r]), Ab, *(tps->CurveIsogeny), NULL);
 			if (Status != CRYPTO_SUCCESS) {
-				printf("Error in psi(S) compression : S not multiple of 3\n");
+				printf("Error in psi(S) compression on round %d: S not multiple of 3\n", r);
+				pthread_mutex_lock(&ELOCK);
+				errorCount++;
+				pthread_mutex_unlock(&ELOCK);
+			} else {
+				printf("compress complete for %d\n", r);
 			}
 		} else {
 			fp2copy751(tempPsiS->X, tps->sig->psiS[r]->X);
 			fp2copy751(tempPsiS->Z, tps->sig->psiS[r]->Z);
-		}
+		}	
 		
 		//check success of SecretAgreementB
 		if(Status != CRYPTO_SUCCESS) {
 			//printf("Random point generation failed"); 
 		}
 	}
+	
 }
 
 
@@ -165,6 +172,12 @@ CRYPTO_STATUS isogeny_sign(PCurveIsogenyStruct CurveIsogeny, unsigned char *Priv
 	CUR_ROUND = 0;
 	if (pthread_mutex_init(&RLOCK, NULL)) {
 		printf("ERROR: mutex init failed\n");
+		return 1;
+	}
+	
+	errorCount = 0;
+	if (pthread_mutex_init(&ELOCK, NULL)) {
+		printf("ERROR: error counter mutex init failed\n");
 		return 1;
 	}
 	
@@ -202,15 +215,24 @@ CRYPTO_STATUS isogeny_sign(PCurveIsogenyStruct CurveIsogeny, unsigned char *Priv
 	for (t=0; t<NUM_THREADS; t++) {
 		pthread_join(sign_threads[t], NULL);
 	}
+	
+	if (errorCount > 0) {
+		//return CRYPTO_ERROR_INVALID_ORDER;
+	}
 
 	//printf("Average time for ZKP round ...... %10lld cycles\n", totcycles/NUM_ROUNDS);
 
 	// Commit to responses (hash)
 	int HashLength = 32; //bytes
 	sig->HashResp = calloc(2*NUM_ROUNDS, HashLength*sizeof(uint8_t));
+	
 	for (r=0; r<NUM_ROUNDS; r++) {
 		keccak((uint8_t*) sig->Randoms[r], obytes, sig->HashResp+((2*r)*HashLength), HashLength);
-		keccak((uint8_t*) sig->psiS[r], sizeof(point_proj), sig->HashResp+((2*r+1)*HashLength), HashLength);
+		if (sig->compressed) {
+			keccak((uint8_t*) sig->compPsiS[r], sizeof(digit_t) * NWORDS_ORDER, sig->HashResp+((2*r+1)*HashLength), HashLength);
+		} else {
+			keccak((uint8_t*) sig->psiS[r], sizeof(point_proj), sig->HashResp+((2*r+1)*HashLength), HashLength);
+		}
 	}
 
 	// Create challenge hash (by hashing all the commitments and HashResps)
@@ -219,7 +241,7 @@ CRYPTO_STATUS isogeny_sign(PCurveIsogenyStruct CurveIsogeny, unsigned char *Priv
 	int cHashLength = NUM_ROUNDS/8;
 	datastring = calloc(1, DataLength);
 	cHash = calloc(1, cHashLength);
-    
+  
 	hashdata(pbytes, sig->Commitments1, sig->Commitments2, sig->HashResp, HashLength, DataLength, datastring, cHash, cHashLength);
 	
 	pthread_t compress_threads[NUM_THREADS/3];
@@ -389,50 +411,67 @@ void *verify_thread(void *TPV) {
 			//can we do this in a method simpler and quicker using only a & b where psiS = [a]R1 + [b]R2
 			Status = SecretAgreement_B(NULL, TempPubKey, TempSharSec, *(tpv->CurveIsogeny), newPsiS, NULL, verifyBatchC);
 			if(Status != CRYPTO_SUCCESS) {
-				printf("Computing E/<R> -> E/<R,S> failed");
+				//printf("Computing E/<R> -> E/<R,S> failed");
 			}
 
 			int cmp = memcmp(TempSharSec, tpv->sig->Commitments2[r], 2*tpv->pbytes);
 			if (cmp != 0) {
 				verified = false;
-				printf("verifying E/<R> -> E/<R,S> failed\n");
+				//printf("verifying E/<R> -> E/<R,S> failed\n");
+			}
+		}
+		
+		if (tpv->sig->compressed) {	
+			if (!verified) {
+				pthread_mutex_lock(&ELOCK);
+				errorCount++;
+				pthread_mutex_unlock(&ELOCK);
+				printf("Error in verify on round %d\n", r);
+			} else {
+				printf("Verify complete for %d\n", r);
 			}
 		}
 	}
-
-	if (!verified) {
-		printf("ERROR: verify failed.\n");
-	}
+	
 }
 
 
 CRYPTO_STATUS isogeny_verify(PCurveIsogenyStruct CurveIsogeny, unsigned char *PublicKey, struct Signature *sig, int batched, int compressed) {
-    unsigned int pbytes = (CurveIsogeny->pwordbits + 7)/8;      // Number of bytes in a field element 
-    unsigned int n, obytes = (CurveIsogeny->owordbits + 7)/8;   // Number of bytes in an element in [1, order]
-    unsigned long long cycles, cycles1, cycles2, totcycles=0;
-    CRYPTO_STATUS Status = CRYPTO_SUCCESS;
-    bool passed;
+	unsigned int pbytes = (CurveIsogeny->pwordbits + 7)/8;      // Number of bytes in a field element 
+	unsigned int n, obytes = (CurveIsogeny->owordbits + 7)/8;   // Number of bytes in an element in [1, order]
+	unsigned long long cycles, cycles1, cycles2, totcycles=0;
+	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
+	bool passed;
 
-    int r;
+	int r;
 
-    // compute challenge hash
-    int HashLength = 32;
-    int cHashLength = NUM_ROUNDS/8;
-    int DataLength = (2 * NUM_ROUNDS * 2*pbytes) + (2 * NUM_ROUNDS * HashLength*sizeof(uint8_t));
-    uint8_t *datastring, *cHash;
-    datastring = calloc(1, DataLength);
-    cHash = calloc(1, cHashLength);
+	// compute challenge hash
+	int HashLength = 32;
+	int cHashLength = NUM_ROUNDS/8;
+	int DataLength = (2 * NUM_ROUNDS * 2*pbytes) + (2 * NUM_ROUNDS * HashLength*sizeof(uint8_t));
+	uint8_t *datastring, *cHash;
+	datastring = calloc(1, DataLength);
+	cHash = calloc(1, cHashLength);
 
-    hashdata(pbytes, sig->Commitments1, sig->Commitments2, sig->HashResp, HashLength, DataLength, datastring, cHash, cHashLength);
+	hashdata(pbytes, sig->Commitments1, sig->Commitments2, sig->HashResp, HashLength, DataLength, datastring, cHash, cHashLength);
 
-    // Run the verifying rounds
-    pthread_t verify_threads[NUM_THREADS];
-    CUR_ROUND = 0;
-    if (pthread_mutex_init(&RLOCK, NULL)) {
-    	printf("ERROR: mutex init failed\n");
-    	return 1;
-    }
-    thread_params_verify tpv = {&CurveIsogeny, PublicKey, sig, cHashLength, cHash, pbytes, n, obytes, compressed};
+	// Run the verifying rounds
+	pthread_t verify_threads[NUM_THREADS];
+
+	//initialize mutexes and cross-thread variables
+	CUR_ROUND = 0;
+	if (pthread_mutex_init(&RLOCK, NULL)) {
+		printf("ERROR: mutex init failed\n");
+		return 1;
+	}
+
+	errorCount = 0;
+	if (pthread_mutex_init(&ELOCK, NULL)) {
+		printf("ERROR: mutex init failed\n");
+		return 1;
+	}  
+
+	thread_params_verify tpv = {&CurveIsogeny, PublicKey, sig, cHashLength, cHash, pbytes, n, obytes, compressed};
 
 	if (batched) {
 		verifyBatchA = (invBatch*) malloc (sizeof(invBatch));
@@ -464,16 +503,20 @@ CRYPTO_STATUS isogeny_verify(PCurveIsogenyStruct CurveIsogeny, unsigned char *Pu
 		verifyBatchC = NULL;
 	}
 
-    int t;
-    for (t=0; t<NUM_THREADS; t++) {
-    	if (pthread_create(&verify_threads[t], NULL, verify_thread, &tpv)) {
-    		printf("ERROR: Failed to create thread %d\n", t);
-    	}
-    }
+	int t;
+	for (t=0; t<NUM_THREADS; t++) {
+		if (pthread_create(&verify_threads[t], NULL, verify_thread, &tpv)) {
+			printf("ERROR: Failed to create thread %d\n", t);
+		}
+	}
 
-    for (t=0; t<NUM_THREADS; t++) {
-    	pthread_join(verify_threads[t], NULL);
-  	}
+	for (t=0; t<NUM_THREADS; t++) {
+		pthread_join(verify_threads[t], NULL);
+	}
+
+	if (errorCount > 0) {
+		return CRYPTO_ERROR_INVALID_ORDER;
+	}
 
 cleanup:
 		if (batched) {

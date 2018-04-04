@@ -1149,13 +1149,15 @@ CRYPTO_STATUS EphemeralSecretAgreement_Compression_B(const unsigned char* Privat
 ///////////////             COMPRESSION FOR SIGNATURES              ///////////////
 
 CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS, int* compBit, const f2elm_t A, PCurveIsogenyStruct CurveIsogeny, invBatch* batch) {
-// Inputs:  a point psiS in point_proj form
-//          curve CurveIsogeny (SIDHp751)
-// Outputs: compressed psiS of the form ainv*b where psiS = R1 + [ainv*b]R2
-// 
-	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
+// Inputs:  psiS - a point in projective coordinates - computed by SecretAgreementB
+//          A - f2elm in montgomery form - the A value for the signers curve
+//          CurveIsogeny - SIDHp751
+// Outputs: CompressedPsiS - f2elm in subgroub E[3^239] - ainv*b or binv*a
+//          compBit - a bit signifying if ainv*b (0) or binv*a (1) was computed
 	
-	point_full_proj_t P, Q;                    //points used in the construction of {R1,R2}
+	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
+	point_full_proj_t P, Q;
+	point_proj_t Pnot, Qnot;
 	point_t psiSa, R1, R2;
 	point_t R1not, R2not;
 	digit_t *comp = CompressedPsiS;
@@ -1167,103 +1169,85 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	uint64_t Montgomery_rprime[NWORDS64_ORDER] = {0x48062A91D3AB563D, 0x6CE572751303C2F5, 0x5D1319F3F160EC9D, 0xE35554E8C2D5623A, 0xCA29300232BC79A5, 0x8AAD843D646D78C5}; // Value -(3^239)^-1 mod 2^384
 	unsigned int bit;
 	f2elm_t tmp, t, inf, one = {0};
-	int error;
-	
+	int error;	
 	fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
-
-	//is A value sent to mont rep in other instances? typically it is constructed using get_A
 	fp2copy751(A, A_temp);
-	
-	//construct (A+2)/4 from A
-	fp2add751(A_temp, one, A24);
-	fp2add751(A24, one, A24);
-	fp2div2_751(A24, A24);
-	fp2div2_751(A24, A24);
-	
-	to_fp2mont(A24, A24);
-	//to_fp2mont(A_temp, A_temp);
 
-	//do we need a curveIsogeny that reflects E/<R> ?
-	//converting A_temp to montgomery representation causes generate_3_torsion_basis to run indefinitely
+	// constructing the basis {P,Q} which genertes E[3^239] // 
 	generate_3_torsion_basis(A_temp, P, Q, CurveIsogeny);
 	
-	//do we need
-	to_fp2mont(A_temp, A_temp);
+	// check that P and Q have full order ----------------------------------------------//
+	fp2copy751(P->X, Pnot->X);                                                          //
+	fp2copy751(P->Z, Pnot->Z);                                                          //
+	fp2copy751(Q->X, Qnot->X);                                                          //
+	fp2copy751(Q->Z, Qnot->Z);                                                          //
+	for (int i=0; i < 238; i++) {                                                       //
+		xTPL(Pnot, Pnot, A, CurveIsogeny->C);                                             //
+		xTPL(Qnot, Qnot, A, CurveIsogeny->C);                                             //
+		                                                                                  //
+		if (is_felm_zero(((felm_t*)Pnot->Z)[0]) && is_felm_zero(((felm_t*)Pnot->Z)[1])) { //
+			printf ("Error: order of P falls short of 3^239\n");                            //
+			error++;                                                                        //
+		}                                                                                 //
+		if (is_felm_zero(((felm_t*)Qnot->Z)[0]) && is_felm_zero(((felm_t*)Qnot->Z)[1])) { //
+			printf ("Error: order of Q falls short of 3^239\n");                            //
+			error++;                                                                        //
+		}                                                                                 //
+		if (error) {                                                                      //
+			return CRYPTO_ERROR_INVALID_ORDER;                                              //
+		}	                                                                                //
+	}                                                                                   //
+	//----------------------------------------------------------------------------------//
 	
-	fp2copy751(P->Z, vec[0]);
-	fp2copy751(Q->Z, vec[1]);
-	fp2copy751(psiS->Z, vec[2]);
-	
-	mont_n_way_inv(vec, 3, Zinv);
-	
-	fp2mul751_mont(P->X, Zinv[0], R1->x);
-	fp2mul751_mont(P->Y, Zinv[0], R1->y);
-	fp2mul751_mont(Q->X, Zinv[1], R2->x);
-	fp2mul751_mont(Q->Y, Zinv[1], R2->y);
-	
-	//check that R1 and R2 have full order. e.g. they are points of order 2^e or 3^e
-	fp2copy751(R1->x, R1not->x);
-	fp2copy751(R2->x, R2not->x);
-	fp2copy751(psiS->X, t);
-	fp2inv751_mont_bingcd(t);
-	fp2mul751_mont(psiS->X, t, inf); //constructing the identity and storing it in inf
-	for (int i=0; i < 239; i++) {    //check that R1 and R2 have order 3^239
-		xTPL(R1not, R1not, A, CurveIsogeny->C); //should be A24 and C24?
-		xTPL(R2not, R2not, A, CurveIsogeny->C);
-		
-		if (memcmp(inf, R1not->x, sizeof(f2elm_t)) != 0) {
-			printf ("Error: order of R1 falls short of 3^239\n");
-			error++;
-		}
-		if (memcmp(inf, R2not->x, sizeof(f2elm_t)) != 0) {
-			printf ("Error: order of R2 falls short of 3^239\n");
-			error++;
-		}
-		if (error) {
-			return CRYPTO_ERROR_INVALID_ORDER;
-		}
-		
-	}
-
-	//recover affine x of psiS
-	fp2mul751_mont(psiS->X, Zinv[2], psiSa->x);
-	
-	//recover affine y of psiS
-	fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
-	fp2add751(psiSa->x, A_temp, tmp);
-	fp2mul751_mont(psiSa->x, tmp, tmp);
-	fp2add751(tmp, one, tmp);                 
-	fp2mul751_mont(psiSa->x, tmp, tmp);
-	sqrt_Fp2(tmp, psiSa->y);
+	// convert P, Q, and psiS to affine coordinates -//
+	fp2copy751(P->Z, vec[0]);                        //
+	fp2copy751(Q->Z, vec[1]);                        //
+	fp2copy751(psiS->Z, vec[2]);                     //
+	                                                 //
+	mont_n_way_inv(vec, 3, Zinv);                    //
+	                                                 //
+	fp2mul751_mont(P->X, Zinv[0], R1->x);            //
+	fp2mul751_mont(P->Y, Zinv[0], R1->y);            //
+	fp2mul751_mont(Q->X, Zinv[1], R2->x);            //
+	fp2mul751_mont(Q->Y, Zinv[1], R2->y);            //
+                                                   //
+	fp2mul751_mont(psiS->X, Zinv[2], psiSa->x);      // Recover affine x of psiS
+	                                                 //
+	fpcopy751(CurveIsogeny->Montgomery_one, one[0]); //
+	fp2add751(psiSa->x, A_temp, tmp);                //
+	fp2mul751_mont(psiSa->x, tmp, tmp);              //
+	fp2add751(tmp, one, tmp);                        //
+	fp2mul751_mont(psiSa->x, tmp, tmp);              //
+	sqrt_Fp2(tmp, psiSa->y);                         //
+	//-----------------------------------------------//
 	
 	//do ph3 or ph2 depending on if S has order 3 or 2
 	half_ph3(psiSa, R1, R2, A_temp, (uint64_t*)a, (uint64_t*)b, CurveIsogeny);
 	
-	//test that psi(S) = [a]R1 + [b]R2
-	//compute [a]R1 and [b]R2 on the ladder and sum them together; check that the sum = psiS
+	// compute ainv*b or binv*a depending on which element is divisible by 3 ----------------------------------------------------------//
+	bit = mod3(a);                                                                                                                     //
+	to_Montgomery_mod_order(a, a, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);                   // Converting to Montgomery representation
+	to_Montgomery_mod_order(b, b, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);                   // 
+	                                                                                                                                   //
+	if (bit != 0) {                                                                                                                    // Storing b*ainv and setting bit384 to 0
+		*compBit = 0;                                                                                                                    //
+		Montgomery_inversion_mod_order_bingcd(a, inv, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime); //
+		Montgomery_multiply_mod_order(b, inv, &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);                             //
+		from_Montgomery_mod_order(&comp[0], &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);                               // Converting back from Montgomery representation
+	} else {                                                                                                                           // Storing a*binv and setting bit384 to 1
+		*compBit = 1;                                                                                                                    //
+		Montgomery_inversion_mod_order_bingcd(b, inv, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime); //      
+		Montgomery_multiply_mod_order(a, inv, &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);                             //
+		from_Montgomery_mod_order(&comp[0], &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);                               // Converting back from Montgomery representation 
+	}                                                                                                                                  //
+	//---------------------------------------------------------------------------------------------------------------------------------//
 	
-	//check if a has order 3
-	bit = mod3(a);
-	to_Montgomery_mod_order(a, a, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);    // Converting to Montgomery representation
-	to_Montgomery_mod_order(b, b, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);  
-    
-	if (bit != 0) {  // Storing b*ainv and setting bit384 to 0   
-		*compBit = 0;      
-		Montgomery_inversion_mod_order_bingcd(a, inv, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
-		Montgomery_multiply_mod_order(b, inv, comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);  
-		from_Montgomery_mod_order(comp, comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);                           // Converting back from Montgomery representation
-	} else {  // Storing a*binv and setting bit384 to 1
-		*compBit = 1;
-		Montgomery_inversion_mod_order_bingcd(b, inv, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);         
-		Montgomery_multiply_mod_order(a, inv, comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
-		from_Montgomery_mod_order(comp, comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);                           // Converting back from Montgomery representation 
-	}
-	
-	//check order of comp
-	bit = mod3(comp);
-	if (bit != 0) {
-		return CRYPTO_ERROR_INVALID_ORDER;
-	} 
+	// make sure comp has order 3 -------//
+	bit = mod3(comp);                    //
+	if (bit != 0) {                      //
+		return CRYPTO_ERROR_INVALID_ORDER; //
+	}                                    //
+	//-----------------------------------//
 	
 	return Status;
 }
