@@ -360,11 +360,11 @@ int main (int argc, char** argv) {
 			
 			
 	//signature tests --------------------------------------------------------------
-	Status = cryptotest_signature();
+	/*Status = cryptotest_signature();
 	if (Status != CRYPTO_SUCCESS) { 
 		printf("\n\n   Error detected: %s \n\n", SIDH_get_error_message(Status));
 		return -1;	
-	} else { printf("\n  ISOGENY-BASED SIGNATURE RUN SUCCESSFUL\n\n"); }
+	} else { printf("\n  ISOGENY-BASED SIGNATURE RUN SUCCESSFUL\n\n"); }*/
 
 
 	//signature benchmark ----------------------------------------------------------
@@ -405,8 +405,44 @@ int main (int argc, char** argv) {
 		printf("\n\n   Error detected: %s \n\n", SIDH_get_error_message(Status));
 		return -1;	
 	} */
-		
-		
+	
+	
+	//temporary arithmetic tests
+	unsigned int pbytes = (CurveIsogeny_SIDHp751.pwordbits + 7)/8;
+	unsigned int obytes = (CurveIsogeny_SIDHp751.owordbits + 7)/8;
+	f2elm_t m;
+	f2elm_t n;
+	f2elm_t c;
+	unsigned long long cycles1, cycles2, scycles;
+	
+	PCurveIsogenyStruct CurveIsogeny = {0};
+	
+	CurveIsogeny = SIDH_curve_allocate(&CurveIsogeny_SIDHp751);
+	if (CurveIsogeny == NULL) {
+		Status = CRYPTO_ERROR_NO_MEMORY;
+		goto cleanup;
+	}
+   
+	Status = SIDH_curve_initialize(CurveIsogeny, &random_bytes_test, &CurveIsogeny_SIDHp751);
+	if (Status != CRYPTO_SUCCESS) {
+		goto cleanup;
+	}
+	
+	for (int i=0; i < 1000; i++) {
+		Status = random_bytes_test(sizeof(f2elm_t), m);
+		Status = random_bytes_test(sizeof(f2elm_t), n);
+		to_fp2mont(m, m);
+		to_fp2mont(n, n);
+		cycles1 = cpucycles();
+		//fp2add751(m, n, c);
+		//fp2mult751_mont(m, n, c);
+		cycles2 = cpucycles();
+		scycles = cycles2 - cycles1;
+		printf("%d\n", scycles);
+	}
+	
+cleanup:
+		SIDH_curve_free(CurveIsogeny);
 	
 	return 0;
 	

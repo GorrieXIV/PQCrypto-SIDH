@@ -2051,18 +2051,18 @@ int main()
 {
     bool OK = true;
 
-    OK = OK && fp_test();        // Test field operations using p751
+    //OK = OK && fp_test();        // Test field operations using p751
     OK = OK && fp_run();         // Benchmark field operations using p751
 
-    OK = OK && fp2_test();       // Test arithmetic functions over GF(p751^2)
+    //OK = OK && fp2_test();       // Test arithmetic functions over GF(p751^2)
     OK = OK && fp2_run();        // Benchmark arithmetic functions over GF(p751^2)
     
-    OK = OK && ecisog_run(&CurveIsogeny_SIDHp751);       // Benchmark elliptic curve and isogeny functions
+    //OK = OK && ecisog_run(&CurveIsogeny_SIDHp751);       // Benchmark elliptic curve and isogeny functions
 
-    OK = OK && ecpoints_test(&CurveIsogeny_SIDHp751);    // Test point generation functions
-    OK = OK && ecpairing_test(&CurveIsogeny_SIDHp751);   // Test pairing functions
-    OK = OK && ecph_test(&CurveIsogeny_SIDHp751);        // Test Pohlig-Hellman functions    
-    OK = OK && eccompress_test(&CurveIsogeny_SIDHp751);  // Test Pohlig-Hellman functions
+    //OK = OK && ecpoints_test(&CurveIsogeny_SIDHp751);    // Test point generation functions
+    //OK = OK && ecpairing_test(&CurveIsogeny_SIDHp751);   // Test pairing functions
+    //OK = OK && ecph_test(&CurveIsogeny_SIDHp751);        // Test Pohlig-Hellman functions    
+    //OK = OK && eccompress_test(&CurveIsogeny_SIDHp751);  // Test Pohlig-Hellman functions
 
     return OK;
 }

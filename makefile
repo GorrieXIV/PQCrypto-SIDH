@@ -64,7 +64,7 @@ kex_test: $(OBJECTS_KEX_TEST)
 	$(CC) -pthread -o kex_test $(OBJECTS_KEX_TEST) $(ARM_SETTING)
 
 arith_test: $(OBJECTS_ARITH_TEST)
-	$(CC) -o arith_test $(OBJECTS_ARITH_TEST) $(ARM_SETTING)
+	$(CC) -pthread -o arith_test $(OBJECTS_ARITH_TEST) $(ARM_SETTING)
 	
 sig_test: $(OBJECTS_SIG_TEST)
 	$(CC) -pthread -o sig_test $(OBJECTS_SIG_TEST)

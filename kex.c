@@ -27,7 +27,7 @@ CRYPTO_STATUS EphemeralKeyGeneration_A(unsigned char* PrivateKeyA, unsigned char
     publickey_t* PublicKey = (publickey_t*)PublicKeyA;
     unsigned int i, row, m, index = 0, pts_index[MAX_INT_POINTS_ALICE], npts = 0; 
     f2elm_t coeff[5], A = {0}, C = {0}, Aout, Cout;
-    CRYPTO_STATUS Status = CRYPTO_ERROR_UNKNOWN; 
+    CRYPTO_STATUS Status = CRYPTO_ERROR_UNKNOWN;
 
     if (PrivateKeyA == NULL || PublicKey == NULL || is_CurveIsogenyStruct_null(CurveIsogeny)) {
         return CRYPTO_ERROR_INVALID_PARAMETER;
