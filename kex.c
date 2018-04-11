@@ -1163,12 +1163,12 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	digit_t *comp = CompressedPsiS;
 	f2elm_t vec[3], Zinv[3];
 	f2elm_t A_temp, A24;
-	digit_t a[NWORDS_ORDER], b[NWORDS_ORDER], anot[NWORDS_ORDER], bnot[NWORDS_ORDER], garb[NWORDS_ORDER], garb2[NWORDS_ORDER];  //for pohlig-hellman results
+	digit_t a[NWORDS_ORDER], b[NWORDS_ORDER], anot[NWORDS_ORDER], bnot[NWORDS_ORDER];  //for pohlig-hellman results
 	digit_t inv[NWORDS_ORDER];                 //for storing the inverse of alpha
 	uint64_t Montgomery_Rprime[NWORDS64_ORDER] = {0x1A55482318541298, 0x070A6370DFA12A03, 0xCB1658E0E3823A40, 0xB3B7384EB5DEF3F9, 0xCBCA952F7006EA33, 0x00569EF8EC94864C}; // Value (2^384)^2 mod 3^239
 	uint64_t Montgomery_rprime[NWORDS64_ORDER] = {0x48062A91D3AB563D, 0x6CE572751303C2F5, 0x5D1319F3F160EC9D, 0xE35554E8C2D5623A, 0xCA29300232BC79A5, 0x8AAD843D646D78C5}; // Value -(3^239)^-1 mod 2^384
 	unsigned int bita, bitb;
-	f2elm_t tmp, t, inf, one = {0};
+	f2elm_t tmp, tmp2, t, inf, one = {0};
 	int error;
 	fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
 	fp2copy751(A, A_temp);
@@ -1213,27 +1213,23 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
                                                    //
 	fp2mul751_mont(psiS->X, Zinv[2], psiSa->x);      // Recover affine x of psiS
 	                                                 //
-	fpcopy751(CurveIsogeny->Montgomery_one, one[0]); //
-	fp2add751(psiSa->x, A_temp, tmp);                //
-	fp2mul751_mont(psiSa->x, tmp, tmp);              //
-	fp2add751(tmp, one, tmp);                        //
-	fp2mul751_mont(psiSa->x, tmp, tmp);              //
-	sqrt_Fp2(tmp, psiSa->y);                         //
+	//fpcopy751(CurveIsogeny->Montgomery_one, one[0]); //
+	//fp2add751(psiSa->x, A_temp, tmp);                //
+	//fp2mul751_mont(psiSa->x, tmp, tmp);              //
+	//fp2add751(tmp, one, tmp);                        //
+	//fp2mul751_mont(psiSa->x, tmp, tmp);              //
+	//sqrt_Fp2(tmp, psiSa->y);                         //
+	fp2mul751_mont(psiSa->x, psiSa->x, tmp);
+	fp2mul751_mont(tmp, psiSa->x, tmp2);
+	fp2mul751_mont(tmp, A_temp, tmp);
+	fp2add751(tmp, tmp2, tmp);
+	fp2add751(tmp, psiSa->x, tmp);
+	sqrt_Fp2(tmp, psiSa->y);
+	fp2neg751(psiSa->y);
 	//-----------------------------------------------//
 	
 	//do ph3 or ph2 depending on if S has order 3 or 2
 	half_ph3(psiSa, R1, R2, A_temp, (uint64_t*)a, (uint64_t*)b, CurveIsogeny);
-	fp2copy751(psiSa, notPsiSa);
-	ph3(psiSa, notPsiSa, R1, R2, A_temp, (uint64_t*)anot, (uint64_t*)bnot, (uint64_t*)garb, (uint64_t*)garb2, CurveIsogeny);
-	
-	int cmp = memcmp(a, anot, sizeof(digit_t)*NWORDS_ORDER);
-	if (cmp != 0) {
-		return CRYPTO_ERROR_DURING_TEST;
-	}
-	cmp = memcmp(b, bnot, sizeof(digit_t)*NWORDS_ORDER);
-	if (cmp != 0) {
-		return CRYPTO_ERROR_DURING_TEST;
-	}
 	
 	// compute ainv*b or binv*a depending on which element is divisible by 3 ----------------------------------------------------------//
 	bita = mod3(a);
