@@ -135,7 +135,7 @@ void *sign_thread(void *TPS) {
 		if (tps->compressed) {
 			Status = compressPsiS(tempPsiS, tps->sig->compPsiS[r], &(tps->sig->compBit[r]), Ab, *(tps->CurveIsogeny), NULL);
 			if (Status != CRYPTO_SUCCESS) {
-				printf("Error in psi(S) compression on round %d: S not multiple of 3\n", r);
+				printf("Error in psi(S) compression on round %d: Neither a nor b order of 3\n", r);
 				pthread_mutex_lock(&ELOCK);
 				errorCount++;
 				pthread_mutex_unlock(&ELOCK);

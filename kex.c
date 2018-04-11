@@ -1167,9 +1167,9 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	digit_t inv[NWORDS_ORDER];                 //for storing the inverse of alpha
 	uint64_t Montgomery_Rprime[NWORDS64_ORDER] = {0x1A55482318541298, 0x070A6370DFA12A03, 0xCB1658E0E3823A40, 0xB3B7384EB5DEF3F9, 0xCBCA952F7006EA33, 0x00569EF8EC94864C}; // Value (2^384)^2 mod 3^239
 	uint64_t Montgomery_rprime[NWORDS64_ORDER] = {0x48062A91D3AB563D, 0x6CE572751303C2F5, 0x5D1319F3F160EC9D, 0xE35554E8C2D5623A, 0xCA29300232BC79A5, 0x8AAD843D646D78C5}; // Value -(3^239)^-1 mod 2^384
-	unsigned int bit;
+	unsigned int bita, bitb;
 	f2elm_t tmp, t, inf, one = {0};
-	int error;	
+	int error;
 	fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
 	fp2copy751(A, A_temp);
 
@@ -1225,11 +1225,16 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	half_ph3(psiSa, R1, R2, A_temp, (uint64_t*)a, (uint64_t*)b, CurveIsogeny);
 	
 	// compute ainv*b or binv*a depending on which element is divisible by 3 ----------------------------------------------------------//
-	bit = mod3(a);                                                                                                                     //
-	to_Montgomery_mod_order(a, a, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);                   // Converting to Montgomery representation
+	bita = mod3(a);
+	bitb = mod3(b);
+	if (bita != 0 && bitb != 0) {
+		return CRYPTO_ERROR_INVALID_ORDER;
+	}                                                                                                                                  //
+	
+	to_Montgomery_mod_order(a, a, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);                   // Converting to Mont rep
 	to_Montgomery_mod_order(b, b, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);                   // 
 	                                                                                                                                   //
-	if (bit != 0) {                                                                                                                    // Storing b*ainv and setting bit384 to 0
+	if (bita != 0) {                                                                                                                   // Storing b*ainv and setting bit384 to 0
 		*compBit = 0;                                                                                                                    //
 		Montgomery_inversion_mod_order_bingcd(a, inv, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime); //
 		Montgomery_multiply_mod_order(b, inv, &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);                             //
@@ -1243,9 +1248,9 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	//---------------------------------------------------------------------------------------------------------------------------------//
 	
 	// make sure comp has order 3 -------//
-	bit = mod3(comp);                    //
-	if (bit != 0) {                      //
-		return CRYPTO_ERROR_INVALID_ORDER; //
+	bita = mod3(comp);                   //
+	if (bita != 0) {                     //
+		//return CRYPTO_ERROR_INVALID_ORDER; //
 	}                                    //
 	//-----------------------------------//
 	
