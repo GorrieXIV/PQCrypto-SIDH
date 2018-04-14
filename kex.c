@@ -1200,25 +1200,25 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	//----------------------------------------------------------------------------------//
 	
 	// convert P, Q, and psiS to affine coordinates -//
-	fp2copy751(P->Z, vec[0]);                        //
-	fp2copy751(Q->Z, vec[1]);                        //
-	fp2copy751(psiS->Z, vec[2]);                     //
-	                                                 //
-	mont_n_way_inv(vec, 3, Zinv);                    //
-	                                                 //
-	fp2mul751_mont(P->X, Zinv[0], R1->x);            //
-	fp2mul751_mont(P->Y, Zinv[0], R1->y);            //
-	fp2mul751_mont(Q->X, Zinv[1], R2->x);            //
-	fp2mul751_mont(Q->Y, Zinv[1], R2->y);            //
-                                                   //
-	fp2mul751_mont(psiS->X, Zinv[2], psiSa->x);      // Recover affine x of psiS
-	                                                 //
-	//fpcopy751(CurveIsogeny->Montgomery_one, one[0]); //
-	//fp2add751(psiSa->x, A_temp, tmp);                //
-	//fp2mul751_mont(psiSa->x, tmp, tmp);              //
-	//fp2add751(tmp, one, tmp);                        //
-	//fp2mul751_mont(psiSa->x, tmp, tmp);              //
-	//sqrt_Fp2(tmp, psiSa->y);                         //
+	fp2copy751(P->Z, vec[0]);                        
+	fp2copy751(Q->Z, vec[1]);                        
+	fp2copy751(psiS->Z, vec[2]);                     
+	                                                 
+	mont_n_way_inv(vec, 3, Zinv);                    
+	                                                 
+	fp2mul751_mont(P->X, Zinv[0], R1->x);            
+	fp2mul751_mont(P->Y, Zinv[0], R1->y);            
+	fp2mul751_mont(Q->X, Zinv[1], R2->x);            
+	fp2mul751_mont(Q->Y, Zinv[1], R2->y);            
+                                                   
+	fp2mul751_mont(psiS->X, Zinv[2], psiSa->x);      
+	                                                 
+	//fpcopy751(CurveIsogeny->Montgomery_one, one[0]); 
+	//fp2add751(psiSa->x, A_temp, tmp);                
+	//fp2mul751_mont(psiSa->x, tmp, tmp);              
+	//fp2add751(tmp, one, tmp);                        
+	//fp2mul751_mont(psiSa->x, tmp, tmp);              
+	//sqrt_Fp2(tmp, psiSa->y);                         
 	fp2mul751_mont(psiSa->x, psiSa->x, tmp);
 	fp2mul751_mont(tmp, psiSa->x, tmp2);
 	fp2mul751_mont(tmp, A_temp, tmp);
