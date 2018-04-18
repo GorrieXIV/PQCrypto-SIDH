@@ -1163,7 +1163,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	digit_t *comp = CompressedPsiS;
 	f2elm_t vec[3], Zinv[3];
 	f2elm_t A_temp, A24;
-	digit_t a[NWORDS_ORDER], b[NWORDS_ORDER], anot[NWORDS_ORDER], bnot[NWORDS_ORDER];  //for pohlig-hellman results
+	digit_t a[NWORDS_ORDER], b[NWORDS_ORDER], anot[NWORDS_ORDER], bnot[NWORDS_ORDER], anot2[NWORDS_ORDER], bnot2[NWORDS_ORDER];  //for pohlig-hellman results
 	digit_t inv[NWORDS_ORDER];                 //for storing the inverse of alpha
 	uint64_t Montgomery_Rprime[NWORDS64_ORDER] = {0x1A55482318541298, 0x070A6370DFA12A03, 0xCB1658E0E3823A40, 0xB3B7384EB5DEF3F9, 0xCBCA952F7006EA33, 0x00569EF8EC94864C}; // Value (2^384)^2 mod 3^239
 	uint64_t Montgomery_rprime[NWORDS64_ORDER] = {0x48062A91D3AB563D, 0x6CE572751303C2F5, 0x5D1319F3F160EC9D, 0xE35554E8C2D5623A, 0xCA29300232BC79A5, 0x8AAD843D646D78C5}; // Value -(3^239)^-1 mod 2^384
@@ -1177,26 +1177,26 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	generate_3_torsion_basis(A_temp, P, Q, CurveIsogeny);
 	
 	// check that P and Q have full order ----------------------------------------------//
-	fp2copy751(P->X, Pnot->X);                                                          //
-	fp2copy751(P->Z, Pnot->Z);                                                          //
-	fp2copy751(Q->X, Qnot->X);                                                          //
-	fp2copy751(Q->Z, Qnot->Z);                                                          //
-	for (int i=0; i < 238; i++) {                                                       //
-		xTPL(Pnot, Pnot, A, CurveIsogeny->C);                                             //
-		xTPL(Qnot, Qnot, A, CurveIsogeny->C);                                             //
-		                                                                                  //
-		if (is_felm_zero(((felm_t*)Pnot->Z)[0]) && is_felm_zero(((felm_t*)Pnot->Z)[1])) { //
-			printf ("Error: order of P falls short of 3^239\n");                            //
-			error++;                                                                        //
-		}                                                                                 //
-		if (is_felm_zero(((felm_t*)Qnot->Z)[0]) && is_felm_zero(((felm_t*)Qnot->Z)[1])) { //
-			printf ("Error: order of Q falls short of 3^239\n");                            //
-			error++;                                                                        //
-		}                                                                                 //
-		if (error) {                                                                      //
-			return CRYPTO_ERROR_INVALID_ORDER;                                              //
-		}	                                                                                //
-	}                                                                                   //
+	fp2copy751(P->X, Pnot->X);
+	fp2copy751(P->Z, Pnot->Z);
+	fp2copy751(Q->X, Qnot->X);
+	fp2copy751(Q->Z, Qnot->Z);
+	for (int i=0; i < 238; i++) {
+		xTPL(Pnot, Pnot, A, CurveIsogeny->C);
+		xTPL(Qnot, Qnot, A, CurveIsogeny->C);
+
+		if (is_felm_zero(((felm_t*)Pnot->Z)[0]) && is_felm_zero(((felm_t*)Pnot->Z)[1])) {
+			printf ("Error: order of P falls short of 3^239\n");
+			error++;
+		}
+		if (is_felm_zero(((felm_t*)Qnot->Z)[0]) && is_felm_zero(((felm_t*)Qnot->Z)[1])) {
+			printf ("Error: order of Q falls short of 3^239\n");
+			error++;
+		}
+		if (error) {
+			return CRYPTO_ERROR_INVALID_ORDER;
+		}
+	}
 	//----------------------------------------------------------------------------------//
 	
 	// convert P, Q, and psiS to affine coordinates -//
@@ -1228,37 +1228,46 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	fp2neg751(psiSa->y);
 	//-----------------------------------------------//
 	
-	//do ph3 or ph2 depending on if S has order 3 or 2
+	// do polleg-hellman to find a and b -------------------------------------//
 	half_ph3(psiSa, R1, R2, A_temp, (uint64_t*)a, (uint64_t*)b, CurveIsogeny);
+	// check validity of half_ph3 compared to ph3 ----------------------------//
+	//fp2copy751(psiSa->x, notPsiSa->x);
+	//fp2copy751(psiSa->y, notPsiSa->y);
+	//ph3(psiSa, notPsiSa, R1, R2, A_temp, (uint64_t*)anot, (uint64_t*)bnot, (uint64_t*)anot2, (uint64_t*)bnot2, CurveIsogeny);
+	//int cmpA = memcmp(a, anot, NWORDS_ORDER*sizeof(digit_t));
+	//int cmpB = memcmp(b, bnot, NWORDS_ORDER*sizeof(digit_t));
+	//if (cmpA != 0 && cmpB != 0) {
+		//return CRYPTO_ERROR_DURING_TEST;
+	//}
 	
 	// compute ainv*b or binv*a depending on which element is divisible by 3 ----------------------------------------------------------//
 	bita = mod3(a);
 	bitb = mod3(b);
 	if (bita != 0 && bitb != 0) {
 		return CRYPTO_ERROR_INVALID_ORDER;
-	}                                                                                                                                  //
-	
-	to_Montgomery_mod_order(a, a, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);                   // Converting to Mont rep
-	to_Montgomery_mod_order(b, b, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);                   // 
-	                                                                                                                                   //
-	if (bita != 0) {                                                                                                                   // Storing b*ainv and setting bit384 to 0
-		*compBit = 0;                                                                                                                    //
-		Montgomery_inversion_mod_order_bingcd(a, inv, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime); //
-		Montgomery_multiply_mod_order(b, inv, &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);                             //
-		from_Montgomery_mod_order(&comp[0], &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);                               // Converting back from Montgomery representation
-	} else {                                                                                                                           // Storing a*binv and setting bit384 to 1
-		*compBit = 1;                                                                                                                    //
-		Montgomery_inversion_mod_order_bingcd(b, inv, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime); //      
-		Montgomery_multiply_mod_order(a, inv, &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);                             //
-		from_Montgomery_mod_order(&comp[0], &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);                               // Converting back from Montgomery representation 
-	}                                                                                                                                  //
+	}
+
+	to_Montgomery_mod_order(a, a, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+	to_Montgomery_mod_order(b, b, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+
+	if (bita != 0) {
+		*compBit = 0;
+		Montgomery_inversion_mod_order_bingcd(a, inv, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+		Montgomery_multiply_mod_order(b, inv, &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
+		from_Montgomery_mod_order(&comp[0], &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
+	} else {
+		*compBit = 1;
+		Montgomery_inversion_mod_order_bingcd(b, inv, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+		Montgomery_multiply_mod_order(a, inv, &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
+		from_Montgomery_mod_order(&comp[0], &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
+	}
 	//---------------------------------------------------------------------------------------------------------------------------------//
 	
 	// make sure comp has order 3 -------//
-	bita = mod3(comp);                   //
-	if (bita != 0) {                     //
-		//return CRYPTO_ERROR_INVALID_ORDER; //
-	}                                    //
+	bita = mod3(comp);
+	if (bita != 0) {
+		//return CRYPTO_ERROR_INVALID_ORDER;
+	}
 	//-----------------------------------//
 	
 	return Status;
