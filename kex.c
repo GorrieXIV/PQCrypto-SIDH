@@ -1157,7 +1157,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	
 	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
 	point_full_proj_t P, Q;
-	point_proj_t Pnot, Qnot;
+	point_proj_t Pnot, Qnot, psiSTriple;
 	point_t psiSa, notPsiSa, R1, R2;
 	point_t R1not, R2not;
 	digit_t *comp = CompressedPsiS;
@@ -1172,7 +1172,17 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	int error;
 	fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
 	fp2copy751(A, A_temp);
+	
+	// check that psi(S) has full order -----------------------------------//
+	copy_words((digit_t*)psiS, (digit_t*)psiSTriple, 2*2*NWORDS_FIELD);
+	for (int i=0; i < 238; i++) {
+		xTPL(psiSTriple, psiSTriple, A_temp, CurveIsogeny->C);
 
+		if (is_felm_zero(((felm_t*)psiSTriple->Z)[0]) && is_felm_zero(((felm_t*)psiSTriple->Z)[1])) {
+			printf ("Error: order of psi(S) falls short of 3^239\n");
+			return CRYPTO_ERROR_INVALID_ORDER;
+		}
+	}
 	// constructing the basis {P,Q} which genertes E[3^239] // 
 	generate_3_torsion_basis(A_temp, P, Q, CurveIsogeny);
 	
@@ -1212,13 +1222,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	fp2mul751_mont(Q->Y, Zinv[1], R2->y);            
                                                    
 	fp2mul751_mont(psiS->X, Zinv[2], psiSa->x);      
-	                                                 
-	//fpcopy751(CurveIsogeny->Montgomery_one, one[0]); 
-	//fp2add751(psiSa->x, A_temp, tmp);                
-	//fp2mul751_mont(psiSa->x, tmp, tmp);              
-	//fp2add751(tmp, one, tmp);                        
-	//fp2mul751_mont(psiSa->x, tmp, tmp);              
-	//sqrt_Fp2(tmp, psiSa->y);                         
+                     
 	fp2mul751_mont(psiSa->x, psiSa->x, tmp);
 	fp2mul751_mont(tmp, psiSa->x, tmp2);
 	fp2mul751_mont(tmp, A_temp, tmp);
@@ -1294,9 +1298,9 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 	f2elm_t tmp, one = {0};
 	f2elm_t A_temp, A24;
 	
+	fp2copy751(A, A_temp);
 	fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
-	
-	//check the order of compressedPsiS to ensure it equals 3 or 2
+	to_fp2mont((felm_t*)comp, A_temp);
 	
 	generate_3_torsion_basis(A, P, Q, CurveIsogeny);
 	
@@ -1311,7 +1315,6 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 	
 	//check that R1 and R2 have full order. e.g. they are points of order 2^e or 3^e
 	
-	fp2copy751(A, A_temp);
 	
 	//construct (A+2)/4 from A
 	fp2add751(A_temp, one, A24);
