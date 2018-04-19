@@ -138,7 +138,7 @@ void *sign_thread(void *TPS) {
 				if (Status == CRYPTO_ERROR_DURING_TEST) {
 					printf("half_ph3 not working\n");
 				} else {
-					printf("Error in psi(S) compression on round %d: Neither a nor b order of 3\n", r);
+					printf("Error in psi(S) compression on round %d\n", r);
 				}
 				pthread_mutex_lock(&ELOCK);
 				errorCount++;
@@ -291,6 +291,7 @@ void *verify_thread(void *TPV) {
 
 	while (1) {
 		int stop=0;
+		verified = true;
 
 		pthread_mutex_lock(&RLOCK);
 		if (CUR_ROUND >= NUM_ROUNDS) {
@@ -300,7 +301,7 @@ void *verify_thread(void *TPV) {
 			CUR_ROUND++;
 		}
 		pthread_mutex_unlock(&RLOCK);
-
+		
 		if (stop) break;
 
 		//printf("\nround: %d ", CUR_ROUND);
@@ -402,7 +403,7 @@ void *verify_thread(void *TPV) {
 			for (t=0; t<238; t++) {
 				xTPL(triple, triple, A, C); //triple psiS to check if order(psiS) = 3^239
 				if (is_felm_zero(((felm_t*)triple->Z)[0]) && is_felm_zero(((felm_t*)triple->Z)[1])) {
-					printf("ERROR: psi(S) has order 3^%d\n", t+1);
+					//printf("ERROR: psi(S) has order 3^%d\n", t+1);
 				}
 			}
 			
@@ -423,18 +424,20 @@ void *verify_thread(void *TPV) {
 				verified = false;
 				//printf("verifying E/<R> -> E/<R,S> failed\n");
 			}
+			
+			if (tpv->sig->compressed) {	
+				if (!verified) {
+					pthread_mutex_lock(&ELOCK);
+					errorCount++;
+					pthread_mutex_unlock(&ELOCK);
+					printf("Error in verify on round %d\n", r);
+				} else {
+					printf("Verify complete for %d\n", r);
+				}
+			}
+
 		}
 		
-		if (tpv->sig->compressed) {	
-			if (!verified) {
-				pthread_mutex_lock(&ELOCK);
-				errorCount++;
-				pthread_mutex_unlock(&ELOCK);
-				printf("Error in verify on round %d\n", r);
-			} else {
-				printf("Verify complete for %d\n", r);
-			}
-		}
 	}
 	
 }

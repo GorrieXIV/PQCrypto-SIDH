@@ -1243,7 +1243,8 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	// compute ainv*b or binv*a depending on which element is divisible by 3 ----------------------------------------------------------//
 	bita = mod3(a);
 	bitb = mod3(b);
-	if (bita != 0 && bitb != 0) {
+	if (bita == 0 && bitb == 0) {
+		printf("Both a and b of order of 3\n");
 		return CRYPTO_ERROR_INVALID_ORDER;
 	}
 
@@ -1266,7 +1267,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	// make sure comp has order 3 -------//
 	bita = mod3(comp);
 	if (bita != 0) {
-		//return CRYPTO_ERROR_INVALID_ORDER;
+		return CRYPTO_ERROR_INVALID_ORDER;
 	}
 	//-----------------------------------//
 	
@@ -1317,9 +1318,6 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 	fp2add751(A24, one, A24);
 	fp2div2_751(A24, A24);
 	fp2div2_751(A24, A24);
-	
-	to_fp2mont(A24, A24);
-	to_fp2mont(A_temp, A_temp);
   
 	//need to swap R1 and R2 in the following function call depending on the order of a in psi(S) = [a]R1 + [b]R2
 	if (compBit) {
