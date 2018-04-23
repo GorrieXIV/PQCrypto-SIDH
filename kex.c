@@ -1183,7 +1183,9 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 			return CRYPTO_ERROR_INVALID_ORDER;
 		}
 	}
-	// constructing the basis {P,Q} which genertes E[3^239] // 
+	//---------------------------------------------------------------------//
+	
+	// generate projective basis {P, Q} generating E[3^239] which gives affine basis {R1, R2} //
 	generate_3_torsion_basis(A_temp, P, Q, CurveIsogeny);
 	
 	// check that P and Q have full order ----------------------------------------------//
@@ -1279,14 +1281,16 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 }
 
 CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S, int compBit, const f2elm_t A, PCurveIsogenyStruct CurveIsogeny) {
-// Inputs: CompressedPsiS: x s.t. psi(S) = R1 + [x]R2
-//         PCurveIsogenyStruct
+// Inputs:  CompressedPsiS: x s.t. psi(S) = R1 + [x]R2 or psi(S) = [x]R1 + R2
+//          CurveIsogeny - SIDHp751
+//          compBit - a bit signifying if ainv*b (0) or binv*a (1) was computed
 // Outputs: point S generating the same kernel as the original psi(S)
 //
 	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
 	
 	point_full_proj_t P, Q;                    //points used in the construction of {R1,R2}
-	point_full_proj_t S_temp;
+	point_proj_t temp1;
+	point_proj_t Pnot, Qnot;
 	point_t R1, R2;
 	digit_t* comp = (digit_t*)CompressedPsiS;
 	f2elm_t vec[2], Zinv[2];
@@ -1297,12 +1301,37 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 	unsigned int bit;
 	f2elm_t tmp, one = {0};
 	f2elm_t A_temp, A24;
+	int error;
 	
 	fp2copy751(A, A_temp);
 	fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
-	to_fp2mont((felm_t*)comp, A_temp);
+	to_fp2mont((felm_t*)comp, comp);
 	
-	generate_3_torsion_basis(A, P, Q, CurveIsogeny);
+	// generate projective basis {P, Q} generating E[3^239] which gives affine basis {R1, R2} //
+	generate_3_torsion_basis(A_temp, P, Q, CurveIsogeny);
+	
+	// check that P and Q have full order ----------------------------------------------//
+	fp2copy751(P->X, Pnot->X);
+	fp2copy751(P->Z, Pnot->Z);
+	fp2copy751(Q->X, Qnot->X);
+	fp2copy751(Q->Z, Qnot->Z);
+	for (int i=0; i < 238; i++) {
+		xTPL(Pnot, Pnot, A_temp, CurveIsogeny->C);
+		xTPL(Qnot, Qnot, A_temp, CurveIsogeny->C);
+
+		if (is_felm_zero(((felm_t*)Pnot->Z)[0]) && is_felm_zero(((felm_t*)Pnot->Z)[1])) {
+			printf ("Error: order of P falls short of 3^239\n");
+			error++;
+		}
+		if (is_felm_zero(((felm_t*)Qnot->Z)[0]) && is_felm_zero(((felm_t*)Qnot->Z)[1])) {
+			printf ("Error: order of Q falls short of 3^239\n");
+			error++;
+		}
+		if (error) {
+			return CRYPTO_ERROR_INVALID_ORDER;
+		}
+	}
+	//----------------------------------------------------------------------------------//
 	
 	fp2copy751(P->Z, vec[0]);
 	fp2copy751(Q->Z, vec[1]);
@@ -1311,10 +1340,7 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 	fp2mul751_mont(P->X, Zinv[0], R1->x);
 	fp2mul751_mont(P->Y, Zinv[0], R1->y);
 	fp2mul751_mont(Q->X, Zinv[1], R2->x);
-	fp2mul751_mont(Q->Y, Zinv[1], R2->y);
-	
-	//check that R1 and R2 have full order. e.g. they are points of order 2^e or 3^e
-	
+	fp2mul751_mont(Q->Y, Zinv[1], R2->y);	
 	
 	//construct (A+2)/4 from A
 	fp2add751(A_temp, one, A24);
@@ -1324,7 +1350,8 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
   
 	//need to swap R1 and R2 in the following function call depending on the order of a in psi(S) = [a]R1 + [b]R2
 	if (compBit) {
-		mont_twodim_scalarmult(comp, R2, R1, A_temp, A24, S_temp, CurveIsogeny);
+		//mont_twodim_scalarmult(comp, R2, R1, A_temp, A24, S_temp, CurveIsogeny);
+		Status = ladder_3_pt(const f2elm_t xP, const f2elm_t xQ, const f2elm_t xPQ, const digit_t* m, const unsigned int AliceOrBob, temp1, A_temp, CurveIsogeny);
 	} else {
 		mont_twodim_scalarmult(comp, R1, R2, A_temp, A24, S_temp, CurveIsogeny);
 	}

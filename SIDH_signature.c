@@ -377,18 +377,12 @@ void *verify_thread(void *TPV) {
 			point_proj_t newPsiS = {0};
 			f2elm_t A,C={0};
 			fp2copy751(tpv->sig->Commitments1[r], A);
-			//to_fp2mont(((f2elm_t*)tpv->PublicKey)[0],A);
-			
-			////////////////////////////////////////////////////////////////////////////
-			//                  psi(S) decompression under construction               //
-			
-			
-			////////////////////////////////////////////////////////////////////////////
 			
 			if (tpv->compressed) {
 				Status = decompressPsiS(tpv->sig->compPsiS[r], triple, tpv->sig->compBit[r], A, *(tpv->CurveIsogeny));
 				if (Status != CRYPTO_SUCCESS) {
 					printf("Error in psi(S) decompression\n");
+					errorCount++;
 				} else {
 					copy_words((digit_t*)triple, (digit_t*)newPsiS, 2*2*NWORDS_FIELD);
 				}			
