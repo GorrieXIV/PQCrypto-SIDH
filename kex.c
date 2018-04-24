@@ -1249,8 +1249,9 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	// compute ainv*b or binv*a depending on which element is divisible by 3 ----------------------------------------------------------//
 	bita = mod3(a);
 	bitb = mod3(b);
+	
 	if (bita == 0 && bitb == 0) {
-		printf("Both a and b of order of 3\n");
+		//printf("Both a and b of order of 3\n");
 		return CRYPTO_ERROR_INVALID_ORDER;
 	}
 
@@ -1269,6 +1270,28 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 		from_Montgomery_mod_order(&comp[0], &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
 	}
 	//---------------------------------------------------------------------------------------------------------------------------------//
+	
+	// print a, b, and comp for testing purposes //
+	printf("a: ");
+	for (int i = 0; i < NWORDS_ORDER; i++) {
+		printf("%0llX", a[i]);
+	} printf("\n");
+	
+	printf("b: ");
+	for (int i = 0; i < NWORDS_ORDER; i++) {
+		printf("%0llX", b[i]);
+	} printf("\n");
+	
+	printf("comp: ");
+	for (int i = 0; i < NWORDS_ORDER; i++) {
+		printf("%0llX", comp[i]);
+	} printf("\n");
+	
+	printf("bit: ");
+	for (int i = 0; i < NWORDS_ORDER; i++) {
+		printf("%d", *compBit);
+	} printf("\n");
+	//-------------------------------------------//
 	
 	// make sure comp has order 3 -------//
 	bita = mod3(comp);

@@ -136,15 +136,15 @@ void *sign_thread(void *TPS) {
 			Status = compressPsiS(tempPsiS, tps->sig->compPsiS[r], &(tps->sig->compBit[r]), Ab, *(tps->CurveIsogeny), NULL);
 			if (Status != CRYPTO_SUCCESS) {
 				if (Status == CRYPTO_ERROR_DURING_TEST) {
-					printf("half_ph3 not working\n");
+					//printf("half_ph3 not working\n");
 				} else {
-					printf("Error in psi(S) compression on round %d\n", r);
+					//printf("Error in psi(S) compression on round %d\n", r);
 				}
 				pthread_mutex_lock(&ELOCK);
 				errorCount++;
 				pthread_mutex_unlock(&ELOCK);
 			} else {
-				printf("compress complete for %d\n", r);
+				//printf("compress complete for %d\n", r);
 			}
 		} else {
 			fp2copy751(tempPsiS->X, tps->sig->psiS[r]->X);
