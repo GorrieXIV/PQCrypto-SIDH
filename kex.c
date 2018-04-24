@@ -1289,6 +1289,7 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
 	
 	point_full_proj_t P, Q;                    //points used in the construction of {R1,R2}
+	point_full_proj_t S_temp;
 	point_proj_t temp1;
 	point_proj_t Pnot, Qnot;
 	point_t R1, R2;
@@ -1350,8 +1351,8 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
   
 	//need to swap R1 and R2 in the following function call depending on the order of a in psi(S) = [a]R1 + [b]R2
 	if (compBit) {
-		//mont_twodim_scalarmult(comp, R2, R1, A_temp, A24, S_temp, CurveIsogeny);
-		Status = ladder_3_pt(const f2elm_t xP, const f2elm_t xQ, const f2elm_t xPQ, const digit_t* m, const unsigned int AliceOrBob, temp1, A_temp, CurveIsogeny);
+		mont_twodim_scalarmult(comp, R2, R1, A_temp, A24, S_temp, CurveIsogeny);
+		//Status = ladder_3_pt(const f2elm_t xP, const f2elm_t xQ, const f2elm_t xPQ, const digit_t* m, const unsigned int AliceOrBob, temp1, A_temp, CurveIsogeny);
 	} else {
 		mont_twodim_scalarmult(comp, R1, R2, A_temp, A24, S_temp, CurveIsogeny);
 	}
