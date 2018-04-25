@@ -4,10 +4,8 @@ comp = []
 bit = []
 
 # p stores the working modulus
-p = '0xC968549F878A8EEB59B1A13F7CC76E3EE9867D6EBE876DA92B5045CB257480842909F97BADC6685606FE5D541F71C0E1'
+p = 'C968549F878A8EEB59B1A13F7CC76E3EE9867D6EBE876DA92B5045CB257480842909F97BADC6685606FE5D541F71C0E1'
 p = int(p, 16)
-
-print(p)
 
 i = 0
 with open("abcomp_output") as file:
@@ -26,7 +24,12 @@ with open("abcomp_output") as file:
 			bit.append(int(line))
 		i = (i + 1) % 4
 
-print("a[1] = " + str(a[1]))
-print("b[2] = " + str(b[2]))
-print("comp[3] = " + str(comp[3]))
-print("bit[7] = " + str(bit[7]))
+for q in range(0, len(a)):
+    if (bit[q] == 1):
+        ainv = pow (a[q], p-2, p)
+        rcomp = (ainv * b[q]) % p
+        print(str(comp[q] == rcomp))
+    else:
+        binv = pow(b[q], p-2, p)
+        rcomp = (binv * a[q]) % p
+        print(str(comp[q] == rcomp))
