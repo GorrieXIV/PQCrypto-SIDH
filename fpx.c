@@ -1263,9 +1263,10 @@ void partial_batched_inv (const f2elm_t* vec, f2elm_t* dest, const int n)
 
 	//convert f2elm to felm denominators
 	for (i = 0; i < n; i++) {
-		fpsqr751_mont((vec[i])[0], t0[i]); //t0[i] = a[i][0]^2
-		fpsqr751_mont((vec[i])[1], t1[i]); //t1[i] = a[i][1]^2
-		fpadd751(t0[i], t1[i], den[i]);//den[i] = t0[i] + t1[i];
+		//compute den[i] = a[i][0]^2 + a[i][1]^2
+		fpsqr751_mont((vec[i])[0], t0[i]);
+		fpsqr751_mont((vec[i])[1], t1[i]);
+		fpadd751(t0[i], t1[i], den[i]);
 	}	
 	
 
