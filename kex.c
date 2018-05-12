@@ -1219,7 +1219,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	mont_n_way_inv(vec, 3, Zinv);                    
 	                                                 
 	fp2mul751_mont(P->X, Zinv[0], R1->x);            
-	fp2mul751_mont(P->Y, Zinv[0], R1->y);            
+	fp2mul751_mont(P->Y, Zinv[0], R1->y);        
 	fp2mul751_mont(Q->X, Zinv[1], R2->x);            
 	fp2mul751_mont(Q->Y, Zinv[1], R2->y);            
                                                    
@@ -1270,6 +1270,9 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 		from_Montgomery_mod_order(&comp[0], &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
 	}
 	//---------------------------------------------------------------------------------------------------------------------------------//
+	
+	from_Montgomery_mod_order(a, a, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
+	from_Montgomery_mod_order(b, b, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
 	
 	// print a, b, and comp for testing purposes //
 	printf("a: ");
