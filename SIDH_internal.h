@@ -409,7 +409,7 @@ void swap_points(point_proj_t P, point_proj_t Q, const digit_t option);
 void j_inv(const f2elm_t A, const f2elm_t C, f2elm_t jinv);
 
 // Computes the j-invariant in a parallelizable format
-void j_inv_batch(f2elm_t A, f2elm_t C, f2elm_t jinv, invBatch* batch);
+void j_inv_batch(f2elm_t A, f2elm_t C, f2elm_t jinv, batch_struct* batch);
 
 // Simultaneous doubling and differential addition.
 void xDBLADD(point_proj_t P, point_proj_t Q, const f2elm_t xPQ, const f2elm_t A24);
@@ -475,7 +475,7 @@ void inv_3_way(f2elm_t z1, f2elm_t z2, f2elm_t z3);
 void inv_4_way(f2elm_t z1, f2elm_t z2, f2elm_t z3, f2elm_t z4);
 
 // 4-way parallelizable inversion
-void inv_4_way_batch(f2elm_t z1, f2elm_t z2, f2elm_t z3, f2elm_t z4, invBatch* batch);
+void inv_4_way_batch(f2elm_t z1, f2elm_t z2, f2elm_t z3, f2elm_t z4, batch_struct* batch);
 
 // Computing the point D = (x(Q-P),z(Q-P))
 void distort_and_diff(const felm_t xP, point_proj_t d, PCurveIsogenyStruct CurveIsogeny);

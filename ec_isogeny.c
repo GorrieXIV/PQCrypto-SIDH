@@ -41,7 +41,7 @@ void j_inv(const f2elm_t A, const f2elm_t C, f2elm_t jinv)
 	fp2mul751_mont(jinv, t0, jinv);                    // jinv = t0*jinv
 }
 
-void j_inv_batch(f2elm_t A, f2elm_t C, f2elm_t jinv, invBatch* batch) {	
+void j_inv_batch(f2elm_t A, f2elm_t C, f2elm_t jinv, batch_struct* batch) {	
 	f2elm_t t0, t1;
 	int tempCnt;
     
@@ -58,7 +58,7 @@ void j_inv_batch(f2elm_t A, f2elm_t C, f2elm_t jinv, invBatch* batch) {
 	fp2sqr751_mont(t0, t1);                            // t1 = t0^2
 	fp2mul751_mont(t0, t1, t0);                        // t0 = t0*t1
 	fp2add751(t0, t0, t0);                             // t0 = t0+t0
-  fp2add751(t0, t0, t0);                             // t0 = t0+t0 
+	fp2add751(t0, t0, t0);                             // t0 = t0+t0 
 		
 	pthread_mutex_lock(&batch->arrayLock);
 	fp2copy751(jinv, batch->invArray[batch->cntr]);
@@ -644,7 +644,7 @@ void inv_4_way(f2elm_t z1, f2elm_t z2, f2elm_t z3, f2elm_t z4)
     fp2copy751(t2, z2);                              // z2 = 1/z2
 }
 
-void inv_4_way_batch(f2elm_t z1, f2elm_t z2, f2elm_t z3, f2elm_t z4, invBatch* batch) {
+void inv_4_way_batch(f2elm_t z1, f2elm_t z2, f2elm_t z3, f2elm_t z4, batch_struct* batch) {
 	// 4-way simultaneous inversion
 	// Input:  z1,z2,z3,z4
 	// Output: 1/z1,1/z2,1/z3,1/z4 (override inputs).

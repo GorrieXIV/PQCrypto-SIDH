@@ -120,7 +120,7 @@ CRYPTO_STATUS EphemeralKeyGeneration_A(unsigned char* PrivateKeyA, unsigned char
     return Status;
 }
 
-CRYPTO_STATUS KeyGeneration_A(unsigned char* pPrivateKeyA, unsigned char* pPublicKeyA, PCurveIsogenyStruct CurveIsogeny, bool GenerateRandom, invBatch* batch) { 
+CRYPTO_STATUS KeyGeneration_A(unsigned char* pPrivateKeyA, unsigned char* pPublicKeyA, PCurveIsogenyStruct CurveIsogeny, bool GenerateRandom, batch_struct* batch) { 
 	// Alice's key-pair generation
 	// It produces a private key pPrivateKeyA and computes the public key pPublicKeyA.
 	// The private key is an even integer in the range [2, oA-2], where oA = 2^372 (i.e., 372 bits in total). 
@@ -510,7 +510,7 @@ CRYPTO_STATUS EphemeralSecretAgreement_A(const unsigned char* PrivateKeyA, const
     return Status;
 }
 
-CRYPTO_STATUS SecretAgreement_A(unsigned char* pPrivateKeyA, unsigned char* pPublicKeyB, unsigned char* pSharedSecretA, PCurveIsogenyStruct CurveIsogeny, point_proj_t kerngen, invBatch* batch)
+CRYPTO_STATUS SecretAgreement_A(unsigned char* pPrivateKeyA, unsigned char* pPublicKeyB, unsigned char* pSharedSecretA, PCurveIsogenyStruct CurveIsogeny, point_proj_t kerngen, batch_struct* batch)
 { // Alice's shared secret generation
   // It produces a shared secret key pSharedSecretA using her secret key pPrivateKeyA and Bob's public key pPublicKeyB
   // Inputs: Alice's pPrivateKeyA is an even integer in the range [2, oA-2], where oA = 2^372 (i.e., 372 bits in total). 
@@ -661,7 +661,7 @@ CRYPTO_STATUS EphemeralSecretAgreement_B(const unsigned char* PrivateKeyB, const
     return Status;
 }
 
-CRYPTO_STATUS SecretAgreement_B(unsigned char* pPrivateKeyB, unsigned char* pPublicKeyA, unsigned char* pSharedSecretB, PCurveIsogenyStruct CurveIsogeny, point_proj_t kerngen, point_proj_t extractpoint, invBatch* batch)
+CRYPTO_STATUS SecretAgreement_B(unsigned char* pPrivateKeyB, unsigned char* pPublicKeyA, unsigned char* pSharedSecretB, PCurveIsogenyStruct CurveIsogeny, point_proj_t kerngen, point_proj_t extractpoint, batch_struct* batch)
 { // Bob's shared secret generation
   // It produces a shared secret key pSharedSecretB using his secret key pPrivateKeyB and Alice's public key pPublicKeyA
   // Inputs: Bob's pPrivateKeyB is an integer in the range [1, oB-1], where oA = 3^239 (i.e., 379 bits in total). 
@@ -1148,7 +1148,7 @@ CRYPTO_STATUS EphemeralSecretAgreement_Compression_B(const unsigned char* Privat
 ///////////////////////////////////////////////////////////////////////////////////
 ///////////////             COMPRESSION FOR SIGNATURES              ///////////////
 
-CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS, int* compBit, const f2elm_t A, PCurveIsogenyStruct CurveIsogeny, invBatch* batch) {
+CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS, int* compBit, const f2elm_t A, PCurveIsogenyStruct CurveIsogeny, batch_struct* batch) {
 // Inputs:  psiS - a point in projective coordinates - computed by SecretAgreementB
 //          A - f2elm in montgomery form - the A value for the signers curve
 //          CurveIsogeny - SIDHp751
@@ -1247,11 +1247,12 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	//}
 	
 	// compute ainv*b or binv*a depending on which element is divisible by 3 ----------------------------------------------------------//
+	
 	bita = mod3(a);
 	bitb = mod3(b);
 	
 	if (bita == 0 && bitb == 0) {
-		//printf("Both a and b of order of 3\n");
+		printf("Both a and b of order of 3\n");
 		return CRYPTO_ERROR_INVALID_ORDER;
 	}
 
@@ -1271,10 +1272,10 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	}
 	//---------------------------------------------------------------------------------------------------------------------------------//
 	
+	/* print a, b, and comp for testing purposes //
 	from_Montgomery_mod_order(a, a, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
 	from_Montgomery_mod_order(b, b, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
 	
-	// print a, b, and comp for testing purposes //
 	printf("a: ");
 	for (int i = 0; i < NWORDS_ORDER; i++) {
 		printf("%0llX", a[i]);
@@ -1294,7 +1295,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	for (int i = 0; i < NWORDS_ORDER; i++) {
 		printf("%d", *compBit);
 	} printf("\n");
-	//-------------------------------------------//
+	//-------------------------------------------*/
 	
 	// make sure comp has order 3 -------//
 	bita = mod3(comp);

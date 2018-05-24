@@ -193,7 +193,7 @@ typedef enum {
     CRYPTO_ERROR_PUBLIC_KEY_VALIDATION,      // 0x08
     CRYPTO_ERROR_TOO_MANY_ITERATIONS,        // 0x09
     CRYPTO_ERROR_END_OF_LIST,                // 0x0A
-		CRYPTO_ERROR_INVALID_ORDER,              // 0x0B
+    CRYPTO_ERROR_INVALID_ORDER,              // 0x0B
 } CRYPTO_STATUS;
 
 #define CRYPTO_STATUS_TYPE_SIZE (CRYPTO_ERROR_END_OF_LIST)
@@ -289,7 +289,7 @@ typedef struct {
 	int cntr;
 	sem_t sign_sem;
 	pthread_mutex_t arrayLock;
-} invBatch;
+} batch_struct;
 
 
 /******************** Function prototypes ***********************/

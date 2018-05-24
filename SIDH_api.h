@@ -108,7 +108,7 @@ void PublicKeyBDecompression_A(const unsigned char* SecretKeyA, const unsigned c
 CRYPTO_STATUS EphemeralSecretAgreement_Compression_B(const unsigned char* PrivateKeyB, const unsigned char* point_R, const unsigned char* param_A, unsigned char* SharedSecretB, PCurveIsogenyStruct CurveIsogeny);
 
 // Compression of value psi(S) for isogeny based signatures
-CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS, int* compBit, const f2elm_t A, PCurveIsogenyStruct CurveIsogeny, invBatch* batch);
+CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS, int* compBit, const f2elm_t A, PCurveIsogenyStruct CurveIsogeny, batch_struct* batch);
 
 // Decompression of value psi(S) and calculation of the points degree
 CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* psiS, int compBit, const f2elm_t A, PCurveIsogenyStruct CurveIsogeny);
@@ -121,7 +121,7 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* ps
 // The public key consists of 4 elements in GF(p751^2), i.e., 751 bytes in total.
 // CurveIsogeny must be set up in advance using SIDH_curve_initialize().
 // batch is a struct enabling batched inversion in parallel
-CRYPTO_STATUS KeyGeneration_A(unsigned char* pPrivateKeyA, unsigned char* pPublicKeyA, PCurveIsogenyStruct CurveIsogeny, bool GenerateRandom, invBatch* batch);
+CRYPTO_STATUS KeyGeneration_A(unsigned char* pPrivateKeyA, unsigned char* pPublicKeyA, PCurveIsogenyStruct CurveIsogeny, bool GenerateRandom, batch_struct* batch);
 
 // Bob's key-pair generation
 // It produces a private key pPrivateKeyB and computes the public key pPublicKeyB.
@@ -145,7 +145,7 @@ CRYPTO_STATUS Validate_PKB(unsigned char* pPublicKeyB, bool* valid, PCurveIsogen
 // Output: a shared secret pSharedSecretA that consists of one element in GF(p751^2), i.e., 1502 bits in total. 
 // CurveIsogeny must be set up in advance using SIDH_curve_initialize().
 // batch is a struct enabling batched inversion in parallel
-CRYPTO_STATUS SecretAgreement_A(unsigned char* pPrivateKeyA, unsigned char* pPublicKeyB, unsigned char* pSharedSecretA, PCurveIsogenyStruct CurveIsogeny, point_proj_t kerngen, invBatch* batch);
+CRYPTO_STATUS SecretAgreement_A(unsigned char* pPrivateKeyA, unsigned char* pPublicKeyB, unsigned char* pSharedSecretA, PCurveIsogenyStruct CurveIsogeny, point_proj_t kerngen, batch_struct* batch);
 
 // Bob's shared secret generation
 // It produces a shared secret key pSharedSecretB using his secret key pPrivateKeyB and Alice's public key pPublicKeyA
@@ -154,7 +154,7 @@ CRYPTO_STATUS SecretAgreement_A(unsigned char* pPrivateKeyA, unsigned char* pPub
 // Output: a shared secret pSharedSecretB that consists of one element in GF(p751^2), i.e., 1502 bits in total. 
 // CurveIsogeny must be set up in advance using SIDH_curve_initialize().
 // batch is a struct enabling batched inversion in parallel
-CRYPTO_STATUS SecretAgreement_B(unsigned char* pPrivateKeyB, unsigned char* pPublicKeyA, unsigned char* pSharedSecretB, PCurveIsogenyStruct CurveIsogeny, point_proj_t kerngen, point_proj_t extractpoint, invBatch* batch);
+CRYPTO_STATUS SecretAgreement_B(unsigned char* pPrivateKeyB, unsigned char* pPublicKeyA, unsigned char* pSharedSecretB, PCurveIsogenyStruct CurveIsogeny, point_proj_t kerngen, point_proj_t extractpoint, batch_struct* batch);
 
 /*********************** Scalar multiplication API using BigMont ***********************/ 
 

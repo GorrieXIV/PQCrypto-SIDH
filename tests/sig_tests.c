@@ -168,7 +168,7 @@ CRYPTO_STATUS cryptotest_signature_compressed() {
 	if (Status != CRYPTO_SUCCESS) {
 		return Status;
 	} else {
-		//printf("  SIGNATURE KEYGEN ........................ SUCCESSFUL\n"); 
+		printf("  SIGNATURE KEYGEN ........................ SUCCESSFUL\n"); 
 	}
 	
 	//signing procedure
@@ -176,7 +176,7 @@ CRYPTO_STATUS cryptotest_signature_compressed() {
 	if (Status != CRYPTO_SUCCESS) {
 		return Status;
 	} else { 
-		//printf("  SIGNATURE SIGN (compressed) ............. SUCCESSFUL\n");
+		printf("  SIGNATURE SIGN (compressed) ............. SUCCESSFUL\n");
 	}
 
 	//verifying procedure
@@ -184,7 +184,7 @@ CRYPTO_STATUS cryptotest_signature_compressed() {
 	if (Status != CRYPTO_SUCCESS) {
 		return Status;
 	} else {
-		//printf("  SIGNATURE VERIFY (compressed) ........... SUCCESSFUL\n");
+		printf("  SIGNATURE VERIFY (compressed) ........... SUCCESSFUL\n");
 	}
 	
 cleanup:
@@ -412,10 +412,10 @@ int main (int argc, char** argv) {
 	//signature tests with compressed psi(S) ---------------------------------------
 	Status = cryptotest_signature_compressed();
 	if (Status != CRYPTO_SUCCESS) {
-		//printf("\n\n   Error detected: %s \n\n", SIDH_get_error_message(Status));
+		printf("\n\n   Error detected: %s \n\n", SIDH_get_error_message(Status));
 		return -1;
 	} else {
-		//printf("\n  ISOGENY-BASED SIGNATURE RUN WITH COMPRESSION SUCCESSFUL\n\n");
+		printf("\n  ISOGENY-BASED SIGNATURE RUN WITH COMPRESSION SUCCESSFUL\n\n");
 	}
 	
 	
