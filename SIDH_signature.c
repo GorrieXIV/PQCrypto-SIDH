@@ -397,7 +397,7 @@ void *verify_thread(void *TPV) {
 			for (t=0; t<238; t++) {
 				xTPL(triple, triple, A, C); //triple psiS to check if order(psiS) = 3^239
 				if (is_felm_zero(((felm_t*)triple->Z)[0]) && is_felm_zero(((felm_t*)triple->Z)[1])) {
-					//printf("ERROR: psi(S) has order 3^%d\n", t+1);
+					printf("ERROR: psi(S) has order 3^%d\n", t+1);
 				}
 			}
 			
@@ -410,13 +410,13 @@ void *verify_thread(void *TPV) {
 			//can we do this in a method simpler and quicker using only a & b where psiS = [a]R1 + [b]R2
 			Status = SecretAgreement_B(NULL, TempPubKey, TempSharSec, *(tpv->CurveIsogeny), newPsiS, NULL, verifyBatchC);
 			if(Status != CRYPTO_SUCCESS) {
-				//printf("Computing E/<R> -> E/<R,S> failed");
+				printf("Computing E/<R> -> E/<R,S> failed");
 			}
 
 			int cmp = memcmp(TempSharSec, tpv->sig->Commitments2[r], 2*tpv->pbytes);
 			if (cmp != 0) {
 				verified = false;
-				//printf("verifying E/<R> -> E/<R,S> failed\n");
+				printf("verifying E/<R> -> E/<R,S> failed\n");
 			}
 			
 			if (tpv->sig->compressed) {	

@@ -130,7 +130,7 @@ CRYPTO_STATUS KeyGeneration_A(unsigned char* pPrivateKeyA, unsigned char* pPubli
 	unsigned int pwords = NBITS_TO_NWORDS(CurveIsogeny->pwordbits);
 	point_basefield_t P;
 	point_proj_t R, phiP = {0}, phiQ = {0}, phiD = {0}, pts[MAX_INT_POINTS_ALICE];
-  publickey_t* PublicKeyA = (publickey_t*)pPublicKeyA;
+	publickey_t* PublicKeyA = (publickey_t*)pPublicKeyA;
 	unsigned int i, row, m, index = 0, pts_index[MAX_INT_POINTS_ALICE], npts = 0; 
 	f2elm_t coeff[5], A = {0}, C = {0}, Aout, Cout;
 	CRYPTO_STATUS Status = CRYPTO_ERROR_UNKNOWN; 
@@ -216,7 +216,7 @@ CRYPTO_STATUS KeyGeneration_A(unsigned char* pPrivateKeyA, unsigned char* pPubli
 	fp2mul751_mont(A, C, A);
 	fp2mul751_mont(phiP->X, phiP->Z, phiP->X);
 	fp2mul751_mont(phiQ->X, phiQ->Z, phiQ->X);
-  fp2mul751_mont(phiD->X, phiD->Z, phiD->X);
+	fp2mul751_mont(phiD->X, phiD->Z, phiD->X);
 
 	from_fp2mont(A, ((f2elm_t*)PublicKeyA)[0]);		// Converting back to standard representation
 	from_fp2mont(phiP->X, ((f2elm_t*)PublicKeyA)[1]);
