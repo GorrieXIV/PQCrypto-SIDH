@@ -1,5 +1,5 @@
 /********************************************************************************************
-* SIDH: an efficient supersingular isogeny-based cryptography library for ephemeral 
+* SIDH: an efficient supersingular isogeny-based cryptography library for ephemeral
 *       Diffie-Hellman key exchange.
 *
 *    Copyright (c) Microsoft Corporation. All rights reserved.
@@ -7,7 +7,7 @@
 *
 * Header file for Yoo et. al signature procedures
 *
-*********************************************************************************************/ 
+*********************************************************************************************/
 
 #include "SIDH_internal.h"
 
@@ -20,15 +20,16 @@ struct Signature {
 	unsigned char *Commitments2[NUM_ROUNDS];
 	unsigned char *HashResp;
 	unsigned char *Randoms[NUM_ROUNDS];
-	
+
 	//the following is an /anonymous/ union
 	//this lets us reference psiS and compPsiS as members of Signature,
 	//while ensuring their mutual exclusivity
-	union { 
+	union {
 		point_proj *psiS[NUM_ROUNDS];
-		digit_t compPsiS[NUM_ROUNDS][NWORDS_ORDER];
+		//digit_t compPsiS[NUM_ROUNDS][NWORDS_ORDER];
+		point_proj *compPsiS[NUM_ROUNDS];
 	};
-	
+
 	int compBit[NUM_ROUNDS];
 	int compressed;
 };
@@ -37,7 +38,7 @@ typedef struct thread_params_compress {
 	PCurveIsogenyStruct *CurveIsogeny;
 	unsigned char *PublicKey;
 	struct Signature *sig;
-	
+
 	unsigned int pbytes;
 	unsigned int n;
 	unsigned int obytes;

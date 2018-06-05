@@ -15,7 +15,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <limits.h>
-#include <pthread.h>  
+#include <pthread.h>
 #include <semaphore.h>
 
 
@@ -46,7 +46,7 @@ void hashdata(unsigned int pbytes, unsigned char** comm1, unsigned char** comm2,
 }
 
 CRYPTO_STATUS isogeny_keygen(PCurveIsogenyStruct CurveIsogeny, unsigned char *PrivateKey, unsigned char *PublicKey) {
-    unsigned int pbytes = (CurveIsogeny->pwordbits + 7)/8;      // Number of bytes in a field element 
+    unsigned int pbytes = (CurveIsogeny->pwordbits + 7)/8;      // Number of bytes in a field element
     unsigned int n, obytes = (CurveIsogeny->owordbits + 7)/8;   // Number of bytes in an element in [1, order]
     bool valid_PublicKey = false;
     CRYPTO_STATUS Status = CRYPTO_SUCCESS;
@@ -55,14 +55,14 @@ CRYPTO_STATUS isogeny_keygen(PCurveIsogenyStruct CurveIsogeny, unsigned char *Pr
     // Generate Peggy(Bob)'s keys
     passed = true;
     Status = KeyGeneration_B(PrivateKey, PublicKey, CurveIsogeny);
-    if (Status != CRYPTO_SUCCESS) {                  
+    if (Status != CRYPTO_SUCCESS) {
         passed = false;
     }
 
     if (!passed) {
     	printf("  Key generation failed\n"); goto cleanup;
-    } 
-  
+    }
+
 cleanup:
 
     return Status;
@@ -73,11 +73,11 @@ typedef struct thread_params_sign {
 	unsigned char *PrivateKey;
 	unsigned char *PublicKey;
 	struct Signature *sig;
-	
+
 	unsigned int pbytes;
 	unsigned int n;
 	unsigned int obytes;
-	
+
 	int compressed;
 } thread_params_sign;
 
@@ -92,7 +92,6 @@ void *sign_thread(void *TPS) {
 		int stop=0;
 
 		pthread_mutex_lock(&RLOCK);
-		
 		if (CUR_ROUND >= NUM_ROUNDS) {
 			stop=1;
 		} else {
@@ -123,18 +122,30 @@ void *sign_thread(void *TPS) {
 
 		to_fp2mont(((f2elm_t*)TempPubKey)[0], A);
 		fp2copy751(A, *(f2elm_t*)tps->sig->Commitments1[r]);     //commitment1[r] = A = tempPubKey[0]
-		
+
+    /*
+    printf("A[%d]: ", r);
+    for (int i = 0; i < 2*NWORDS_FIELD; i++) {
+      printf("%0llu", A[i]);
+    } printf("\n");
+    */
+
 		point_proj tempPsiS[1];
-		
+
 		//although SecretAgreement_A runs faster than B, B appears necessary so that we can generate psiS
 		Status = SecretAgreement_B(tps->PrivateKey, TempPubKey, tps->sig->Commitments2[r], *(tps->CurveIsogeny), NULL, tempPsiS, signBatchB);
-		
+    if(Status != CRYPTO_SUCCESS) {
+			printf("Secret Agreement failed\n");
+		}
+
 		f2elm_t Ab;
-		to_fp2mont(((f2elm_t*)tps->PublicKey)[0],Ab);
-		
+		//to_fp2mont(((f2elm_t*)tps->PublicKey)[0],Ab);
+    to_fp2mont(((f2elm_t*)TempPubKey)[0], Ab);
+
 		if (tps->compressed) {
 			Status = compressPsiS(tempPsiS, tps->sig->compPsiS[r], &(tps->sig->compBit[r]), Ab, *(tps->CurveIsogeny), NULL);
-			if (Status != CRYPTO_SUCCESS) {
+      //Status = psiSTestCompress(tempPsiS, tps->sig->compPsiS[r]);
+      if (Status != CRYPTO_SUCCESS) {
 				if (Status == CRYPTO_ERROR_DURING_TEST) {
 					printf("half_ph3 not working\n");
 				} else {
@@ -149,18 +160,16 @@ void *sign_thread(void *TPS) {
 		} else {
 			fp2copy751(tempPsiS->X, tps->sig->psiS[r]->X);
 			fp2copy751(tempPsiS->Z, tps->sig->psiS[r]->Z);
-		}	
-		
-		//check success of SecretAgreementB
-		if(Status != CRYPTO_SUCCESS) {
-			printf("Random point generation failed"); 
 		}
+
+		//check success of SecretAgreementB
+
 	}
-	
+
 }
 
 
-CRYPTO_STATUS isogeny_sign(PCurveIsogenyStruct CurveIsogeny, unsigned char *PrivateKey, unsigned char *PublicKey, struct Signature *sig, int batched, int compressed) {		
+CRYPTO_STATUS isogeny_sign(PCurveIsogenyStruct CurveIsogeny, unsigned char *PrivateKey, unsigned char *PublicKey, struct Signature *sig, int batched, int compressed) {
 	unsigned int pbytes = (CurveIsogeny->pwordbits + 7)/8;          // Number of bytes in a field element
 	unsigned int pwords = NBITS_TO_NWORDS(CurveIsogeny->pwordbits); // Number of words in a curve element
 	unsigned int n, obytes = (CurveIsogeny->owordbits + 7)/8;       // Number of bytes in an element in [1, order]
@@ -178,13 +187,13 @@ CRYPTO_STATUS isogeny_sign(PCurveIsogenyStruct CurveIsogeny, unsigned char *Priv
 		printf("ERROR: mutex init failed\n");
 		return 1;
 	}
-	
+
 	errorCount = 0;
 	if (pthread_mutex_init(&ELOCK, NULL)) {
 		printf("ERROR: error counter mutex init failed\n");
 		return 1;
 	}
-	
+
 	thread_params_sign tps = {&CurveIsogeny, PrivateKey, PublicKey, sig, pbytes, n, obytes, compressed};
 
 	if (batched) {
@@ -207,7 +216,7 @@ CRYPTO_STATUS isogeny_sign(PCurveIsogenyStruct CurveIsogeny, unsigned char *Priv
 		signBatchA = NULL;
 		signBatchB = NULL;
 	}
-	
+
 
 	int t;
 	for (t=0; t<NUM_THREADS; t++) {
@@ -219,7 +228,7 @@ CRYPTO_STATUS isogeny_sign(PCurveIsogenyStruct CurveIsogeny, unsigned char *Priv
 	for (t=0; t<NUM_THREADS; t++) {
 		pthread_join(sign_threads[t], NULL);
 	}
-	
+
 	if (errorCount > 0) {
 		//return CRYPTO_ERROR_INVALID_ORDER;
 	}
@@ -229,7 +238,7 @@ CRYPTO_STATUS isogeny_sign(PCurveIsogenyStruct CurveIsogeny, unsigned char *Priv
 	// Commit to responses (hash)
 	int HashLength = 32; //bytes
 	sig->HashResp = calloc(2*NUM_ROUNDS, HashLength*sizeof(uint8_t));
-	
+
 	for (r=0; r<NUM_ROUNDS; r++) {
 		keccak((uint8_t*) sig->Randoms[r], obytes, sig->HashResp+((2*r)*HashLength), HashLength);
 		if (sig->compressed) {
@@ -245,11 +254,11 @@ CRYPTO_STATUS isogeny_sign(PCurveIsogenyStruct CurveIsogeny, unsigned char *Priv
 	int cHashLength = NUM_ROUNDS/8;
 	datastring = calloc(1, DataLength);
 	cHash = calloc(1, cHashLength);
-  
+
 	hashdata(pbytes, sig->Commitments1, sig->Commitments2, sig->HashResp, HashLength, DataLength, datastring, cHash, cHashLength);
-	
+
 	pthread_t compress_threads[NUM_THREADS/3];
-	
+
 
 cleanup:
 		if (batched) {
@@ -258,7 +267,7 @@ cleanup:
 			free(signBatchB->invArray);
 			free(signBatchB->invDest);
 		}
-		
+
 
 	return Status;
 }
@@ -272,11 +281,11 @@ typedef struct thread_params_verify {
 
 	int cHashLength;
 	uint8_t *cHash;
-	
+
 	unsigned int pbytes;
 	unsigned int n;
 	unsigned int obytes;
-	
+
 	int compressed;
 } thread_params_verify;
 
@@ -301,7 +310,7 @@ void *verify_thread(void *TPV) {
 			CUR_ROUND++;
 		}
 		pthread_mutex_unlock(&RLOCK);
-		
+
 		if (stop) break;
 
 		//printf("\nround: %d ", CUR_ROUND);
@@ -333,14 +342,14 @@ void *verify_thread(void *TPV) {
 			TempPubKey = (unsigned char*)calloc(1, 4*2*tpv->pbytes);
 
 			Status = KeyGeneration_A(tpv->sig->Randoms[r], TempPubKey, *(tpv->CurveIsogeny), false, verifyBatchA);
-			
+
 			if(Status != CRYPTO_SUCCESS) {
 				printf("Computing E -> E/<R> failed");
 			} else {
 				//printf("%s %d: thread success of KeyGenA\n", __FILE__, __LINE__);
 			}
-			
-            
+
+
 			to_fp2mont(((f2elm_t*)TempPubKey)[0], A);
 
 			int cmp = memcmp(A, tpv->sig->Commitments1[r], sizeof(f2elm_t));
@@ -348,7 +357,7 @@ void *verify_thread(void *TPV) {
 				verified = false;
 				printf("verifying E -> E/<R> failed\n");
 			}
-            
+
 			unsigned char *TempSharSec;
 			TempSharSec = (unsigned char*)calloc(1, 2*tpv->pbytes);
 
@@ -377,20 +386,21 @@ void *verify_thread(void *TPV) {
 			point_proj_t newPsiS = {0};
 			f2elm_t A,C={0};
 			fp2copy751(tpv->sig->Commitments1[r], A);
-			
+
 			if (tpv->compressed) {
 				Status = decompressPsiS(tpv->sig->compPsiS[r], triple, tpv->sig->compBit[r], A, *(tpv->CurveIsogeny));
-				if (Status != CRYPTO_SUCCESS) {
+        //Status = psiSTestDecompress(triple, tpv->sig->compPsiS[r]);
+        if (Status != CRYPTO_SUCCESS) {
 					printf("Error in psi(S) decompression\n");
 					errorCount++;
 				} else {
 					copy_words((digit_t*)triple, (digit_t*)newPsiS, 2*2*NWORDS_FIELD);
-				}			
+				}
 			} else {
 				copy_words((digit_t*)tpv->sig->psiS[r], (digit_t*)triple, 2*2*NWORDS_FIELD);
 				copy_words((digit_t*)tpv->sig->psiS[r], (digit_t*)newPsiS, 2*2*NWORDS_FIELD);
 			}
-			
+
 			to_fp2mont(((f2elm_t*)tpv->PublicKey)[0],A);
 			fpcopy751((*(tpv->CurveIsogeny))->C, C[0]);
 			int t;
@@ -400,7 +410,7 @@ void *verify_thread(void *TPV) {
 					printf("ERROR: psi(S) has order 3^%d\n", t+1);
 				}
 			}
-			
+
 			unsigned char *TempSharSec, *TempPubKey;
 			TempSharSec = calloc(1, 2*tpv->pbytes);
 			TempPubKey = calloc(1, 4*2*tpv->pbytes);
@@ -418,8 +428,8 @@ void *verify_thread(void *TPV) {
 				verified = false;
 				printf("verifying E/<R> -> E/<R,S> failed\n");
 			}
-			
-			if (tpv->sig->compressed) {	
+
+			if (tpv->sig->compressed) {
 				if (!verified) {
 					pthread_mutex_lock(&ELOCK);
 					errorCount++;
@@ -431,14 +441,14 @@ void *verify_thread(void *TPV) {
 			}
 
 		}
-		
+
 	}
-	
+
 }
 
 
 CRYPTO_STATUS isogeny_verify(PCurveIsogenyStruct CurveIsogeny, unsigned char *PublicKey, struct Signature *sig, int batched, int compressed) {
-	unsigned int pbytes = (CurveIsogeny->pwordbits + 7)/8;      // Number of bytes in a field element 
+	unsigned int pbytes = (CurveIsogeny->pwordbits + 7)/8;      // Number of bytes in a field element
 	unsigned int n, obytes = (CurveIsogeny->owordbits + 7)/8;   // Number of bytes in an element in [1, order]
 	unsigned long long cycles, cycles1, cycles2, totcycles=0;
 	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
@@ -470,7 +480,7 @@ CRYPTO_STATUS isogeny_verify(PCurveIsogenyStruct CurveIsogeny, unsigned char *Pu
 	if (pthread_mutex_init(&ELOCK, NULL)) {
 		printf("ERROR: mutex init failed\n");
 		return 1;
-	}  
+	}
 
 	thread_params_verify tpv = {&CurveIsogeny, PublicKey, sig, cHashLength, cHash, pbytes, n, obytes, compressed};
 
@@ -531,4 +541,3 @@ cleanup:
 
     return Status;
 }
-
