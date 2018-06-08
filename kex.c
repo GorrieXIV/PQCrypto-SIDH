@@ -1172,7 +1172,12 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	int error;
 	fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
 	fp2copy751(A, A_temp);
-
+  /*
+  printf("Sign A: ");
+  for (int i = 0; i < 2*NWORDS_FIELD; i++) {
+    printf("%0llu", A_temp[i]);
+  } printf("\n");
+  */
 	// check that psi(S) has full order -----------------------------------//
 	copy_words((digit_t*)psiS, (digit_t*)psiSTriple, 2*2*NWORDS_FIELD);
 	for (int i=0; i < 238; i++) {
@@ -1223,6 +1228,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	fp2mul751_mont(Q->X, Zinv[1], R2->x);
 	fp2mul751_mont(Q->Y, Zinv[1], R2->y);
 
+  /*
   printf("Sign A: ");
   for (int i = 0; i < 2*NWORDS_FIELD; i++) {
     printf("%0llu", A_temp[i]);
@@ -1247,6 +1253,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
   for (int i = 0; i < 2*NWORDS_FIELD; i++) {
     printf("%0llu", R2->y[i]);
   } printf("\n");
+  */
 
 
 	fp2mul751_mont(psiS->X, Zinv[2], psiSa->x);
@@ -1360,7 +1367,12 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 	fp2copy751(A, A_temp);
 	fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
 	to_fp2mont((felm_t*)comp, comp);
-
+  /*
+  printf("Verify A: ");
+  for (int i = 0; i < 2*NWORDS_FIELD; i++) {
+    printf("%0llu", A_temp[i]);
+  } printf("\n");
+  */
 	// generate projective basis {P, Q} generating E[3^239] which gives affine basis {R1, R2} //
 	generate_3_torsion_basis(A_temp, P, Q, CurveIsogeny);
 
@@ -1396,6 +1408,7 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 	fp2mul751_mont(Q->X, Zinv[1], R2->x);
 	fp2mul751_mont(Q->Y, Zinv[1], R2->y);
 
+  /*
   printf("Verify A: ");
   for (int i = 0; i < 2*NWORDS_FIELD; i++) {
     printf("%0llu", A_temp[i]);
@@ -1420,6 +1433,7 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
   for (int i = 0; i < 2*NWORDS_FIELD; i++) {
     printf("%0llu", R2->y[i]);
   } printf("\n");
+  */
 
 	//construct (A+2)/4 from A
 	fp2add751(A_temp, one, A24);
