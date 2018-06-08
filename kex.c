@@ -1172,12 +1172,12 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	int error;
 	fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
 	fp2copy751(A, A_temp);
-  /*
+
   printf("Sign A: ");
   for (int i = 0; i < 2*NWORDS_FIELD; i++) {
-    printf("%0llu", A_temp[i]);
+    printf("%0llu", ((unsigned char*)A_temp)[i]);
   } printf("\n");
-  */
+
 	// check that psi(S) has full order -----------------------------------//
 	copy_words((digit_t*)psiS, (digit_t*)psiSTriple, 2*2*NWORDS_FIELD);
 	for (int i=0; i < 238; i++) {
@@ -1367,12 +1367,12 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 	fp2copy751(A, A_temp);
 	fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
 	to_fp2mont((felm_t*)comp, comp);
-  /*
+
   printf("Verify A: ");
   for (int i = 0; i < 2*NWORDS_FIELD; i++) {
     printf("%0llu", A_temp[i]);
   } printf("\n");
-  */
+
 	// generate projective basis {P, Q} generating E[3^239] which gives affine basis {R1, R2} //
 	generate_3_torsion_basis(A_temp, P, Q, CurveIsogeny);
 

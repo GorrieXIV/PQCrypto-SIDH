@@ -122,12 +122,12 @@ void *sign_thread(void *TPS) {
 
 		to_fp2mont(((f2elm_t*)TempPubKey)[0], A);
 		fp2copy751(A, *(f2elm_t*)tps->sig->Commitments1[r]);     //commitment1[r] = A = tempPubKey[0]
-
+    /*
     printf("Sign A[%d]:   ", r);
     for (int i = 0; i < 2*tps->pbytes; i++) {
       printf("%0hhu", (tps->sig->Commitments1[r])[i]);
     } printf("\n");
-
+    */
 		point_proj tempPsiS[1];
 
 		//although SecretAgreement_A runs faster than B, B appears necessary so that we can generate psiS
@@ -149,13 +149,13 @@ void *sign_thread(void *TPS) {
 				if (Status == CRYPTO_ERROR_DURING_TEST) {
 					printf("half_ph3 not working\n");
 				} else {
-					//printf("Error in psi(S) compression on round %d\n", r);
+					printf("Error in psi(S) compression on round %d\n", r);
 				}
 				pthread_mutex_lock(&ELOCK);
 				errorCount++;
 				pthread_mutex_unlock(&ELOCK);
 			} else {
-				//printf("compress complete for %d\n", r);
+				printf("compress complete for %d\n", r);
 			}
 		} else {
 			fp2copy751(tempPsiS->X, tps->sig->psiS[r]->X);
@@ -386,12 +386,12 @@ void *verify_thread(void *TPV) {
 			point_proj_t newPsiS = {0};
 			f2elm_t A,C={0};
 			fp2copy751(tpv->sig->Commitments1[r], A);
-
+      /*
       printf("Verify A[%d]:   ", r);
       for (int i = 0; i < 2*tpv->pbytes; i++) {
         printf("%0hhu", (tpv->sig->Commitments1[r])[i]);
       } printf("\n");
-
+      */
 			if (tpv->compressed) {
 				Status = decompressPsiS(tpv->sig->compPsiS[r], triple, tpv->sig->compBit[r], A, *(tpv->CurveIsogeny));
         //Status = psiSTestDecompress(triple, tpv->sig->compPsiS[r]);
@@ -431,7 +431,7 @@ void *verify_thread(void *TPV) {
 			int cmp = memcmp(TempSharSec, tpv->sig->Commitments2[r], 2*tpv->pbytes);
 			if (cmp != 0) {
 				verified = false;
-				//printf("verifying E/<R> -> E/<R,S> failed\n");
+				printf("verifying E/<R> -> E/<R,S> failed\n");
 			}
 
 			if (tpv->sig->compressed) {
@@ -439,9 +439,9 @@ void *verify_thread(void *TPV) {
 					pthread_mutex_lock(&ELOCK);
 					errorCount++;
 					pthread_mutex_unlock(&ELOCK);
-					//printf("Error in verify on round %d\n", r);
+					printf("Error in verify on round %d\n", r);
 				} else {
-					//printf("Verify complete for %d\n", r);
+					printf("Verify complete for %d\n", r);
 				}
 			}
 
