@@ -17,7 +17,7 @@ with open("scripts/abcomp_output") as file:
 			line = line.strip("b: ")
 			b.append(int(line,16))
 		elif (i == 2):
-			line = line.strip("comp: ")				
+			line = line.strip("comp: ")
 			comp.append(int(line,16))
 		elif (i == 3):
 			line = line.strip("bit: ")
@@ -42,3 +42,31 @@ for q in range(0, len(a)):
     #    print('{:x}'.format(comp[q]))
     #    print()
         #print(str(comp[q] == rcomp))
+
+
+''' section of code to add to compress_psiS at the end (uncommented) for testing
+	/* print a, b, and comp for testing purposes //
+	from_Montgomery_mod_order(a, a, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
+	from_Montgomery_mod_order(b, b, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
+
+	printf("a: ");
+	for (int i = 0; i < NWORDS_ORDER; i++) {
+		printf("%0llX", a[i]);
+	} printf("\n");
+
+	printf("b: ");
+	for (int i = 0; i < NWORDS_ORDER; i++) {
+		printf("%0llX", b[i]);
+	} printf("\n");
+
+	printf("comp: ");
+	for (int i = 0; i < NWORDS_ORDER; i++) {
+		printf("%0llX", comp[i]);
+	} printf("\n");
+
+	printf("bit: ");
+	for (int i = 0; i < NWORDS_ORDER; i++) {
+		printf("%d", *compBit);
+	} printf("\n");
+	//-------------------------------------------*/
+'''

@@ -1,0 +1,35 @@
+// Paramters defining the prime p = f*lA^eA*lB^eB - 1
+f:=1;
+lA:=2;
+lB:=3;
+eA:=372;
+eB:=239;
+
+// Define the prime p
+p:=f*lA^eA*lB^eB-1;
+assert IsPrime(p: Proof:=false);
+
+// or, explicitly...
+assert p eq
+1035471774176930525297776823786680532142738964554907117011618967905467894068247\
+8846502882896561066713624553211618840202385203911976522554393044160468771151816\
+976706840078913334358399730952774926980235086850991501872665651576831;
+
+// Prime field of order p
+Fp:=GF(p);
+// The quadratic extension via x^2 + 1 since p = 3 mod 4
+Fp2<i>:=ExtensionField<Fp,x|x^2+1>;
+
+// Bitlengths of group orders lA^eA and lB^eB, needed during the ladder
+// functions
+eAbits:=eA;
+eBbits:=379;
+
+// E0 is the starting curve E0/Fp2: y^2=x^3+x (the A=0 Montgomery curve)
+E0:=EllipticCurve([Fp2|1,0]);
+assert IsSupersingular(E0);
+ 
+// The orders of the points on each side
+oA:=lA^eA;
+oB:=lB^eB;
+

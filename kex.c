@@ -1173,11 +1173,6 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
 	fp2copy751(A, A_temp);
 
-  printf("Sign A: ");
-  for (int i = 0; i < 2*NWORDS_FIELD; i++) {
-    printf("%0llu", ((unsigned char*)A_temp)[i]);
-  } printf("\n");
-
 	// check that psi(S) has full order -----------------------------------//
 	copy_words((digit_t*)psiS, (digit_t*)psiSTriple, 2*2*NWORDS_FIELD);
 	for (int i=0; i < 238; i++) {
@@ -1228,34 +1223,6 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	fp2mul751_mont(Q->X, Zinv[1], R2->x);
 	fp2mul751_mont(Q->Y, Zinv[1], R2->y);
 
-  /*
-  printf("Sign A: ");
-  for (int i = 0; i < 2*NWORDS_FIELD; i++) {
-    printf("%0llu", A_temp[i]);
-  } printf("\n");
-
-  printf("Sign R1.x: ");
-  for (int i = 0; i < 2*NWORDS_FIELD; i++) {
-    printf("%0llu", R1->x[i]);
-  } printf("\n");
-
-  printf("Sign R1.y: ");
-  for (int i = 0; i < 2*NWORDS_FIELD; i++) {
-    printf("%0llu", R1->y[i]);
-  } printf("\n");
-
-  printf("Sign R2.x: ");
-  for (int i = 0; i < 2*NWORDS_FIELD; i++) {
-    printf("%0llu", R2->x[i]);
-  } printf("\n");
-
-  printf("Sign R2.y: ");
-  for (int i = 0; i < 2*NWORDS_FIELD; i++) {
-    printf("%0llu", R2->y[i]);
-  } printf("\n");
-  */
-
-
 	fp2mul751_mont(psiS->X, Zinv[2], psiSa->x);
 
 	fp2mul751_mont(psiSa->x, psiSa->x, tmp);
@@ -1305,31 +1272,6 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	}
 	//---------------------------------------------------------------------------------------------------------------------------------//
 
-	/* print a, b, and comp for testing purposes //
-	from_Montgomery_mod_order(a, a, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
-	from_Montgomery_mod_order(b, b, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
-
-	printf("a: ");
-	for (int i = 0; i < NWORDS_ORDER; i++) {
-		printf("%0llX", a[i]);
-	} printf("\n");
-
-	printf("b: ");
-	for (int i = 0; i < NWORDS_ORDER; i++) {
-		printf("%0llX", b[i]);
-	} printf("\n");
-
-	printf("comp: ");
-	for (int i = 0; i < NWORDS_ORDER; i++) {
-		printf("%0llX", comp[i]);
-	} printf("\n");
-
-	printf("bit: ");
-	for (int i = 0; i < NWORDS_ORDER; i++) {
-		printf("%d", *compBit);
-	} printf("\n");
-	//-------------------------------------------*/
-
 	// make sure comp has order 3 -------//
 	bita = mod3(comp);
 	if (bita != 0) {
@@ -1368,11 +1310,6 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 	fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
 	to_fp2mont((felm_t*)comp, comp);
 
-  printf("Verify A: ");
-  for (int i = 0; i < 2*NWORDS_FIELD; i++) {
-    printf("%0llu", A_temp[i]);
-  } printf("\n");
-
 	// generate projective basis {P, Q} generating E[3^239] which gives affine basis {R1, R2} //
 	generate_3_torsion_basis(A_temp, P, Q, CurveIsogeny);
 
@@ -1408,33 +1345,6 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 	fp2mul751_mont(Q->X, Zinv[1], R2->x);
 	fp2mul751_mont(Q->Y, Zinv[1], R2->y);
 
-  /*
-  printf("Verify A: ");
-  for (int i = 0; i < 2*NWORDS_FIELD; i++) {
-    printf("%0llu", A_temp[i]);
-  } printf("\n");
-
-  printf("Verify R1.x: ");
-  for (int i = 0; i < 2*NWORDS_FIELD; i++) {
-    printf("%0llu", R1->x[i]);
-  } printf("\n");
-
-  printf("Verify R1.y: ");
-  for (int i = 0; i < 2*NWORDS_FIELD; i++) {
-    printf("%0llu", R1->y[i]);
-  } printf("\n");
-
-  printf("Verify R2.x: ");
-  for (int i = 0; i < 2*NWORDS_FIELD; i++) {
-    printf("%0llu", R2->x[i]);
-  } printf("\n");
-
-  printf("Verify R2.y: ");
-  for (int i = 0; i < 2*NWORDS_FIELD; i++) {
-    printf("%0llu", R2->y[i]);
-  } printf("\n");
-  */
-
 	//construct (A+2)/4 from A
 	fp2add751(A_temp, one, A24);
 	fp2add751(A24, one, A24);
@@ -1455,14 +1365,4 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 	fp2copy751(S_temp->Z, S->Z);
 
 	return Status;
-}
-
-CRYPTO_STATUS psiSTestCompress(const point_proj* psiS, point_proj* psiScopy) {
-  copy_words((digit_t*)psiS, (digit_t*)psiScopy, 2*2*NWORDS_FIELD);
-  return CRYPTO_SUCCESS;
-}
-
-CRYPTO_STATUS psiSTestDecompress(point_proj* newPsiS, point_proj* psiScopy) {
-  copy_words((digit_t*)psiScopy, (digit_t*)newPsiS, 2*2*NWORDS_FIELD);
-  return CRYPTO_SUCCESS;
 }
