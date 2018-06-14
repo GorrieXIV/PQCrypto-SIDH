@@ -1317,6 +1317,8 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	}
 	//---------------------------------------------------------------------------------------------------------------------------------//
 
+  printf("Sign bit: %d\n", *compBit);
+
 	// make sure comp has order 3 -------//
 	bita = mod3(comp);
 	if (bita != 0) {

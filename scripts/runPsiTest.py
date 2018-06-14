@@ -13,3 +13,54 @@ From sig_test.c we need:
 - b of every iteration
 - bit of every iteration
 '''
+
+Alist = []
+psiS_x_list = []
+psiS_y_list = []
+R1_x_list = []
+R1_y_list = []
+R2_x_list = []
+R2_y_list = []
+alist = []
+blist = []
+bits = []
+
+i = 0
+with open("psiS_test_values") as file:
+  for line in file:
+    if (i == 0):
+      line = line.strip("Sign A: ")
+      Alist.append(int(line))
+    elif (i == 1):
+      line = line.strip("Sign psi(S).x: ")
+      psiS_x_list.append(int(line))
+    elif (i == 2):
+      line = line.strip("Sign psi(S).y: ")
+      psiS_y_list.append(int(line))
+    elif (i == 3):  
+      line = line.strip("Sign R1.x: ")
+      R1_x_list.append(int(line))
+    elif (i == 4):
+      line = line.strip("Sign R1.y: ")
+      R1_x_list.append(int(line))
+    elif (i == 5):
+      line = line.strip("Sign R2.x: ")
+      R2_x_list.append(int(line))
+    elif (i == 6):
+      line = line.strip("Sign R2.y: ")
+      R2_y_list.append(int(line))
+    elif (i == 7):
+      line = line.strip("Sign a: ")
+      alist.append(int(line))
+    elif (i == 8):
+      line = line.strip("Sign b: ")
+      blist.append(int(line))
+    elif (i == 9):
+      line = line.strip("Sign bit: ")
+      bits.append(int(line))
+    i = (i + 1) % 10
+
+print (alist[0])
+print (blist[5])
+print (Alist[1])
+print (bits[7])
