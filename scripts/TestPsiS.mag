@@ -28,7 +28,7 @@ eBbits := 379;
 // E0 is the starting curve E0/Fp2: y^2=x^3+x (the A=0 Montgomery curve)
 // EA is Randall's public key curve E0/<R>
 E0 := EllipticCurve([Fp2|1,0]);
-EA := EllipticCurve([Fp2|1,0]);
+EA := EllipticCurve([Fp2|1,21991761032002426118317221222212209811694599952051825156176154]);
 assert IsSupersingular(E0) and IsSuperSingular(EA);
 
 // Create points psi(S), R1, and R2

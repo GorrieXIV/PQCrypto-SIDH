@@ -1248,10 +1248,17 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 
 	// compute ainv*b or binv*a depending on which element is divisible by 3 ----------------------------------------------------------//
 
-  printf("Sign A: ");
-  for (int i = (2*NWORDS_FIELD - 1); i >= 0; i--) {
+  printf("Sign A.1: ");
+  for (int i = (2*NWORDS_FIELD - 1); i >= NEWORDS_FIELD; i--) {
     printf("%0llu", ((unsigned char*)A_temp)[i]);
   } printf("\n");
+
+  //guessing we need to split the printing of f2elms up like this
+  printf("Sign A.2: ");
+  for (int i = (NWORDS_FIELD - 1); i >= 0; i--) {
+    printf("%0llu", ((unsigned char*)A_temp)[i]);
+  } printf("\n");
+  //////////////////////////////////////////////////////////////
 
   printf("Sign psi(S).x: ");
   for (int i = (2*NWORDS_FIELD - 1); i >= 0; i--) {

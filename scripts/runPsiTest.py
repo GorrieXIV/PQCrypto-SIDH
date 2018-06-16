@@ -29,7 +29,7 @@ i = 0
 with open("psiS_test_values") as file:
   for line in file:
     if (i == 0):
-      line = line.strip("Sign A: ")
+      line = line.strip("Sign A.1: ")
       Alist.append(int(line))
     elif (i == 1):
       line = line.strip("Sign psi(S).x: ")
