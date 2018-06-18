@@ -1248,55 +1248,76 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 
 	// compute ainv*b or binv*a depending on which element is divisible by 3 ----------------------------------------------------------//
 
-  printf("Sign A.1: ");
-  for (int i = (2*NWORDS_FIELD - 1); i >= NEWORDS_FIELD; i--) {
+  printf("Sign A: [");
+  for (int i = (2*NWORDS_FIELD - 1); i >= NWORDS_FIELD; i--) {
     printf("%0llu", ((unsigned char*)A_temp)[i]);
-  } printf("\n");
+  } printf(", ");
 
-  //guessing we need to split the printing of f2elms up like this
-  printf("Sign A.2: ");
   for (int i = (NWORDS_FIELD - 1); i >= 0; i--) {
     printf("%0llu", ((unsigned char*)A_temp)[i]);
-  } printf("\n");
-  //////////////////////////////////////////////////////////////
+  } printf("]\n");
 
-  printf("Sign psi(S).x: ");
-  for (int i = (2*NWORDS_FIELD - 1); i >= 0; i--) {
+  printf("Sign psi(S).x: [");
+  for (int i = (2*NWORDS_FIELD - 1); i >= NWORDS_FIELD; i--) {
     printf("%0llu", ((unsigned char*)psiSa->x)[i]);
-  } printf("\n");
+  } printf(", ");
 
-  printf("Sign psi(S).y: ");
-  for (int i = (2*NWORDS_FIELD - 1); i >= 0; i--) {
+  for (int i = (NWORDS_FIELD - 1); i >= 0; i--) {
+    printf("%0llu", ((unsigned char*)psiSa->x)[i]);
+  } printf("]\n");
+
+  printf("Sign psi(S).y: [");
+  for (int i = (2*NWORDS_FIELD - 1); i >= NWORDS_FIELD; i--) {
     printf("%0llu", ((unsigned char*)psiSa->y)[i]);
-  } printf("\n");
+  } printf(", ");
 
-  printf("Sign R1.x: ");
-  for (int i = (2*NWORDS_FIELD - 1); i >= 0; i--) {
+  for (int i = (NWORDS_FIELD - 1); i >= 0; i--) {
+    printf("%0llu", ((unsigned char*)psiSa->y)[i]);
+  } printf("]\n");
+
+  printf("Sign R1.x: [");
+  for (int i = (2*NWORDS_FIELD - 1); i >= NWORDS_FIELD; i--) {
     printf("%0llu", ((unsigned char*)R1->x)[i]);
-  } printf("\n");
+  } printf(", ");
 
-  printf("Sign R1.y: ");
-  for (int i = (2*NWORDS_FIELD - 1); i >= 0; i--) {
+  for (int i = (NWORDS_FIELD - 1); i >= 0; i--) {
+    printf("%0llu", ((unsigned char*)R1->x)[i]);
+  } printf("]\n");
+
+  printf("Sign R1.y: [");
+  for (int i = (2*NWORDS_FIELD - 1); i >= NWORDS_FIELD; i--) {
     printf("%0llu", ((unsigned char*)R1->y)[i]);
-  } printf("\n");
+  } printf(", ");
 
-  printf("Sign R2.x: ");
-  for (int i = (2*NWORDS_FIELD - 1); i >= 0; i--) {
+  for (int i = (NWORDS_FIELD - 1); i >= 0; i--) {
+    printf("%0llu", ((unsigned char*)R1->y)[i]);
+  } printf("]\n");
+
+  printf("Sign R2.x: [");
+  for (int i = (2*NWORDS_FIELD - 1); i >= NWORDS_FIELD; i--) {
     printf("%0llu", ((unsigned char*)R2->x)[i]);
-  } printf("\n");
+  } printf(", ");
 
-  printf("Sign R2.y: ");
-  for (int i = (2*NWORDS_FIELD - 1); i >= 0; i--) {
+  for (int i = (NWORDS_FIELD - 1); i >= 0; i--) {
+    printf("%0llu", ((unsigned char*)R2->x)[i]);
+  } printf("]\n");
+
+  printf("Sign R2.y: [");
+  for (int i = (2*NWORDS_FIELD - 1); i >= NWORDS_FIELD; i--) {
     printf("%0llu", ((unsigned char*)R2->y)[i]);
-  } printf("\n");
+  } printf(", ");
+
+  for (int i = (NWORDS_FIELD - 1); i >= 0; i--) {
+    printf("%0llu", ((unsigned char*)R2->y)[i]);
+  } printf("]\n");
 
   printf("Sign a: ");
-  for (int i = (NWORDS_ORDER - 1); i >= 0; i--) {
+  for (int i = (NWORDS_FIELD - 1); i >= 0; i--) {
     printf("%0llu", ((unsigned char*)a)[i]);
   } printf("\n");
 
   printf("Sign b: ");
-  for (int i = (NWORDS_ORDER - 1); i >= 0; i--) {
+  for (int i = (NWORDS_FIELD - 1); i >= 0; i--) {
     printf("%0llu", ((unsigned char*)b)[i]);
   } printf("\n");
 
