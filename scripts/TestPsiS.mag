@@ -5,6 +5,8 @@ lB := 3;
 eA := 372;
 eB := 239;
 
+Border := 1076415339332851335838408278837787304900791017342367285006484190592481075231153579549080863047304729836926607724267;
+
 // Define the prime p
 p := f*lA^eA*lB^eB-1;
 assert IsPrime(p: Proof:=false);
@@ -17,13 +19,9 @@ assert p eq
 
 // Prime field of order p
 Fp := GF(p);
+Fborder := GF(Border);
 // The quadratic extension via x^2 + 1 since p = 3 mod 4
 Fp2<i> := ExtensionField<Fp,x|x^2+1>;
-
-// Bitlengths of group orders lA^eA and lB^eB, needed during the ladder
-// functions
-eAbits := eA;
-eBbits := 379;
 
 // E0 is the starting curve E0/Fp2: y^2=x^3+x (the A=0 Montgomery curve)
 // EA is Randall's public key curve E0/<R>
@@ -35,8 +33,9 @@ assert IsSupersingular(E0) and IsSuperSingular(EA);
 psiS := EA![20822980237232112531912212748 + 51278778511252216111315483*i,125228132159772071454873118180 + 877013910730177471301131354840*i];
 R1 := EA![2052111761442405241083921322120 + 151421532372212653931171585610*i,187118178183224219139992423888143 + 713614811726411377219247134156*i];
 R2 := EA![12425524171173160202138121218140173 + 5921011320555831351482220320666*i,10924159824912315518921456163211 + 21423833239105219063319119175*i];
-a := Fp!156971921972241659215198628498
-b := Fp!161788118612315171211492770105
+a := Fborder!156971921972241659215198628498
+b := Fborder!161788118612315171211492770105
 
-newPsiS := a * R1 + b * R2;
+newPsiS := a*R1 + b*R2;
+
 assert psiS eq newPsiS; 
