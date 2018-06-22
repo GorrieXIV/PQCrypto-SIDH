@@ -1249,7 +1249,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	// compute ainv*b or binv*a depending on which element is divisible by 3 ----------------------------------------------------------//
 
   printf("Sign A: [");
-  for (int i = (2*NWORDS_FIELD - 1); i >= NWORDS_FIELD; i--) {
+  for (int i = (2*NWORDS_FIELD); i >= NWORDS_FIELD; i--) {
     printf("%0llX", ((unsigned char*)A_temp)[i]);
   } printf(", ");
 
@@ -1258,7 +1258,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
   } printf("]\n");
 
   printf("Sign psi(S).x: [");
-  for (int i = (2*NWORDS_FIELD - 1); i >= NWORDS_FIELD; i--) {
+  for (int i = (2*NWORDS_FIELD); i >= NWORDS_FIELD; i--) {
     printf("%0llX", ((unsigned char*)psiSa->x)[i]);
   } printf(", ");
 
@@ -1267,7 +1267,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
   } printf("]\n");
 
   printf("Sign psi(S).y: [");
-  for (int i = (2*NWORDS_FIELD - 1); i >= NWORDS_FIELD; i--) {
+  for (int i = (2*NWORDS_FIELD); i >= NWORDS_FIELD; i--) {
     printf("%0llX", ((unsigned char*)psiSa->y)[i]);
   } printf(", ");
 
@@ -1276,7 +1276,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
   } printf("]\n");
 
   printf("Sign R1.x: [");
-  for (int i = (2*NWORDS_FIELD - 1); i >= NWORDS_FIELD; i--) {
+  for (int i = (2*NWORDS_FIELD); i >= NWORDS_FIELD; i--) {
     printf("%0llX", ((unsigned char*)R1->x)[i]);
   } printf(", ");
 
@@ -1285,7 +1285,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
   } printf("]\n");
 
   printf("Sign R1.y: [");
-  for (int i = (2*NWORDS_FIELD - 1); i >= NWORDS_FIELD; i--) {
+  for (int i = (2*NWORDS_FIELD); i >= NWORDS_FIELD; i--) {
     printf("%0llX", ((unsigned char*)R1->y)[i]);
   } printf(", ");
 
@@ -1294,7 +1294,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
   } printf("]\n");
 
   printf("Sign R2.x: [");
-  for (int i = (2*NWORDS_FIELD - 1); i >= NWORDS_FIELD; i--) {
+  for (int i = (2*NWORDS_FIELD); i >= NWORDS_FIELD; i--) {
     printf("%0llX", ((unsigned char*)R2->x)[i]);
   } printf(", ");
 
@@ -1303,7 +1303,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
   } printf("]\n");
 
   printf("Sign R2.y: [");
-  for (int i = (2*NWORDS_FIELD - 1); i >= NWORDS_FIELD; i--) {
+  for (int i = (2*NWORDS_FIELD); i >= NWORDS_FIELD; i--) {
     printf("%0llX", ((unsigned char*)R2->y)[i]);
   } printf(", ");
 
