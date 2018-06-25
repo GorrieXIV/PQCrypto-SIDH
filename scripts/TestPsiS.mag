@@ -32,8 +32,12 @@ a2 := Fp![5262706819393939520542272411847889621636794187508506672548144826883651
 
 A := Fp2![a2 + a1*i];
 
-EA := EllipticCurve([Fp2|1, A]);
-print IsSupersingular(E0) and IsSupersingular(EA);
+_<x> := PolynomialRing(Fp2);
+EA := EllipticCurve(x^3 + A*x^2 + x);
+
+//EA := EllipticCurve([Fp2|1, A]);
+//print IsSupersingular(E0) and IsSupersingular(EA);
+print IsSupersingular(EA);
 
 // Create points psi(S), R1, and R2
 // psiS := EA![20822980237232112531912212748 + 51278778511252216111315483*i,125228132159772071454873118180 + 877013910730177471301131354840*i];
