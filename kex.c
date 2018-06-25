@@ -10,6 +10,7 @@
 *********************************************************************************************/
 
 #include "SIDH_internal.h"
+#include <inttypes.h>
 
 extern const unsigned int splits_Alice[MAX_Alice];
 extern const unsigned int splits_Bob[MAX_Bob];
@@ -1145,6 +1146,33 @@ CRYPTO_STATUS EphemeralSecretAgreement_Compression_B(const unsigned char* Privat
     return CRYPTO_SUCCESS;
 }
 
+static void print_digit(digit_t d) {
+  unsigned char *c = (unsigned char *) &d;
+  for (int i = sizeof(digit_t) - 1; i >= 0; i--) {
+    printf("%02X", c[i]);
+  }
+}
+
+static void print_felm(felm_t f) {
+  for (int i = NWORDS_FIELD - 1; i >= 0; i--) {
+    print_digit(f[i]);
+  }
+}
+
+static void print_f2elm(f2elm_t f2) {
+  printf("[");
+  print_felm(f2[0]);
+  printf(", ");
+  print_felm(f2[1]);
+  printf("]");
+}
+
+static void printf_f2elm(char *s, f2elm_t f2) {
+  printf("%s: ", s);
+  print_f2elm(f2);
+  printf("\n");
+}
+
 ///////////////////////////////////////////////////////////////////////////////////
 ///////////////             COMPRESSION FOR SIGNATURES              ///////////////
 
@@ -1248,8 +1276,13 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 
 	// compute ainv*b or binv*a depending on which element is divisible by 3 ----------------------------------------------------------//
 
+
+  printf("prime = "); print_felm(CurveIsogeny->prime); printf("\n");
+
+  printf_f2elm("Sign A", A_temp);
+
   printf("Sign A: [");
-  for (int i = (2*NWORDS_FIELD); i >= NWORDS_FIELD; i--) {
+  for (int i = (2*NWORDS_FIELD - 1); i >= NWORDS_FIELD; i--) {
     printf("%0llX", ((unsigned char*)A_temp)[i]);
   } printf(", ");
 
@@ -1258,7 +1291,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
   } printf("]\n");
 
   printf("Sign psi(S).x: [");
-  for (int i = (2*NWORDS_FIELD); i >= NWORDS_FIELD; i--) {
+  for (int i = (2*NWORDS_FIELD - 1); i >= NWORDS_FIELD; i--) {
     printf("%0llX", ((unsigned char*)psiSa->x)[i]);
   } printf(", ");
 
@@ -1267,7 +1300,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
   } printf("]\n");
 
   printf("Sign psi(S).y: [");
-  for (int i = (2*NWORDS_FIELD); i >= NWORDS_FIELD; i--) {
+  for (int i = (2*NWORDS_FIELD - 1); i >= NWORDS_FIELD; i--) {
     printf("%0llX", ((unsigned char*)psiSa->y)[i]);
   } printf(", ");
 
@@ -1276,7 +1309,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
   } printf("]\n");
 
   printf("Sign R1.x: [");
-  for (int i = (2*NWORDS_FIELD); i >= NWORDS_FIELD; i--) {
+  for (int i = (2*NWORDS_FIELD - 1); i >= NWORDS_FIELD; i--) {
     printf("%0llX", ((unsigned char*)R1->x)[i]);
   } printf(", ");
 
@@ -1285,7 +1318,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
   } printf("]\n");
 
   printf("Sign R1.y: [");
-  for (int i = (2*NWORDS_FIELD); i >= NWORDS_FIELD; i--) {
+  for (int i = (2*NWORDS_FIELD - 1); i >= NWORDS_FIELD; i--) {
     printf("%0llX", ((unsigned char*)R1->y)[i]);
   } printf(", ");
 
@@ -1294,7 +1327,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
   } printf("]\n");
 
   printf("Sign R2.x: [");
-  for (int i = (2*NWORDS_FIELD); i >= NWORDS_FIELD; i--) {
+  for (int i = (2*NWORDS_FIELD - 1); i >= NWORDS_FIELD; i--) {
     printf("%0llX", ((unsigned char*)R2->x)[i]);
   } printf(", ");
 
@@ -1303,7 +1336,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
   } printf("]\n");
 
   printf("Sign R2.y: [");
-  for (int i = (2*NWORDS_FIELD); i >= NWORDS_FIELD; i--) {
+  for (int i = (2*NWORDS_FIELD - 1); i >= NWORDS_FIELD; i--) {
     printf("%0llX", ((unsigned char*)R2->y)[i]);
   } printf(", ");
 
