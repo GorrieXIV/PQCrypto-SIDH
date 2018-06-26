@@ -1153,18 +1153,32 @@ static void print_digit(digit_t d) {
   }
 }
 
-static void print_felm(felm_t f) {
-  for (int i = NWORDS_FIELD - 1; i >= 0; i--) {
-    print_digit(f[i]);
+static void print_digit_order(digit_t* d, int order) {
+  for (int i = order - 1; i >= 0; i--) {
+    print_digit(d[i]);
   }
 }
 
-static void print_f2elm(f2elm_t f2) {
-  printf("[");
-  print_felm(f2[0]);
-  printf(", ");
-  print_felm(f2[1]);
+static void print_felm(felm_t f) {
+  printf("Fp![0x");
+  for (int i = NWORDS_FIELD - 1; i >= 0; i--) {
+    print_digit(f[i]);
+  }
   printf("]");
+}
+
+static void print_f2elm(f2elm_t f2) {
+  printf("");
+  print_felm(f2[0]);
+  printf(" + ");
+  print_felm(f2[1]);
+  printf("*i");
+}
+
+static void printf_digit_order(char *s, digit_t* d, int order) {
+  printf("%s: ", s);
+  print_digit_order(d, order);
+  printf("\n");
 }
 
 static void printf_f2elm(char *s, f2elm_t f2) {
@@ -1262,6 +1276,10 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	fp2neg751(psiSa->y);
 	//-----------------------------------------------//
 
+  from_fp2mont(psiSa->x, psiSa->x);
+  from_fp2mont(psiSa->y, psiSa->y);
+  from_fp2mont(A_temp, A_temp);
+
 	// do polleg-hellman to find a and b -------------------------------------//
 	half_ph3(psiSa, R1, R2, A_temp, (uint64_t*)a, (uint64_t*)b, CurveIsogeny);
 	// check validity of half_ph3 compared to ph3 ----------------------------//
@@ -1276,83 +1294,23 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 
 	// compute ainv*b or binv*a depending on which element is divisible by 3 ----------------------------------------------------------//
 
-
-  printf("prime = "); print_felm(CurveIsogeny->prime); printf("\n");
-
   printf_f2elm("Sign A", A_temp);
 
-  printf("Sign A: [");
-  for (int i = (2*NWORDS_FIELD - 1); i >= NWORDS_FIELD; i--) {
-    printf("%0llX", ((unsigned char*)A_temp)[i]);
-  } printf(", ");
+  printf_f2elm("Sign psi(S)->x", psiSa->x);
+  printf_f2elm("Sign psi(S)->y", psiSa->y);
 
-  for (int i = (NWORDS_FIELD - 1); i >= 0; i--) {
-    printf("%0llX", ((unsigned char*)A_temp)[i]);
-  } printf("]\n");
+  printf_f2elm("Sign R1->x", R1->x);
+  printf_f2elm("Sign R1->y", R1->y);
 
-  printf("Sign psi(S).x: [");
-  for (int i = (2*NWORDS_FIELD - 1); i >= NWORDS_FIELD; i--) {
-    printf("%0llX", ((unsigned char*)psiSa->x)[i]);
-  } printf(", ");
+  printf_f2elm("Sign R2->y", R2->x);
+  printf_f2elm("Sign R2->y", R2->y);
 
-  for (int i = (NWORDS_FIELD - 1); i >= 0; i--) {
-    printf("%0llX", ((unsigned char*)psiSa->x)[i]);
-  } printf("]\n");
+  printf_f2elm("Sign R1->y", R1->x);
+  printf_f2elm("Sign R1->y", R1->y);
 
-  printf("Sign psi(S).y: [");
-  for (int i = (2*NWORDS_FIELD - 1); i >= NWORDS_FIELD; i--) {
-    printf("%0llX", ((unsigned char*)psiSa->y)[i]);
-  } printf(", ");
+  printf_digit_order("Sign a", a, NWORDS_ORDER);
 
-  for (int i = (NWORDS_FIELD - 1); i >= 0; i--) {
-    printf("%0llX", ((unsigned char*)psiSa->y)[i]);
-  } printf("]\n");
-
-  printf("Sign R1.x: [");
-  for (int i = (2*NWORDS_FIELD - 1); i >= NWORDS_FIELD; i--) {
-    printf("%0llX", ((unsigned char*)R1->x)[i]);
-  } printf(", ");
-
-  for (int i = (NWORDS_FIELD - 1); i >= 0; i--) {
-    printf("%0llX", ((unsigned char*)R1->x)[i]);
-  } printf("]\n");
-
-  printf("Sign R1.y: [");
-  for (int i = (2*NWORDS_FIELD - 1); i >= NWORDS_FIELD; i--) {
-    printf("%0llX", ((unsigned char*)R1->y)[i]);
-  } printf(", ");
-
-  for (int i = (NWORDS_FIELD - 1); i >= 0; i--) {
-    printf("%0llX", ((unsigned char*)R1->y)[i]);
-  } printf("]\n");
-
-  printf("Sign R2.x: [");
-  for (int i = (2*NWORDS_FIELD - 1); i >= NWORDS_FIELD; i--) {
-    printf("%0llX", ((unsigned char*)R2->x)[i]);
-  } printf(", ");
-
-  for (int i = (NWORDS_FIELD - 1); i >= 0; i--) {
-    printf("%0llX", ((unsigned char*)R2->x)[i]);
-  } printf("]\n");
-
-  printf("Sign R2.y: [");
-  for (int i = (2*NWORDS_FIELD - 1); i >= NWORDS_FIELD; i--) {
-    printf("%0llX", ((unsigned char*)R2->y)[i]);
-  } printf(", ");
-
-  for (int i = (NWORDS_FIELD - 1); i >= 0; i--) {
-    printf("%0llX", ((unsigned char*)R2->y)[i]);
-  } printf("]\n");
-
-  printf("Sign a: ");
-  for (int i = (NWORDS_ORDER - 1); i >= 0; i--) {
-    printf("%0llX", ((unsigned char*)a)[i]);
-  } printf("\n");
-
-  printf("Sign b: ");
-  for (int i = (NWORDS_ORDER - 1); i >= 0; i--) {
-    printf("%0llX", ((unsigned char*)b)[i]);
-  } printf("\n");
+  printf_digit_order("Sign b", b, NWORDS_ORDER);
 
 	bita = mod3(a);
 	bitb = mod3(b);
