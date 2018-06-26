@@ -1312,6 +1312,10 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 
   printf_digit_order("Sign b", b, NWORDS_ORDER);
 
+  to_fp2mont(psiSa->x, psiSa->x);
+  to_fp2mont(psiSa->y, psiSa->y);
+  to_fp2mont(A_temp, A_temp);
+
 	bita = mod3(a);
 	bitb = mod3(b);
 
