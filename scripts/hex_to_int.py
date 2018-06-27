@@ -1,27 +1,43 @@
+inputs = []
 i = 0
-with open("psiS_test_5") as input:
-  for line in file:
+with open("psiS_test_values") as input:
+  for line in input:
     if (i == 0):
-      line = line.strip("Sign A: [")
-      a.append(int(line,16))
+      inputs.append(line)
     elif (i == 1):
-      line = line.strip("b: ")
-      b.append(int(line,16))
+      inputs.append(line)
     elif (i == 2):
-      line = line.strip("comp: ")
-      comp.append(int(line,16))
+      inputs.append(line)
     elif (i == 3):
-      line = line.strip("bit: ")
-    elif (i == 4):  
-  i = (i + 1) % 4
-  
-  
-print('A: [{:d},'.format(A1) + '{:d}]'.format(A2))
-print('psi(S).x: [{:d},'.format(psiSx1) + '{:d}]'.format(psiSx2))
-print('psi(S).y: [{:d},'.format(psiSy1) + '{:d}]'.format(psiSy2))
-print('R1.x: [{:d},'.format(R1x1) + '{:d}]'.format(R1x2))
-print('R1.y: [{:d},'.format(R1y1) + '{:d}]'.format(R1y2))
-print('R2.x: [{:d},'.format(R2x1) + '{:d}]'.format(R2x2))
-print('R2.y: [{:d},'.format(R2y1) + '{:d}]'.format(R2x2))
-print('a: {:d}'.format(a))
-print('b: {:d}'.format(b))
+      inputs.append(line)
+    elif (i == 4):
+      inputs.append(line)
+    elif (i == 5):
+      inputs.append(line)
+    elif (i == 6):
+      inputs.append(line)
+    elif (i == 7):
+      inputs.append(line)
+    elif (i == 8):
+      inputs.append(line)
+    ++i
+    if (i > 8): 
+      break
+
+def replace_line(file_name, line_num, data):
+  line_num = line_num - 1
+  lines = open(file_name, 'r').readlines()
+  lines[line_num] = data
+  out = open(file_name, 'w')
+  out.writelines(lines)
+  out.close()
+
+replace_line('TestPsiS.mag', 31, inputs[0])
+replace_line('TestPsiS.mag', 42, inputs[1])
+replace_line('TestPsiS.mag', 44, inputs[2])
+replace_line('TestPsiS.mag', 51, inputs[3])
+replace_line('TestPsiS.mag', 53, inputs[4])
+replace_line('TestPsiS.mag', 58, inputs[5])
+replace_line('TestPsiS.mag', 60, inputs[6])
+replace_line('TestPsiS.mag', 65, inputs[7])
+replace_line('TestPsiS.mag', 68, inputs[8])

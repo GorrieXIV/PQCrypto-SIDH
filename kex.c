@@ -1154,9 +1154,11 @@ static void print_digit(digit_t d) {
 }
 
 static void print_digit_order(digit_t* d, int order) {
+  printf("Fborder![0x");
   for (int i = order - 1; i >= 0; i--) {
     print_digit(d[i]);
   }
+  printf("];");
 }
 
 static void print_felm(felm_t f) {
@@ -1172,7 +1174,7 @@ static void print_f2elm(f2elm_t f2) {
   print_felm(f2[0]);
   printf(" + ");
   print_felm(f2[1]);
-  printf("*i");
+  printf("*i;");
 }
 
 static void printf_digit_order(char *s, digit_t* d, int order) {
@@ -1294,26 +1296,32 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 
 	// compute ainv*b or binv*a depending on which element is divisible by 3 ----------------------------------------------------------//
 
-  printf_f2elm("Sign A", A_temp);
+  from_fp2mont(R1->x, R1->x);
+  from_fp2mont(R1->y, R1->y);
+  from_fp2mont(R2->x, R2->x);
+  from_fp2mont(R2->y, R2->y);
 
-  printf_f2elm("Sign psi(S)->x", psiSa->x);
-  printf_f2elm("Sign psi(S)->y", psiSa->y);
+  printf_f2elm("A", A_temp);
 
-  printf_f2elm("Sign R1->x", R1->x);
-  printf_f2elm("Sign R1->y", R1->y);
+  printf_f2elm("psi(S).x", psiSa->x);
+  printf_f2elm("psi(S).y", psiSa->y);
 
-  printf_f2elm("Sign R2->y", R2->x);
-  printf_f2elm("Sign R2->y", R2->y);
+  printf_f2elm("R1.x", R1->x);
+  printf_f2elm("R1.y", R1->y);
 
-  printf_f2elm("Sign R1->y", R1->x);
-  printf_f2elm("Sign R1->y", R1->y);
+  printf_f2elm("R2.x", R2->x);
+  printf_f2elm("R2.y", R2->y);
 
-  printf_digit_order("Sign a", a, NWORDS_ORDER);
+  printf_digit_order("a", a, NWORDS_ORDER);
 
-  printf_digit_order("Sign b", b, NWORDS_ORDER);
+  printf_digit_order("b", b, NWORDS_ORDER);
 
   to_fp2mont(psiSa->x, psiSa->x);
   to_fp2mont(psiSa->y, psiSa->y);
+  to_fp2mont(R1->x, R1->x);
+  to_fp2mont(R1->y, R1->y);
+  to_fp2mont(R2->x, R2->x);
+  to_fp2mont(R2->y, R2->y);
   to_fp2mont(A_temp, A_temp);
 
 	bita = mod3(a);
@@ -1339,8 +1347,6 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 		from_Montgomery_mod_order(&comp[0], &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
 	}
 	//---------------------------------------------------------------------------------------------------------------------------------//
-
-  printf("Sign bit: %d\n", *compBit);
 
 	// make sure comp has order 3 -------//
 	bita = mod3(comp);
