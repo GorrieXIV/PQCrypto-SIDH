@@ -1,4 +1,7 @@
+TEST_CASE_NUMBER = 0
+
 inputs = []
+#i = TEST_CASE_NUMBER * 9
 i = 0
 with open("psiS_test_values") as input:
   for line in input:
