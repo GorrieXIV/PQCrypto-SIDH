@@ -76,4 +76,13 @@ print psiS in EA;
 print R1 in EA;
 print R2 in EA;
 print newPsiS in EA;
-print psiS eq newPsiS;
+
+psiSTriple := newPsiS;
+for i in [1..eB] do
+  psiSTriple := 3*psiSTriple;
+  if psiSTriple eq EA!0 then
+    print "Test successful";
+  end if;
+end for;
+
+//print psiS eq newPsiS;
