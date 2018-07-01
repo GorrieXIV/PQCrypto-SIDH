@@ -1,4 +1,8 @@
+# os.system
+# subprocess.run
+
 TEST_CASE_NUMBER = 0
+
 
 inputs = []
 #i = TEST_CASE_NUMBER * 9

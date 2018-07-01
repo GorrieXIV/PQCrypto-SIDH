@@ -78,10 +78,10 @@ print R2 in EA;
 print newPsiS in EA;
 
 psiSTriple := newPsiS;
-for i in [1..eB] do
+for i in [1..eB-1] do
   psiSTriple := 3*psiSTriple;
   if psiSTriple eq EA!0 then
-    print "Test successful";
+    print "Error in new psi(S) order";
   end if;
 end for;
 
