@@ -19,7 +19,7 @@
 #include <semaphore.h>
 
 
-int NUM_THREADS = 1;
+int NUM_THREADS = 248;
 int CUR_ROUND = 0;
 int batchSize = 248;
 int errorCount = 0;
@@ -60,7 +60,9 @@ CRYPTO_STATUS isogeny_keygen(PCurveIsogenyStruct CurveIsogeny, unsigned char *Pr
     }
 
     if (!passed) {
+      #ifdef TEST_RUN_PRINTS
     	printf("  Key generation failed\n"); goto cleanup;
+      #endif
     }
 
 cleanup:
@@ -117,7 +119,9 @@ void *sign_thread(void *TPS) {
 		Status = KeyGeneration_A(tps->sig->Randoms[r], TempPubKey, *(tps->CurveIsogeny), true, signBatchA);
 		//check success of KeyGeneration_A
 		if(Status != CRYPTO_SUCCESS) {
+      #ifdef TEST_RUN_PRINTS
 			printf("Random point generation failed\n");
+      #endif
 		}
 
 		to_fp2mont(((f2elm_t*)TempPubKey)[0], A);
@@ -133,7 +137,9 @@ void *sign_thread(void *TPS) {
 		//although SecretAgreement_A runs faster than B, B appears necessary so that we can generate psiS
 		Status = SecretAgreement_B(tps->PrivateKey, TempPubKey, tps->sig->Commitments2[r], *(tps->CurveIsogeny), NULL, tempPsiS, signBatchB);
     if(Status != CRYPTO_SUCCESS) {
+      #ifdef TEST_RUN_PRINTS
 			printf("Secret Agreement failed\n");
+      #endif
 		}
 
 		f2elm_t Ab;
@@ -147,15 +153,21 @@ void *sign_thread(void *TPS) {
       //Status = psiSTestCompress(tempPsiS, tps->sig->compPsiS[r]);
       if (Status != CRYPTO_SUCCESS) {
 				if (Status == CRYPTO_ERROR_DURING_TEST) {
+          #ifdef TEST_RUN_PRINTS
 					printf("half_ph3 not working\n");
+          #endif
 				} else {
-					//printf("Error in psi(S) compression on round %d\n", r);
+          #ifdef TEST_RUN_PRINTS
+					printf("Error in psi(S) compression on round %d\n", r);
+          #endif
 				}
 				pthread_mutex_lock(&ELOCK);
 				errorCount++;
 				pthread_mutex_unlock(&ELOCK);
 			} else {
-				//printf("compress complete for %d\n", r);
+        #ifdef TEST_RUN_PRINTS
+				printf("compress complete for %d\n", r);
+        #endif
 			}
 		} else {
 			fp2copy751(tempPsiS->X, tps->sig->psiS[r]->X);
@@ -184,13 +196,17 @@ CRYPTO_STATUS isogeny_sign(PCurveIsogenyStruct CurveIsogeny, unsigned char *Priv
 
 	CUR_ROUND = 0;
 	if (pthread_mutex_init(&RLOCK, NULL)) {
+    #ifdef TEST_RUN_PRINTS
 		printf("ERROR: mutex init failed\n");
+    #endif
 		return 1;
 	}
 
 	errorCount = 0;
 	if (pthread_mutex_init(&ELOCK, NULL)) {
+    #ifdef TEST_RUN_PRINTS
 		printf("ERROR: error counter mutex init failed\n");
+    #endif
 		return 1;
 	}
 
@@ -221,7 +237,9 @@ CRYPTO_STATUS isogeny_sign(PCurveIsogenyStruct CurveIsogeny, unsigned char *Priv
 	int t;
 	for (t=0; t<NUM_THREADS; t++) {
 		if (pthread_create(&sign_threads[t], NULL, sign_thread, &tps)) {
+      #ifdef TEST_RUN_PRINTS
 			printf("ERROR: Failed to create thread %d\n", t);
+      #endif
 		}
 	}
 
@@ -331,7 +349,9 @@ void *verify_thread(void *TPV) {
 			// Check R, phi(R) has order 2^372 (suffices to check that the random number is even)
 			uint8_t lastbyte = ((uint8_t*) tpv->sig->Randoms[r])[0];
 			if (lastbyte % 2) {
+        #ifdef TEST_RUN_PRINTS
 				printf("ERROR: R, phi(R) are not full order\n");
+        #endif
 			} else {
 				//printf("checked order. ");
 			}
@@ -344,7 +364,9 @@ void *verify_thread(void *TPV) {
 			Status = KeyGeneration_A(tpv->sig->Randoms[r], TempPubKey, *(tpv->CurveIsogeny), false, verifyBatchA);
 
 			if(Status != CRYPTO_SUCCESS) {
+        #ifdef TEST_RUN_PRINTS
 				printf("Computing E -> E/<R> failed");
+        #endif
 			} else {
 				//printf("%s %d: thread success of KeyGenA\n", __FILE__, __LINE__);
 			}
@@ -355,7 +377,9 @@ void *verify_thread(void *TPV) {
 			int cmp = memcmp(A, tpv->sig->Commitments1[r], sizeof(f2elm_t));
 			if (cmp != 0) {
 				verified = false;
+        #ifdef TEST_RUN_PRINTS
 				printf("verifying E -> E/<R> failed\n");
+        #endif
 			}
 
 			unsigned char *TempSharSec;
@@ -363,7 +387,9 @@ void *verify_thread(void *TPV) {
 
 			Status = SecretAgreement_A(tpv->sig->Randoms[r], tpv->PublicKey, TempSharSec, *(tpv->CurveIsogeny), NULL, verifyBatchB);
 			if(Status != CRYPTO_SUCCESS) {
+        #ifdef TEST_RUN_PRINTS
 				printf("Computing E/<S> -> E/<R,S> failed");
+        #endif
 			} else {
 				//printf("%s %d: thread success of SecAgrA\n", __FILE__, __LINE__);
 			}
@@ -371,7 +397,9 @@ void *verify_thread(void *TPV) {
 			cmp = memcmp(TempSharSec, tpv->sig->Commitments2[r], 2*tpv->pbytes);
 			if (cmp != 0) {
 				verified = false;
+        #ifdef TEST_RUN_PRINTS
 				printf("verifying E/<S> -> E/<R,S> failed\n");
+        #endif
 			}
 
 		} else {
@@ -396,7 +424,9 @@ void *verify_thread(void *TPV) {
 				Status = decompressPsiS(tpv->sig->compPsiS[r], triple, tpv->sig->compBit[r], A, *(tpv->CurveIsogeny));
         //Status = psiSTestDecompress(triple, tpv->sig->compPsiS[r]);
         if (Status != CRYPTO_SUCCESS) {
+          #ifdef TEST_RUN_PRINTS
 					printf("Error in psi(S) decompression\n");
+          #endif
 					errorCount++;
 				} else {
 					copy_words((digit_t*)triple, (digit_t*)newPsiS, 2*2*NWORDS_FIELD);
@@ -412,7 +442,9 @@ void *verify_thread(void *TPV) {
 			for (t=0; t<238; t++) {
 				xTPL(triple, triple, A, C); //triple psiS to check if order(psiS) = 3^239
 				if (is_felm_zero(((felm_t*)triple->Z)[0]) && is_felm_zero(((felm_t*)triple->Z)[1])) {
-					printf("ERROR: psi(S) has order 3^%d\n", t+1);
+          #ifdef TEST_RUN_PRINTS
+          printf("ERROR: psi(S) has order 3^%d\n", t+1);
+          #endif
 				}
 			}
 
@@ -425,13 +457,17 @@ void *verify_thread(void *TPV) {
 			//can we do this in a method simpler and quicker using only a & b where psiS = [a]R1 + [b]R2
 			Status = SecretAgreement_B(NULL, TempPubKey, TempSharSec, *(tpv->CurveIsogeny), newPsiS, NULL, verifyBatchC);
 			if(Status != CRYPTO_SUCCESS) {
+        #ifdef TEST_RUN_PRINTS
 				printf("Computing E/<R> -> E/<R,S> failed");
+        #endif
 			}
 
 			int cmp = memcmp(TempSharSec, tpv->sig->Commitments2[r], 2*tpv->pbytes);
 			if (cmp != 0) {
 				verified = false;
+        #ifdef TEST_RUN_PRINTS
 				printf("verifying E/<R> -> E/<R,S> failed\n");
+        #endif
 			}
 
 			if (tpv->sig->compressed) {
@@ -439,9 +475,13 @@ void *verify_thread(void *TPV) {
 					pthread_mutex_lock(&ELOCK);
 					errorCount++;
 					pthread_mutex_unlock(&ELOCK);
+          #ifdef TEST_RUN_PRINTS
 					printf("Error in verify on round %d\n", r);
+          #endif
 				} else {
+          #ifdef TEST_RUN_PRINTS
 					printf("Verify complete for %d\n", r);
+          #endif
 				}
 			}
 
@@ -477,13 +517,17 @@ CRYPTO_STATUS isogeny_verify(PCurveIsogenyStruct CurveIsogeny, unsigned char *Pu
 	//initialize mutexes and cross-thread variables
 	CUR_ROUND = 0;
 	if (pthread_mutex_init(&RLOCK, NULL)) {
+    #ifdef TEST_RUN_PRINTS
 		printf("ERROR: mutex init failed\n");
+    #endif
 		return 1;
 	}
 
 	errorCount = 0;
 	if (pthread_mutex_init(&ELOCK, NULL)) {
+    #ifdef TEST_RUN_PRINTS
 		printf("ERROR: mutex init failed\n");
+    #endif
 		return 1;
 	}
 
@@ -522,7 +566,9 @@ CRYPTO_STATUS isogeny_verify(PCurveIsogenyStruct CurveIsogeny, unsigned char *Pu
 	int t;
 	for (t=0; t<NUM_THREADS; t++) {
 		if (pthread_create(&verify_threads[t], NULL, verify_thread, &tpv)) {
+      #ifdef TEST_RUN_PRINTS
 			printf("ERROR: Failed to create thread %d\n", t);
+      #endif
 		}
 	}
 

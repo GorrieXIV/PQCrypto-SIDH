@@ -65,28 +65,28 @@ kex_test: $(OBJECTS_KEX_TEST)
 
 arith_test: $(OBJECTS_ARITH_TEST)
 	$(CC) -pthread -o arith_test $(OBJECTS_ARITH_TEST) $(ARM_SETTING)
-	
+
 sig_test: $(OBJECTS_SIG_TEST)
 	$(CC) -pthread -o sig_test $(OBJECTS_SIG_TEST)
 
-kex.o: kex.c SIDH_internal.h
+kex.o: kex.c SIDH.h SIDH_internal.h
 	$(CC) $(CFLAGS) kex.c
 
-ec_isogeny.o: ec_isogeny.c SIDH_internal.h
+ec_isogeny.o: ec_isogeny.c SIDH.h SIDH_internal.h
 	$(CC) $(CFLAGS) ec_isogeny.c
 
-SIDH.o: SIDH.c SIDH_internal.h
+SIDH.o: SIDH.c SIDH.h SIDH_internal.h
 	$(CC) $(CFLAGS) SIDH.c
 
-SIDH_setup.o: SIDH_setup.c SIDH_internal.h
+SIDH_setup.o: SIDH_setup.c SIDH.h SIDH_internal.h
 	$(CC) $(CFLAGS) SIDH_setup.c
-	
+
 SIDH_signature.o: SIDH_signature.c SIDH_internal.h SIDH.h keccak.h
 	$(CC) $(CFLAGS) SIDH_signature.c
 
-fpx.o: fpx.c SIDH_internal.h
+fpx.o: fpx.c SIDH.h SIDH_internal.h
 	$(CC) $(CFLAGS) fpx.c
-	
+
 keccak.o: keccak.c
 	$(CC) $(CFLAGS) keccak.c
 
@@ -118,7 +118,7 @@ arith_tests.o: tests/arith_tests.c SIDH_internal.h
 
 kex_tests.o: tests/kex_tests.c SIDH.h SIDH_signature.h SIDH_internal.h
 	$(CC) $(CFLAGS) tests/kex_tests.c
-	
+
 sig_tests.o: tests/sig_tests.c SIDH.h SIDH_internal.h SIDH_signature.h
 	$(CC) $(CFLAGS) tests/sig_tests.c
 
@@ -126,4 +126,3 @@ sig_tests.o: tests/sig_tests.c SIDH.h SIDH_internal.h SIDH_signature.h
 
 clean:
 	rm -f arith_test kex_test fp_generic.o fp_x64.o fp_x64_asm.o fp_arm64.o fp_arm64_asm.o $(OBJECTS_ALL)
-

@@ -1178,13 +1178,13 @@ static void print_f2elm(f2elm_t f2) {
 }
 
 static void printf_digit_order(char *s, digit_t* d, int order) {
-  printf("%s: ", s);
+  printf("%s := ", s);
   print_digit_order(d, order);
   printf("\n");
 }
 
 static void printf_f2elm(char *s, f2elm_t f2) {
-  printf("%s: ", s);
+  printf("%s := ", s);
   print_f2elm(f2);
   printf("\n");
 }
@@ -1223,7 +1223,9 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 		xTPL(psiSTriple, psiSTriple, A_temp, CurveIsogeny->C);
 
 		if (is_felm_zero(((felm_t*)psiSTriple->Z)[0]) && is_felm_zero(((felm_t*)psiSTriple->Z)[1])) {
-			printf ("Error: order of psi(S) falls short of 3^239\n");
+      #ifdef TEST_RUN_PRINTS
+      printf ("Error: order of psi(S) falls short of 3^239\n");
+      #endif
 			return CRYPTO_ERROR_INVALID_ORDER;
 		}
 	}
@@ -1242,11 +1244,15 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 		xTPL(Qnot, Qnot, A, CurveIsogeny->C);
 
 		if (is_felm_zero(((felm_t*)Pnot->Z)[0]) && is_felm_zero(((felm_t*)Pnot->Z)[1])) {
-			printf ("Error: order of P falls short of 3^239\n");
+      #ifdef TEST_RUN_PRINTS
+      printf ("Error: order of P falls short of 3^239\n");
+      #endif
 			error++;
 		}
 		if (is_felm_zero(((felm_t*)Qnot->Z)[0]) && is_felm_zero(((felm_t*)Qnot->Z)[1])) {
-			printf ("Error: order of Q falls short of 3^239\n");
+      #ifdef TEST_RUN_PRINTS
+      printf ("Error: order of Q falls short of 3^239\n");
+      #endif
 			error++;
 		}
 		if (error) {
@@ -1295,40 +1301,39 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	//}
 
 	// compute ainv*b or binv*a depending on which element is divisible by 3 ----------------------------------------------------------//
-
+#ifdef COMP_PSIS_PRINTS
   from_fp2mont(R1->x, R1->x);
   from_fp2mont(R1->y, R1->y);
   from_fp2mont(R2->x, R2->x);
   from_fp2mont(R2->y, R2->y);
 
   printf_f2elm("A", A_temp);
-
-  printf_f2elm("psi(S).x", psiSa->x);
-  printf_f2elm("psi(S).y", psiSa->y);
-
-  printf_f2elm("R1.x", R1->x);
-  printf_f2elm("R1.y", R1->y);
-
-  printf_f2elm("R2.x", R2->x);
-  printf_f2elm("R2.y", R2->y);
-
+  printf_f2elm("psiSx", psiSa->x);
+  printf_f2elm("psiSy", psiSa->y);
+  printf_f2elm("R1x", R1->x);
+  printf_f2elm("R1y", R1->y);
+  printf_f2elm("R2x", R2->x);
+  printf_f2elm("R2y", R2->y);
   printf_digit_order("a", a, NWORDS_ORDER);
-
   printf_digit_order("b", b, NWORDS_ORDER);
 
-  to_fp2mont(psiSa->x, psiSa->x);
-  to_fp2mont(psiSa->y, psiSa->y);
   to_fp2mont(R1->x, R1->x);
   to_fp2mont(R1->y, R1->y);
   to_fp2mont(R2->x, R2->x);
   to_fp2mont(R2->y, R2->y);
+#endif
+
+  to_fp2mont(psiSa->x, psiSa->x);
+  to_fp2mont(psiSa->y, psiSa->y);
   to_fp2mont(A_temp, A_temp);
 
 	bita = mod3(a);
 	bitb = mod3(b);
 
 	if (bita == 0 && bitb == 0) {
+    #ifdef TEST_RUN_PRINTS
 		printf("Both a and b of order of 3\n");
+    #endif
 		return CRYPTO_ERROR_INVALID_ORDER;
 	}
 
@@ -1399,11 +1404,15 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 		xTPL(Qnot, Qnot, A_temp, CurveIsogeny->C);
 
 		if (is_felm_zero(((felm_t*)Pnot->Z)[0]) && is_felm_zero(((felm_t*)Pnot->Z)[1])) {
-			printf ("Error: order of P falls short of 3^239\n");
+      #ifdef TEST_RUN_PRINTS
+      printf ("Error: order of P falls short of 3^239\n");
+      #endif
 			error++;
 		}
 		if (is_felm_zero(((felm_t*)Qnot->Z)[0]) && is_felm_zero(((felm_t*)Qnot->Z)[1])) {
-			printf ("Error: order of Q falls short of 3^239\n");
+      #ifdef TEST_RUN_PRINTS
+      printf ("Error: order of Q falls short of 3^239\n");
+      #endif
 			error++;
 		}
 		if (error) {
@@ -1434,6 +1443,37 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 	} else {
 		mont_twodim_scalarmult(comp, R1, R2, A_temp, A24, S_temp, CurveIsogeny);
 	}
+
+#ifdef DECOMP_PSIS_PRINTS
+  from_fp2mont(A_temp, A_temp);
+  from_fp2mont(R1->x, R1->x);
+  from_fp2mont(R1->y, R1->y);
+  from_fp2mont(R2->x, R2->x);
+  from_fp2mont(R2->y, R2->y);
+  from_fp2mont(S_temp->X, S_temp->X);
+  from_fp2mont(S_temp->Y, S_temp->Y);
+  from_fp2mont(S_temp->Z, S_temp->Z);
+  from_fp2mont((felm_t*)comp, comp);
+
+  printf_f2elm("A", A_temp);
+
+  printf_f2elm("R1.x", R1->x);
+  printf_f2elm("R1.y", R1->y);
+  printf_f2elm("R2.x", R2->x);
+  printf_f2elm("R2.y", R2->y);
+  printf_digit_order("comp", a, NWORDS_ORDER);
+  printf("bit :=  %d\n", compBit);
+
+  to_fp2mont(A_temp, A_temp);
+  to_fp2mont(R1->x, R1->x);
+  to_fp2mont(R1->y, R1->y);
+  to_fp2mont(R2->x, R2->x);
+  to_fp2mont(R2->y, R2->y);
+  to_fp2mont(S_temp->X, S_temp->X);
+  to_fp2mont(S_temp->Y, S_temp->Y);
+  to_fp2mont(S_temp->Z, S_temp->Z);
+  to_fp2mont((felm_t*)comp, comp);
+#endif
 
 	//from_Montgomery_mod_order(&comp, &comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
 

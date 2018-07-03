@@ -1,5 +1,5 @@
 /********************************************************************************************
-* SIDH: an efficient supersingular isogeny-based cryptography library for Diffie-Hellman 
+* SIDH: an efficient supersingular isogeny-based cryptography library for Diffie-Hellman
 *       key exchange.
 *
 *    Copyright (c) Microsoft Corporation. All rights reserved.
@@ -7,7 +7,7 @@
 *
 * Abstract: elliptic curve and isogeny functions
 *
-*********************************************************************************************/ 
+*********************************************************************************************/
 
 #include "SIDH_internal.h"
 #include <math.h>
@@ -23,28 +23,6 @@ void j_inv(const f2elm_t A, const f2elm_t C, f2elm_t jinv)
   // Output: j=256*(A^2-3*C^2)^3/(C^4*(A^2-4*C^2)), which is the j-invariant of the Montgomery curve B*y^2=x^3+(A/C)*x^2+x or (equivalently) j-invariant of B'*y^2=C*x^3+A*x^2+C*x.
 	f2elm_t t0, t1;
 
-	fp2sqr751_mont(A, jinv);                           // jinv = A^2        
-	fp2sqr751_mont(C, t1);                             // t1 = C^2
-	fp2add751(t1, t1, t0);                             // t0 = t1+t1
-	fp2sub751(jinv, t0, t0);                           // t0 = jinv-t0
-	fp2sub751(t0, t1, t0);                             // t0 = t0-t1
-	fp2sub751(t0, t1, jinv);                           // jinv = t0-t1
-	fp2sqr751_mont(t1, t1);                            // t1 = t1^2
-	fp2mul751_mont(jinv, t1, jinv);                    // jinv = jinv*t1
-	fp2add751(t0, t0, t0);                             // t0 = t0+t0
-	fp2add751(t0, t0, t0);                             // t0 = t0+t0
-	fp2sqr751_mont(t0, t1);                            // t1 = t0^2
-	fp2mul751_mont(t0, t1, t0);                        // t0 = t0*t1
-	fp2add751(t0, t0, t0);                             // t0 = t0+t0
-	fp2add751(t0, t0, t0);                             // t0 = t0+t0
-	fp2inv751_mont(jinv);                              // jinv = 1/jinv 
-	fp2mul751_mont(jinv, t0, jinv);                    // jinv = t0*jinv
-}
-
-void j_inv_batch(f2elm_t A, f2elm_t C, f2elm_t jinv, batch_struct* batch) {	
-	f2elm_t t0, t1;
-	int tempCnt;
-    
 	fp2sqr751_mont(A, jinv);                           // jinv = A^2
 	fp2sqr751_mont(C, t1);                             // t1 = C^2
 	fp2add751(t1, t1, t0);                             // t0 = t1+t1
@@ -58,19 +36,41 @@ void j_inv_batch(f2elm_t A, f2elm_t C, f2elm_t jinv, batch_struct* batch) {
 	fp2sqr751_mont(t0, t1);                            // t1 = t0^2
 	fp2mul751_mont(t0, t1, t0);                        // t0 = t0*t1
 	fp2add751(t0, t0, t0);                             // t0 = t0+t0
-	fp2add751(t0, t0, t0);                             // t0 = t0+t0 
-		
+	fp2add751(t0, t0, t0);                             // t0 = t0+t0
+	fp2inv751_mont(jinv);                              // jinv = 1/jinv
+	fp2mul751_mont(jinv, t0, jinv);                    // jinv = t0*jinv
+}
+
+void j_inv_batch(f2elm_t A, f2elm_t C, f2elm_t jinv, batch_struct* batch) {
+	f2elm_t t0, t1;
+	int tempCnt;
+
+	fp2sqr751_mont(A, jinv);                           // jinv = A^2
+	fp2sqr751_mont(C, t1);                             // t1 = C^2
+	fp2add751(t1, t1, t0);                             // t0 = t1+t1
+	fp2sub751(jinv, t0, t0);                           // t0 = jinv-t0
+	fp2sub751(t0, t1, t0);                             // t0 = t0-t1
+	fp2sub751(t0, t1, jinv);                           // jinv = t0-t1
+	fp2sqr751_mont(t1, t1);                            // t1 = t1^2
+	fp2mul751_mont(jinv, t1, jinv);                    // jinv = jinv*t1
+	fp2add751(t0, t0, t0);                             // t0 = t0+t0
+	fp2add751(t0, t0, t0);                             // t0 = t0+t0
+	fp2sqr751_mont(t0, t1);                            // t1 = t0^2
+	fp2mul751_mont(t0, t1, t0);                        // t0 = t0*t1
+	fp2add751(t0, t0, t0);                             // t0 = t0+t0
+	fp2add751(t0, t0, t0);                             // t0 = t0+t0
+
 	pthread_mutex_lock(&batch->arrayLock);
 	fp2copy751(jinv, batch->invArray[batch->cntr]);
 	tempCnt = batch->cntr;
-	batch->cntr++; 
-	pthread_mutex_unlock(&batch->arrayLock);	
+	batch->cntr++;
+	pthread_mutex_unlock(&batch->arrayLock);
 
 	int i;
 	if (tempCnt+1 == batch->batchSize) {
 		partial_batched_inv(batch->invArray, batch->invDest, batch->batchSize);
 		for (i = 0; i < batch->batchSize - 1; i++) {
-			sem_post(&batch->sign_sem);			
+			sem_post(&batch->sign_sem);
 		}
 	} else {
 		sem_wait(&batch->sign_sem);
@@ -85,7 +85,7 @@ void j_inv_batch(f2elm_t A, f2elm_t C, f2elm_t jinv, batch_struct* batch) {
 void xDBLADD(point_proj_t P, point_proj_t Q, const f2elm_t xPQ, const f2elm_t A24)
 { // Simultaneous doubling and differential addition.
   // Input: projective Montgomery points P=(XP:ZP) and Q=(XQ:ZQ) such that xP=XP/ZP and xQ=XQ/ZQ, affine difference xPQ=x(P-Q) and Montgomery curve constant A24=(A+2)/4.
-  // Output: projective Montgomery points P <- 2*P = (X2P:Z2P) such that x(2P)=X2P/Z2P, and Q <- P+Q = (XQP:ZQP) such that = x(Q+P)=XQP/ZQP. 
+  // Output: projective Montgomery points P <- 2*P = (X2P:Z2P) such that x(2P)=X2P/Z2P, and Q <- P+Q = (XQP:ZQP) such that = x(Q+P)=XQP/ZQP.
     f2elm_t t0, t1, t2;
 
     fp2add751(P->X, P->Z, t0);                         // t0 = XP+ZP
@@ -114,14 +114,14 @@ void xDBL(const point_proj_t P, point_proj_t Q, const f2elm_t A24, const f2elm_t
   // Input: projective Montgomery x-coordinates P = (X1:Z1), where x1=X1/Z1 and Montgomery curve constant A24/C24=(A/C+2)/4.
   // Output: projective Montgomery x-coordinates Q = 2*P = (X2:Z2).
     f2elm_t t0, t1;
-    
+
     fp2sub751(P->X, P->Z, t0);                         // t0 = X1-Z1
     fp2add751(P->X, P->Z, t1);                         // t1 = X1+Z1
-    fp2sqr751_mont(t0, t0);                            // t0 = (X1-Z1)^2 
-    fp2sqr751_mont(t1, t1);                            // t1 = (X1+Z1)^2 
-    fp2mul751_mont(C24, t0, Q->Z);                     // Z2 = C24*(X1-Z1)^2   
+    fp2sqr751_mont(t0, t0);                            // t0 = (X1-Z1)^2
+    fp2sqr751_mont(t1, t1);                            // t1 = (X1+Z1)^2
+    fp2mul751_mont(C24, t0, Q->Z);                     // Z2 = C24*(X1-Z1)^2
     fp2mul751_mont(t1, Q->Z, Q->X);                    // X2 = C24*(X1-Z1)^2*(X1+Z1)^2
-    fp2sub751(t1, t0, t1);                             // t1 = (X1+Z1)^2-(X1-Z1)^2 
+    fp2sub751(t1, t0, t1);                             // t1 = (X1+Z1)^2-(X1-Z1)^2
     fp2mul751_mont(A24, t1, t0);                       // t0 = A24*[(X1+Z1)^2-(X1-Z1)^2]
     fp2add751(Q->Z, t0, Q->Z);                         // Z2 = A24*[(X1+Z1)^2-(X1-Z1)^2] + C24*(X1-Z1)^2
     fp2mul751_mont(Q->Z, t1, Q->Z);                    // Z2 = [A24*[(X1+Z1)^2-(X1-Z1)^2] + C24*(X1-Z1)^2]*[(X1+Z1)^2-(X1-Z1)^2]
@@ -134,10 +134,10 @@ void xDBLe(const point_proj_t P, point_proj_t Q, const f2elm_t A, const f2elm_t 
   // Output: projective Montgomery x-coordinates Q <- (2^e)*P.
     f2elm_t A24num, A24den;
     int i;
-    
-    fp2add751(C, C, A24num);                           
-    fp2add751(A24num, A24num, A24den);                    
-    fp2add751(A24num, A, A24num); 
+
+    fp2add751(C, C, A24num);
+    fp2add751(A24num, A24num, A24den);
+    fp2add751(A24num, A, A24num);
     copy_words((digit_t*)P, (digit_t*)Q, 2*2*NWORDS_FIELD);
 
     for (i = 0; i < e; i++) {
@@ -149,14 +149,14 @@ void xDBLe(const point_proj_t P, point_proj_t Q, const f2elm_t A, const f2elm_t 
 void xADD(point_proj_t P, const point_proj_t Q, const f2elm_t xPQ)
 { // Differential addition.
   // Input: projective Montgomery points P=(XP:ZP) and Q=(XQ:ZQ) such that xP=XP/ZP and xQ=XQ/ZQ, and affine difference xPQ=x(P-Q).
-  // Output: projective Montgomery point P <- P+Q = (XQP:ZQP) such that = x(Q+P)=XQP/ZQP. 
+  // Output: projective Montgomery point P <- P+Q = (XQP:ZQP) such that = x(Q+P)=XQP/ZQP.
     f2elm_t t0, t1;
-    
+
     fp2add751(P->X, P->Z, t0);                         // t0 = XP+ZP
     fp2sub751(P->X, P->Z, t1);                         // t1 = XP-ZP
     fp2sub751(Q->X, Q->Z, P->X);                       // XP = XQ-ZQ
     fp2add751(Q->X, Q->Z, P->Z);                       // ZP = XQ+ZQ
-    fp2mul751_mont(t0, P->X, t0);                      // t0 = (XP+ZP)*(XQ-ZQ)                           
+    fp2mul751_mont(t0, P->X, t0);                      // t0 = (XP+ZP)*(XQ-ZQ)
     fp2mul751_mont(t1, P->Z, t1);                      // t1 = (XP-ZP)*(XQ+ZQ)
     fp2sub751(t0, t1, P->Z);                           // ZP = (XP+ZP)*(XQ-ZQ)-(XP-ZP)*(XQ+ZQ)
     fp2add751(t0, t1, P->X);                           // XP = (XP+ZP)*(XQ-ZQ)+(XP-ZP)*(XQ+ZQ)
@@ -173,14 +173,14 @@ void xDBL_basefield(const point_basefield_proj_t P, point_basefield_proj_t Q)
     felm_t t0, t1;
 
     // NOTE: this function is fixed for A24=1, C24=2
-    
+
     fpsub751(P->X, P->Z, t0);                          // t0 = X1-Z1
     fpadd751(P->X, P->Z, t1);                          // t1 = X1+Z1
-    fpsqr751_mont(t0, t0);                             // t0 = (X1-Z1)^2 
-    fpsqr751_mont(t1, t1);                             // t1 = (X1+Z1)^2   
-    fpadd751(t0, t0, Q->Z);                            // Z2 = C24*(X1-Z1)^2 
+    fpsqr751_mont(t0, t0);                             // t0 = (X1-Z1)^2
+    fpsqr751_mont(t1, t1);                             // t1 = (X1+Z1)^2
+    fpadd751(t0, t0, Q->Z);                            // Z2 = C24*(X1-Z1)^2
     fpmul751_mont(t1, Q->Z, Q->X);                     // X2 = C24*(X1-Z1)^2*(X1+Z1)^2
-    fpsub751(t1, t0, t1);                              // t1 = (X1+Z1)^2-(X1-Z1)^2 
+    fpsub751(t1, t0, t1);                              // t1 = (X1+Z1)^2-(X1-Z1)^2
     fpadd751(Q->Z, t1, Q->Z);                          // Z2 = A24*[(X1+Z1)^2-(X1-Z1)^2] + C24*(X1-Z1)^2
     fpmul751_mont(Q->Z, t1, Q->Z);                     // Z2 = [A24*[(X1+Z1)^2-(X1-Z1)^2] + C24*(X1-Z1)^2]*[(X1+Z1)^2-(X1-Z1)^2]
 }
@@ -189,7 +189,7 @@ void xDBL_basefield(const point_basefield_proj_t P, point_basefield_proj_t Q)
 void xDBLADD_basefield(point_basefield_proj_t P, point_basefield_proj_t Q, const felm_t xPQ, const felm_t A24)
 { // Simultaneous doubling and differential addition over the base field.
   // Input: projective Montgomery points P=(XP:ZP) and Q=(XQ:ZQ) such that xP=XP/ZP and xQ=XQ/ZQ, affine difference xPQ=x(P-Q) and Montgomery curve constant A24=(A+2)/4.
-  // Output: projective Montgomery points P <- 2*P = (X2P:Z2P) such that x(2P)=X2P/Z2P, and Q <- P+Q = (XQP:ZQP) such that = x(Q+P)=XQP/ZQP. 
+  // Output: projective Montgomery points P <- 2*P = (X2P:Z2P) such that x(2P)=X2P/Z2P, and Q <- P+Q = (XQP:ZQP) such that = x(Q+P)=XQP/ZQP.
     felm_t t0, t1, t2;
 
     // NOTE: this function is fixed for C24=2
@@ -213,7 +213,7 @@ void xDBLADD_basefield(point_basefield_proj_t P, point_basefield_proj_t Q, const
         fpmul751_mont(A24, t2, Q->X);                  // XQ = A24*[(XP+ZP)^2-(XP-ZP)^2]
         fpadd751(P->Z, Q->X, P->Z);                    // ZP = A24*[(XP+ZP)^2-(XP-ZP)^2]+C24*(XP-ZP)^2
     }
-    
+
     fpsub751(t0, t1, Q->Z);                            // ZQ = (XP+ZP)*(XQ-ZQ)-(XP-ZP)*(XQ+ZQ)
     fpadd751(t0, t1, Q->X);                            // XQ = (XP+ZP)*(XQ-ZQ)+(XP-ZP)*(XQ+ZQ)
     fpmul751_mont(P->Z, t2, P->Z);                     // ZP = [A24*[(XP+ZP)^2-(XP-ZP)^2]+C24*(XP-ZP)^2]*[(XP+ZP)^2-(XP-ZP)^2]
@@ -225,7 +225,7 @@ void xDBLADD_basefield(point_basefield_proj_t P, point_basefield_proj_t Q, const
 
 void ladder(const felm_t x, digit_t* m, point_basefield_proj_t P, point_basefield_proj_t Q, const felm_t A24, const unsigned int order_bits, const unsigned int order_fullbits, PCurveIsogenyStruct CurveIsogeny)
 { // The Montgomery ladder
-  // Inputs: the affine x-coordinate of a point P on E: B*y^2=x^3+A*x^2+x, 
+  // Inputs: the affine x-coordinate of a point P on E: B*y^2=x^3+A*x^2+x,
   //         scalar m
   //         curve constant A24 = (A+2)/4
   //         order_bits = subgroup order bitlength
@@ -245,43 +245,43 @@ void ladder(const felm_t x, digit_t* m, point_basefield_proj_t P, point_basefiel
     for (i = order_fullbits-order_bits; i > 0; i--) {
         mp_shiftl1(m, owords);
     }
-    
+
     for (i = order_bits; i > 0; i--) {
         bit = (unsigned int)(m[owords-1] >> (RADIX-1));
         mp_shiftl1(m, owords);
         mask = 0-(digit_t)bit;
 
         swap_points_basefield(P, Q, mask);
-        xDBLADD_basefield(P, Q, x, A24);           // If bit=0 then P <- 2*P and Q <- P+Q, 
+        xDBLADD_basefield(P, Q, x, A24);           // If bit=0 then P <- 2*P and Q <- P+Q,
         swap_points_basefield(P, Q, mask);         // else if bit=1 then Q <- 2*Q and P <- P+Q
     }
 }
 
 void fp2_ladder(const f2elm_t x, digit_t* m, point_proj_t P, point_proj_t Q, const f2elm_t A24, const unsigned int order_bits, const unsigned int order_fullbits, PCurveIsogenyStruct CurveIsogeny)
 {	//The Montgomery ladder for field extension elements
-	// Inputs: 
-	// 
+	// Inputs:
+	//
 	// Output: Q = m*(x:1)
 	unsigned int bit = 0, owords = NBITS_TO_NWORDS(order_fullbits);
 	digit_t mask;
 	int i;
-		
+
 	fp2copy751(CurveIsogeny->Montgomery_one, (digit_t*)P->X);
 	fp2zero751(P->Z);
 	fp2copy751(x, Q->X);
 	fp2copy751(CurveIsogeny->Montgomery_one, (digit_t*)Q->Z);
-		
+
 	for (i = order_fullbits-order_bits; i > 0; i--) {
 		mp_shiftl1(m, owords);
 	}
-		
+
 	for (i = order_bits; i > 0; i--) {
 		bit = (unsigned int)(m[owords-1] >> (RADIX-1));
 		mp_shiftl1(m, owords);
 		mask = 0-(digit_t)bit;
 
 		swap_points(P, Q, mask);
-		xDBLADD(P, Q, x, A24);           // If bit=0 then P <- 2*P and Q <- P+Q, 
+		xDBLADD(P, Q, x, A24);           // If bit=0 then P <- 2*P and Q <- P+Q,
 		swap_points(P, Q, mask);         // else if bit=1 then Q <- 2*Q and P <- P+Q
 	}
 }
@@ -289,7 +289,7 @@ void fp2_ladder(const f2elm_t x, digit_t* m, point_proj_t P, point_proj_t Q, con
 
 CRYPTO_STATUS BigMont_ladder(unsigned char* x, digit_t* m, unsigned char* xout, PCurveIsogenyStruct CurveIsogeny)
 { // BigMont's scalar multiplication using the Montgomery ladder
-  // Inputs: x, the affine x-coordinate of a point P on BigMont: y^2=x^3+A*x^2+x, 
+  // Inputs: x, the affine x-coordinate of a point P on BigMont: y^2=x^3+A*x^2+x,
   //         scalar m.
   // Output: xout, the affine x-coordinate of m*(x:1)
   // CurveIsogeny must be set up in advance using SIDH_curve_initialize().
@@ -297,10 +297,10 @@ CRYPTO_STATUS BigMont_ladder(unsigned char* x, digit_t* m, unsigned char* xout, 
     digit_t scalar[BIGMONT_NWORDS_ORDER];
     felm_t X, A24 = {0};
 
-    A24[0] = (digit_t)CurveIsogeny->BigMont_A24; 
+    A24[0] = (digit_t)CurveIsogeny->BigMont_A24;
     to_mont(A24, A24);                               // Conversion to Montgomery representation
     to_mont((digit_t*)x, X);
-    
+
     copy_words(m, scalar, BIGMONT_NWORDS_ORDER);
     ladder(X, scalar, P1, P2, A24, BIGMONT_NBITS_ORDER, BIGMONT_MAXBITS_ORDER, CurveIsogeny);
 
@@ -313,10 +313,10 @@ CRYPTO_STATUS BigMont_ladder(unsigned char* x, digit_t* m, unsigned char* xout, 
 
 
 CRYPTO_STATUS secret_pt(const point_basefield_t P, const digit_t* m, const unsigned int AliceOrBob, point_proj_t R, PCurveIsogenyStruct CurveIsogeny)
-{ // Computes key generation entirely in the base field by exploiting a 1-dimensional Montgomery ladder in the trace zero subgroup and 
+{ // Computes key generation entirely in the base field by exploiting a 1-dimensional Montgomery ladder in the trace zero subgroup and
   // recovering the y-coordinate for the addition. All operations in the base field GF(p).
-  // Input:  The scalar m, point P = (x,y) on E in the base field subgroup and Q = (x1,y1*i) on E in the trace-zero subgroup. 
-  //         x,y,x1,y1 are all in the base field.          
+  // Input:  The scalar m, point P = (x,y) on E in the base field subgroup and Q = (x1,y1*i) on E in the trace-zero subgroup.
+  //         x,y,x1,y1 are all in the base field.
   // Output: R = (RX0+RX1*i)/RZ0 (the x-coordinate of P+[m]Q).
     unsigned int nbits;
     point_basefield_t Q;
@@ -338,12 +338,12 @@ CRYPTO_STATUS secret_pt(const point_basefield_t P, const digit_t* m, const unsig
     } else {
         return CRYPTO_ERROR_INVALID_PARAMETER;
     }
-        
+
     // Setting curve constant to one (in standard representation), used in xDBLADD_basefield() in the ladder computation
     A24[0] = 1;
     copy_words(m, scalar, NWORDS_ORDER);
     ladder(Q->x, scalar, S, T, A24, nbits, CurveIsogeny->owordbits, CurveIsogeny);
-    
+
     //RX0 = (2*y*y1*Z0^2*Z1 + Z1*(X0*x1+Z0)*(X0+x1*Z0) - X1*(X0-x1*Z0)^2)*(2*y*y1*Z0^2*Z1 - Z1*(X0*x1+Z0)*(X0+x1*Z0) + X1*(X0-x1*Z0)^2) - 4*y1^2*Z0*Z1^2*(X0+x*Z0)*(X0-x*Z0)^2;
     //RX1 = 4*y*y1*Z0^2*Z1*(Z1*(X0*x1+Z0)*(X0+x1*Z0) - X1*(X0-x1*Z0)^2);
     //RZ0 = 4*y1^2*Z0^2*Z1^2*(X0-x*Z0)^2;
@@ -402,13 +402,13 @@ CRYPTO_STATUS ladder_3_pt(const f2elm_t xP, const f2elm_t xQ, const f2elm_t xPQ,
     } else {
         return CRYPTO_ERROR_INVALID_PARAMETER;
     }
-   
+
     fpcopy751(CurveIsogeny->Montgomery_one, constant1[0]);
     fp2add751(constant1, constant1, constant1);                  // constant = 2
     fp2add751(A, constant1, A24num);
-    fp2div2_751(A24num, A24);  
+    fp2div2_751(A24num, A24);
     fp2div2_751(A24, A24);
-    
+
     // Initializing with the points (1:0), (xQ:1) and (xP:1)
     fpcopy751(CurveIsogeny->Montgomery_one, (digit_t*)U->X);
     fp2copy751(xQ, V->X);
@@ -417,11 +417,11 @@ CRYPTO_STATUS ladder_3_pt(const f2elm_t xP, const f2elm_t xQ, const f2elm_t xPQ,
     fpcopy751(CurveIsogeny->Montgomery_one, (digit_t*)W->Z);
     fpzero751(W->Z[1]);
     copy_words(m, temp_scalar, NWORDS_ORDER);
-    
+
     for (i = fullbits-nbits; i > 0; i--) {
         mp_shiftl1(temp_scalar, NWORDS_ORDER);
     }
-    
+
     for (i = nbits; i > 0; i--) {
         bit = (unsigned int)(temp_scalar[NWORDS_ORDER-1] >> (RADIX-1));
         mp_shiftl1(temp_scalar, NWORDS_ORDER);
@@ -431,7 +431,7 @@ CRYPTO_STATUS ladder_3_pt(const f2elm_t xP, const f2elm_t xQ, const f2elm_t xPQ,
         swap_points(U, V, mask);
         select_f2elm(xP, xQ, constant1, mask);
         select_f2elm(xQ, xPQ, constant2, mask);
-        xADD(W, U, constant1);                     // If bit=0 then W <- W+U, U <- 2*U and V <- U+V, 
+        xADD(W, U, constant1);                     // If bit=0 then W <- W+U, U <- 2*U and V <- U+V,
         xDBLADD(U, V, constant2, A24);             // else if bit=1 then U <- U+V, V <- 2*V and W <- V+W
         swap_points(U, V, mask);
         swap_points(W, U, mask);
@@ -444,9 +444,9 @@ CRYPTO_STATUS ladder_3_pt(const f2elm_t xP, const f2elm_t xQ, const f2elm_t xPQ,
 void get_4_isog(const point_proj_t P, f2elm_t A, f2elm_t C, f2elm_t* coeff)
 { // Computes the corresponding 4-isogeny of a projective Montgomery point (X4:Z4) of order 4.
   // Input:  projective point of order four P = (X4:Z4).
-  // Output: the 4-isogenous Montgomery curve with projective coefficient A/C and the 5 coefficients 
+  // Output: the 4-isogenous Montgomery curve with projective coefficient A/C and the 5 coefficients
   //         that are used to evaluate the isogeny at a point in eval_4_isog().
-    
+
     fp2add751(P->X, P->Z, coeff[0]);                   // coeff[0] = X4+Z4
     fp2sqr751_mont(P->X, coeff[3]);                    // coeff[3] = X4^2
     fp2sqr751_mont(P->Z, coeff[4]);                    // coeff[4] = Z4^2
@@ -464,10 +464,10 @@ void get_4_isog(const point_proj_t P, f2elm_t A, f2elm_t C, f2elm_t* coeff)
 
 
 void eval_4_isog(point_proj_t P, f2elm_t* coeff)
-{ // Evaluates the isogeny at the point (X:Z) in the domain of the isogeny, given a 4-isogeny phi defined 
+{ // Evaluates the isogeny at the point (X:Z) in the domain of the isogeny, given a 4-isogeny phi defined
   // by the 5 coefficients in coeff (computed in the function four_isogeny_from_projective_kernel()).
   // Inputs: the coefficients defining the isogeny, and the projective point P = (X:Z).
-  // Output: the projective point P = phi(P) = (X:Z) in the codomain. 
+  // Output: the projective point P = phi(P) = (X:Z) in the codomain.
     f2elm_t t0, t1;
 
     fp2mul751_mont(P->X, coeff[0], P->X);              // X = coeff[0]*X
@@ -492,13 +492,13 @@ void eval_4_isog(point_proj_t P, f2elm_t* coeff)
 void first_4_isog(point_proj_t P, const f2elm_t A, f2elm_t Aout, f2elm_t Cout, PCurveIsogenyStruct CurveIsogeny)
 { // Computes first 4-isogeny computed by Alice.
   // Inputs: projective point P = (X4:Z4) and curve constant A.
-  // Output: the projective point P = (X4:Z4) in the codomain and isogenous curve constant Aout/Cout.  
+  // Output: the projective point P = (X4:Z4) in the codomain and isogenous curve constant Aout/Cout.
     f2elm_t t0 = {0}, t1, t2;
-    
-    fpcopy751(CurveIsogeny->Montgomery_one, t0[0]); 
+
+    fpcopy751(CurveIsogeny->Montgomery_one, t0[0]);
     fpadd751(t0[0], t0[0], t0[0]);                     // t0 = 2 (in Montgomery domain)
     fp2sub751(A, t0, Cout);                            // Cout = A-2
-    fpadd751(t0[0], t0[0], t1[0]);                     
+    fpadd751(t0[0], t0[0], t1[0]);
     fpadd751(t0[0], t1[0], t0[0]);                     // t0 = 6 (in Montgomery domain)
     fp2add751(P->X, P->Z, t1);                         // t1 = X+Z
     fp2sub751(P->X, P->Z, t2);                         // t2 = X-Z
@@ -521,13 +521,13 @@ void xTPL(const point_proj_t P, point_proj_t Q, const f2elm_t A24, const f2elm_t
   // Output: projective Montgomery x-coordinates Q = 3*P = (X3:Z3).
     f2elm_t t0, t1, t2, t3, t4, t5;
 
-    fp2sub751(P->X, P->Z, t2);                         // t2 = X-Z           
-    fp2add751(P->X, P->Z, t3);                         // t3 = X+Z 
-    fp2sqr751_mont(t2, t0);                            // t0 = t2^2 
-    fp2sqr751_mont(t3, t1);                            // t1 = t3^2 
-    fp2mul751_mont(t0, C24, t4);                       // t4 = C24*t0 
+    fp2sub751(P->X, P->Z, t2);                         // t2 = X-Z
+    fp2add751(P->X, P->Z, t3);                         // t3 = X+Z
+    fp2sqr751_mont(t2, t0);                            // t0 = t2^2
+    fp2sqr751_mont(t3, t1);                            // t1 = t3^2
+    fp2mul751_mont(t0, C24, t4);                       // t4 = C24*t0
     fp2mul751_mont(t1, t4, t5);                        // t5 = t4*t1
-    fp2sub751(t1, t0, t1);                             // t1 = t1-t0 
+    fp2sub751(t1, t0, t1);                             // t1 = t1-t0
     fp2mul751_mont(A24, t1, t0);                       // t0 = A24*t1
     fp2add751(t4, t0, t4);                             // t4 = t4+t0
     fp2mul751_mont(t1, t4, t4);                        // t4 = t4*t1
@@ -551,10 +551,10 @@ void xTPLe(const point_proj_t P, point_proj_t Q, const f2elm_t A, const f2elm_t 
   // Output: projective Montgomery x-coordinates Q <- (3^e)*P.
     f2elm_t A24, C24;
     int i;
-    
-    fp2add751(C, C, A24);                           
-    fp2add751(A24, A24, C24);                    
-    fp2add751(A24, A, A24);       
+
+    fp2add751(C, C, A24);
+    fp2add751(A24, A24, C24);
+    fp2add751(A24, A, A24);
     copy_words((digit_t*)P, (digit_t*)Q, 2*2*NWORDS_FIELD);
 
     for (i = 0; i < e; i++) {
@@ -566,7 +566,7 @@ void xTPLe(const point_proj_t P, point_proj_t Q, const f2elm_t A, const f2elm_t 
 void get_3_isog(const point_proj_t P, f2elm_t A, f2elm_t C)
 { // Computes the corresponding 3-isogeny of a projective Montgomery point (X3:Z3) of order 3.
   // Input:  projective point of order three P = (X3:Z3).
-  // Output: the 3-isogenous Montgomery curve with projective coefficient A/C. 
+  // Output: the 3-isogenous Montgomery curve with projective coefficient A/C.
     f2elm_t t0, t1;
 
     fp2sqr751_mont(P->X, t0);                          // t0 = X^2
@@ -578,9 +578,9 @@ void get_3_isog(const point_proj_t P, f2elm_t A, f2elm_t C)
     fp2add751(t1, t1, C);                              // C = 2*t1
     fp2sub751(t0, t1, t1);                             // t1 = t0-t1
     fp2mul751_mont(t0, t1, t1);                        // t1 = t0*t1
-    fp2sub751(A, t1, A);                               // A = A-t1 
-    fp2sub751(A, t1, A);                               // A = A-t1 
-    fp2sub751(A, t1, A);                               // A = A-t1     
+    fp2sub751(A, t1, A);                               // A = A-t1
+    fp2sub751(A, t1, A);                               // A = A-t1
+    fp2sub751(A, t1, A);                               // A = A-t1
     fp2mul751_mont(P->X, P->Z, t1);                    // t1 = X*Z    // ms trade-off possible (1 mul for 1sqr + 1add + 2sub)
     fp2mul751_mont(C, t1, C);                          // C = C*t1
 }
@@ -589,18 +589,18 @@ void get_3_isog(const point_proj_t P, f2elm_t A, f2elm_t C)
 void eval_3_isog(const point_proj_t P, point_proj_t Q)
 { // Computes the 3-isogeny R=phi(X:Z), given projective point (X3:Z3) of order 3 on a Montgomery curve and a point P = (X:Z).
   // Inputs: projective points P = (X3:Z3) and Q = (X:Z).
-  // Output: the projective point Q <- phi(Q) = (XX:ZZ). 
+  // Output: the projective point Q <- phi(Q) = (XX:ZZ).
     f2elm_t t0, t1, t2;
 
     fp2mul751_mont(P->X, Q->X, t0);                  // t0 = X3*X
     fp2mul751_mont(P->Z, Q->X, t1);                  // t1 = Z3*X
     fp2mul751_mont(P->Z, Q->Z, t2);                  // t2 = Z3*Z
-    fp2sub751(t0, t2, t0);                           // t0 = X3*X-Z3*Z          
+    fp2sub751(t0, t2, t0);                           // t0 = X3*X-Z3*Z
     fp2mul751_mont(P->X, Q->Z, t2);                  // t2 = X3*Z
     fp2sub751(t1, t2, t1);                           // t1 = Z3*X-X3*Z
     fp2sqr751_mont(t0, t0);                          // t0 = (X3*X-Z3*Z)^2
     fp2sqr751_mont(t1, t1);                          // t1 = (Z3*X-X3*Z)^2
-    fp2mul751_mont(Q->X, t0, Q->X);                  // X = X*(X3*X-Z3*Z)^2        
+    fp2mul751_mont(Q->X, t0, Q->X);                  // X = X*(X3*X-Z3*Z)^2
     fp2mul751_mont(Q->Z, t1, Q->Z);                  // Z = Z*(Z3*X-X3*Z)^2
 }
 
@@ -614,7 +614,7 @@ void inv_3_way(f2elm_t z1, f2elm_t z2, f2elm_t z3)
     fp2mul751_mont(z1, z2, t0);                      // t0 = z1*z2
     fp2mul751_mont(z3, t0, t1);                      // t1 = z1*z2*z3
     fp2inv751_mont(t1);                              // t1 = 1/(z1*z2*z3)
-    fp2mul751_mont(z3, t1, t2);                      // t2 = 1/(z1*z2) 
+    fp2mul751_mont(z3, t1, t2);                      // t2 = 1/(z1*z2)
     fp2mul751_mont(t2, z2, t3);                      // t3 = 1/z1
     fp2mul751_mont(t2, z1, z2);                      // z2 = 1/z2
     fp2mul751_mont(t0, t1, z3);                      // z3 = 1/z3
@@ -634,8 +634,8 @@ void inv_4_way(f2elm_t z1, f2elm_t z2, f2elm_t z3, f2elm_t z4)
 
     fp2inv751_mont(t2);                              // t2 = 1/(z1*z2*z3*z4)
 
-    fp2mul751_mont(t0, t2, t0);                      // t0 = 1/(z3*z4) 
-    fp2mul751_mont(t1, t2, t1);                      // t1 = 1/(z1*z2) 
+    fp2mul751_mont(t0, t2, t0);                      // t0 = 1/(z3*z4)
+    fp2mul751_mont(t1, t2, t1);                      // t1 = 1/(z1*z2)
     fp2mul751_mont(t0, z3, t2);                      // t2 = 1/z4
     fp2mul751_mont(t0, z4, z3);                      // z3 = 1/z3
     fp2copy751(t2, z4);                              // z4 = 1/z4
@@ -661,18 +661,18 @@ void inv_4_way_batch(f2elm_t z1, f2elm_t z2, f2elm_t z3, f2elm_t z4, batch_struc
 	fp2copy751(t2, batch->invArray[batch->cntr]);
 	tempCnt = batch->cntr;
 	//printf("%s:%d Adding element %d to inversion buffer \n", __FILE__, __LINE__, tempCnt);
-	batch->cntr++; 
+	batch->cntr++;
 	pthread_mutex_unlock(&batch->arrayLock);
-	
+
 	int i;
-	
-	//printf("%s:%d cntr=%d, batchSize=%d\n", __FILE__, __LINE__, cntr, batchSize);		
-		
+
+	//printf("%s:%d cntr=%d, batchSize=%d\n", __FILE__, __LINE__, cntr, batchSize);
+
 	if (tempCnt+1 == batch->batchSize) {
 		partial_batched_inv(batch->invArray, batch->invDest, batch->batchSize);
 
 		for (i = 0; i < batch->batchSize; i++) {
-			sem_post(&batch->sign_sem);			
+			sem_post(&batch->sign_sem);
 		}
 	} else {
 		sem_wait(&batch->sign_sem);
@@ -681,8 +681,8 @@ void inv_4_way_batch(f2elm_t z1, f2elm_t z2, f2elm_t z3, f2elm_t z4, batch_struc
 	fp2copy751(batch->invDest[tempCnt], t2);
 	batch->cntr = 0;
 
-	fp2mul751_mont(t0, t2, t0);                      // t0 = 1/(z3*z4) 
-	fp2mul751_mont(t1, t2, t1);                      // t1 = 1/(z1*z2) 
+	fp2mul751_mont(t0, t2, t0);                      // t0 = 1/(z3*z4)
+	fp2mul751_mont(t1, t2, t1);                      // t1 = 1/(z1*z2)
 	fp2mul751_mont(t0, z3, t2);                      // t2 = 1/z4
 	fp2mul751_mont(t0, z4, z3);                      // z3 = 1/z3
 	fp2copy751(t2, z4);                              // z4 = 1/z4
@@ -690,7 +690,7 @@ void inv_4_way_batch(f2elm_t z1, f2elm_t z2, f2elm_t z3, f2elm_t z4, batch_struc
 	fp2mul751_mont(z2, t1, z1);                      // z1 = 1/z1
 	fp2copy751(t2, z2);                              // z2 = 1/z2
 
-	//printf("%s:%d Batched inversion complete \n", __FILE__, __LINE__);		
+	//printf("%s:%d Batched inversion complete \n", __FILE__, __LINE__);
 }
 
 void distort_and_diff(const felm_t xP, point_proj_t D, PCurveIsogenyStruct CurveIsogeny)
@@ -703,7 +703,7 @@ void distort_and_diff(const felm_t xP, point_proj_t D, PCurveIsogenyStruct Curve
     fpsqr751_mont(xP, D->X[0]);	                     // XD = xP^2
     fpadd751(D->X[0], one, D->X[0]);                 // XD = XD+1
     fpcopy751(D->X[0], D->X[1]);                     // XD = XD*i
-    fpzero751(D->X[0]);          
+    fpzero751(D->X[0]);
     fpadd751(xP, xP, D->Z[0]);                       // ZD = xP+xP
 }
 
@@ -713,7 +713,7 @@ void get_A(const f2elm_t xP, const f2elm_t xQ, const f2elm_t xR, f2elm_t A, PCur
   // Input:  the x-coordinates xP, xQ, and xR of the points P, Q and R.
   // Output: the coefficient A corresponding to the curve E_A: y^2=x^3+A*x^2+x.
     f2elm_t t0, t1, one = {0};
-    
+
     fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
     fp2add751(xP, xQ, t1);                           // t1 = xP+xQ
     fp2mul751_mont(xP, xQ, t0);                      // t0 = xP*xQ
@@ -742,35 +742,35 @@ static void get_point_notin_2E(felm_t alpha, const f2elm_t A, const felm_t one, 
     digit_t *A0 = (digit_t*)A[0], *A1 = (digit_t*)A[1];
     felm_t X0, X1, x0, x1, t0, sqrt, X0_temp = {0}, X1_temp = {0}, alpha52 = {0}, alpha52_2 = {0}, alpha47 = {0}, alpha47_2 = {0};
     unsigned int i;
-    
+
     fpsub751(A0, A1, x0);                            // x0 = A0-A1
     fpadd751(x0, A0, x0);                            // x0 = x0+A0
-    fpadd751(x0, x0, x0);   
+    fpadd751(x0, x0, x0);
     fpadd751(x0, x0, x0);
     fpadd751(x0, x0, x0);                            // x0 = 8*x0
     fpsub751(x0, A0, X0);                            // X0 = x0-A0
     fpadd751(A0, A1, x1);                            // x1 = A0+A1
     fpadd751(x1, A1, x1);                            // x1 = x1+A1
-    fpadd751(x1, x1, x1);   
+    fpadd751(x1, x1, x1);
     fpadd751(x1, x1, x1);
     fpadd751(x1, x1, x1);                            // x1 = 8*x1
     fpsub751(x1, A1, X1);                            // X1 = x1-A1
-    fpmul751_mont(alpha, value52, alpha52);          // alpha52 = 52*alpha 
+    fpmul751_mont(alpha, value52, alpha52);          // alpha52 = 52*alpha
     fpmul751_mont(X0, alpha, X0_temp);               // X0*alpha
-    fpmul751_mont(alpha52, alpha, alpha52_2);        // alpha52^2 = 52*alpha^2 
-    fpmul751_mont(alpha, value47, alpha47);          // alpha47 = 47*alpha 
+    fpmul751_mont(alpha52, alpha, alpha52_2);        // alpha52^2 = 52*alpha^2
+    fpmul751_mont(alpha, value47, alpha47);          // alpha47 = 47*alpha
     fpmul751_mont(X1, alpha, X1_temp);               // X0*alpha
-    fpmul751_mont(alpha47, alpha, alpha47_2);        // alpha47^2 = 47*alpha^2 
+    fpmul751_mont(alpha47, alpha, alpha47_2);        // alpha47^2 = 47*alpha^2
 
-    do {   
-        fpadd751(alpha, one, alpha);                 // alpha += 1        
+    do {
+        fpadd751(alpha, one, alpha);                 // alpha += 1
         fpadd751(X0_temp, X0, X0_temp);              // X0*alpha
         fpadd751(alpha52, value52, t0);              // t0 = 52*alpha52 + 52
         fpadd751(alpha52, t0, alpha52);              // 2*52*alpha52 + 52
         fpadd751(alpha52_2, alpha52, alpha52_2);     // 52*alpha^2 = 52*alpha52^2 + 2*52*alpha52 + 52
         fpcopy751(t0, alpha52);                      // 52*alpha = 52*alpha52 + 52
         fpadd751(alpha52_2, four, x0);               // 52*alpha^2 + 4
-        fpadd751(X0_temp, x0, x0);                   // x0 = X0*alpha + 52*alpha^2 + 4               
+        fpadd751(X0_temp, x0, x0);                   // x0 = X0*alpha + 52*alpha^2 + 4
         fpadd751(X1_temp, X1, X1_temp);              // X1*alpha
         fpadd751(alpha47, value47, t0);              // t0 = 47*alpha47 + 47
         fpadd751(alpha47, t0, alpha47);              // 2*47*alpha52 + 47
@@ -798,7 +798,7 @@ static void get_point_notin_2E(felm_t alpha, const f2elm_t A, const felm_t one, 
 
 
 void generate_2_torsion_basis(const f2elm_t A, point_full_proj_t R1, point_full_proj_t R2, PCurveIsogenyStruct CurveIsogeny)
-{ // Produces points R1 and R2 such that {R1, R2} is a basis for E[2^372].                    
+{ // Produces points R1 and R2 such that {R1, R2} is a basis for E[2^372].
   // Input:   curve constant A.
   // Outputs: R1 = (X1:Y1:Z1) and R2 = (X2:Y2:Z2).
 	point_proj_t P, Q, P1 = {0}, P2 = {0};
@@ -813,7 +813,7 @@ void generate_2_torsion_basis(const f2elm_t A, point_full_proj_t R1, point_full_
 
 	fpzero751(zero);
 	fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
-    
+
 	value47[0] = 47;
 	value52[0] = 52;
 	to_mont(value47, value47);
@@ -825,28 +825,28 @@ void generate_2_torsion_basis(const f2elm_t A, point_full_proj_t R1, point_full_
 	fpcopy751(alpha, X1[1]);
 	fpadd751(alpha, alpha, X1[0]);
 	fpadd751(X1[0], X1[0], X1[0]);                   // X1 = alpha*i + alpha*4
-	fpcopy751(one[0], Z1[0]);                        // Z1 = 1 
+	fpcopy751(one[0], Z1[0]);                        // Z1 = 1
 
 	xTPLe(P1, P1, A, one, 239);                      // xTPL assumes projective constant, but this is minor
 	xDBLe(P1, P, A, one, 371);
 
-	// This loop is necessary to ensure that the order of the WeilPairing is oA and not smaller. 
+	// This loop is necessary to ensure that the order of the WeilPairing is oA and not smaller.
 	// This ensures that we have a basis.
 	do {
-		get_point_notin_2E(alpha, A, one[0], four, value47, value52);  
+		get_point_notin_2E(alpha, A, one[0], four, value47, value52);
 		fpcopy751(alpha, X2[1]);
 		fpadd751(alpha, alpha, X2[0]);
 		fpadd751(X2[0], X2[0], X2[0]);               // X2 = alpha*i + alpha*4
-		fpzero751(Z2[1]);                             
-		fpcopy751(one[0], Z2[0]);                    // Z2 = 1 
+		fpzero751(Z2[1]);
+		fpcopy751(one[0], Z2[0]);                    // Z2 = 1
 		xTPLe(P2, P2, A, one, 239);                  // xTPL assumes projective constant, but this is minor
-		xDBLe(P2, Q, A, one, 371);  
+		xDBLe(P2, Q, A, one, 371);
 		fp2mul751_mont(XP, ZQ, t0);                  // t0 = XP*ZQ
 		fp2mul751_mont(XQ, ZP, t1);                  // t1 = XQ*ZP
 		fp2sub751(t0, t1, t0);                       // t0 = XP*ZQ-XQ*ZP
 		fp2correction751(t0);
 	} while (fpequal751_non_constant_time(t0[0], zero) == true && fpequal751_non_constant_time(t0[1], zero) == true);
-    
+
 	fp2copy751(X1, R1->X);
 	fp2copy751(Z1, R1->Z);
 	fp2copy751(X2, R2->X);
@@ -861,7 +861,7 @@ void generate_2_torsion_basis(const f2elm_t A, point_full_proj_t R1, point_full_
 	fp2mul751_mont(X1, Y1, Y1);                      // Y1 = Y1*X1
 	fp2mul751_mont(t0, Z1, t0);                      // t0 = t0*Z1
 	sqrt_Fp2_frac(Y1, t0, t1);                       // t1 = sqrt(Y1/t0)
-    
+
 	fp2sqr751_mont(Z2, t0);                          // t0 = Z2^2
 	fp2mul751_mont(A, Z2, Y2);                       // Y2 = A*Z2
 	fp2add751(X2, Y2, Y2);                           // Y2 = X2+Y2
@@ -870,7 +870,7 @@ void generate_2_torsion_basis(const f2elm_t A, point_full_proj_t R1, point_full_
 	fp2mul751_mont(Y2, X2, Y2);                      // Y2 = Y2*X2
 	fp2mul751_mont(t0, Z2, t0);                      // t0 = t0*Z2
 	fp2mul751_mont(t1, Z1, Y1);                      // Y1 = t1*Z1
-	sqrt_Fp2_frac(Y2, t0, t1);                       // t1 = sqrt(Y2/t0)    
+	sqrt_Fp2_frac(Y2, t0, t1);                       // t1 = sqrt(Y2/t0)
 	fp2mul751_mont(Z2, t1, Y2);                      // Y2 = t1*Z2
 }
 
@@ -878,7 +878,7 @@ void generate_2_torsion_basis(const f2elm_t A, point_full_proj_t R1, point_full_
 static uint64_t sqrt17[NWORDS64_FIELD] = { 0x89127CDB8966913D, 0xF788014C8C8401A0, 0x1A16F73884F3E3E8, 0x2E67382B560FA195, 0xDD5EE869B7F4FD81, 0x16A0849EF695EFEB,
 	                                       0x3675244609DE1963, 0x36F02976EF2EB241, 0x92D09F939A20637F, 0x41496905F2B0112C, 0xA94C09B1F7242495, 0x0000297652D36A97 };
 
-static void get_X_on_curve(f2elm_t A, unsigned int* r, f2elm_t x, felm_t t1, felm_t a, felm_t b) 
+static void get_X_on_curve(f2elm_t A, unsigned int* r, f2elm_t x, felm_t t1, felm_t a, felm_t b)
 { // Elligator2 for X
     felm_t v0, v1, r0, r1, t0, t2, t3, rsq = {0};
     unsigned int i;
@@ -886,7 +886,7 @@ static void get_X_on_curve(f2elm_t A, unsigned int* r, f2elm_t x, felm_t t1, fel
     fpcopy751(((felm_t*)&LIST)[(*r << 1)-2], r1);    // r1 = list[2*r-1]
     fpcopy751(((felm_t*)&LIST)[(*r << 1)-1], r0);    // r0 = list[2*r]
     rsq[0] = (*r)*(*r);                              // rsp = r^2
-    to_mont(rsq, rsq);                               // Converting to Montgomery representation 
+    to_mont(rsq, rsq);                               // Converting to Montgomery representation
     fpmul751_mont(A[1], r1, t0);                     // t0 = A1*r1
 	fpmul751_mont(A[0], r0, v0);                     // v0 = A0*r0
 	fpsub751(v0, t0, v0);                            // v0 = v0-t0
@@ -918,7 +918,7 @@ static void get_X_on_curve(f2elm_t A, unsigned int* r, f2elm_t x, felm_t t1, fel
     fpsqr751_mont(a, t0);                            // t0 = a^2
     fpsqr751_mont(b, t1);                            // t1 = b^2
     fpadd751(t0, t1, t0);                            // t0 = t0+t1
-	fpcopy751(t0, t1);	
+	fpcopy751(t0, t1);
     for (i = 0; i < 370; i++) {                      // t1 = t0^((p+1) div 4)
         fpsqr751_mont(t1, t1);
     }
@@ -971,12 +971,12 @@ static void get_pt_on_curve(f2elm_t A, unsigned int* r, f2elm_t x, f2elm_t y)
     fpmul751_mont(b, t1, t1);                        // t1 = t1*b
 	fpcorrection751(t0);
 	fpcorrection751(t2);
-  
+
     if (fpequal751_non_constant_time(t0, t2) == true) {
         fpcopy751(t3, y[0]);                         // y0 = t3
         fpcopy751(t1, y[1]);                         // y1 = t1;
     } else {
-        fpneg751(t3);          
+        fpneg751(t3);
         fpcopy751(t1, y[0]);                         // y0 = t1;
         fpcopy751(t3, y[1]);                         // y1 = -t3
     }
@@ -1016,7 +1016,7 @@ static void get_3_torsion_elt(f2elm_t A, unsigned int* r, point_proj_t P, point_
 
 
 void generate_3_torsion_basis(f2elm_t A, point_full_proj_t R1, point_full_proj_t R2, PCurveIsogenyStruct CurveIsogeny)
-{ // Produces points R1 and R2 such that {R1, R2} is a basis for E[3^239].       
+{ // Produces points R1 and R2 such that {R1, R2} is a basis for E[3^239].
   // Input:   curve constant A.
   // Outputs: R1 = (X1:Y1:Z1) and R2 = (X2:Y2:Z2).
 	point_proj_t R, R3, R4;
@@ -1027,17 +1027,17 @@ void generate_3_torsion_basis(f2elm_t A, point_full_proj_t R1, point_full_proj_t
 	felm_t *X2 = (felm_t*)R2->X, *Y2 = (felm_t*)R2->Y, *Z2 = (felm_t*)R2->Z;
 	f2elm_t u, v, c, f, t0, f0, fX, fY, Y, Y3, one = {0};
 	felm_t zero = {0};
-	unsigned int r = 1;         
+	unsigned int r = 1;
 	unsigned int triples = 0, pts_found = 0;
 
-	get_3_torsion_elt(A, &r, R, R3, &triples, CurveIsogeny);        
-	fpcopy751(CurveIsogeny->Montgomery_one, one[0]); 
+	get_3_torsion_elt(A, &r, R, R3, &triples, CurveIsogeny);
+	fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
 	fpzero751(zero);
 
 	if (triples == 239) {
 		pts_found = 1;
 		fp2copy751(X, X1);                           // X1 = X
-		fp2copy751(Z, Z1);                           // Z1 = Z 
+		fp2copy751(Z, Z1);                           // Z1 = Z
 		fp2mul751_mont(A, Z1, u);                    // u = A*Z1
 		fp2add751(u, X1, u);                         // u = u+X1
 		fp2mul751_mont(u, X1, u);                    // u = u*X1
@@ -1187,7 +1187,7 @@ static void square_and_absorb_line(const f2elm_t lx, const f2elm_t ly, const f2e
 
 
 static void final_dbl_iteration(const point_ext_proj_t P, const f2elm_t x, f2elm_t n, f2elm_t d)
-{ // Special iteration for the final doubling step in Miller's algorithm. This is necessary since the doubling 
+{ // Special iteration for the final doubling step in Miller's algorithm. This is necessary since the doubling
   // at the end of the Miller loop is an exceptional case (doubling a point of order 2).
 	felm_t *X = (felm_t*)P->XZ, *Z = (felm_t*)P->Z2;
 	f2elm_t l;
@@ -1204,7 +1204,7 @@ static void final_dbl_iteration(const point_ext_proj_t P, const f2elm_t x, f2elm
 static void final_exponentiation_2_torsion(f2elm_t n, f2elm_t d, const f2elm_t n_inv, const f2elm_t d_inv, f2elm_t nout, PCurveIsogenyStruct CurveIsogeny)
 { // The final exponentiation for pairings in the 2-torsion group. Raising the value n/d to the power (p^2-1)/2^eA.
     felm_t one = {0};
-    unsigned int i; 
+    unsigned int i;
 
     fpcopy751(CurveIsogeny->Montgomery_one, one);
     fp2mul751_mont(n, d_inv, n);                     // n = n*d_inv
@@ -1233,7 +1233,7 @@ void Tate_pairings_2_torsion(const point_t R1, const point_t R2, const point_t P
 	fp2copy751(R1->x, P1->XZ);
 	fp2sqr751_mont(P1->XZ, P1->X2);
 	fp2copy751(R1->y, P1->YZ);
-	fpcopy751(one, P1->Z2[0]);                       // P1 = (x1^2,x1,1,y1)    
+	fpcopy751(one, P1->Z2[0]);                       // P1 = (x1^2,x1,1,y1)
 	fp2copy751(R2->x, P2->XZ);
 	fp2sqr751_mont(P2->XZ, P2->X2);
 	fp2copy751(R2->y, P2->YZ);
@@ -1360,8 +1360,8 @@ static void cube_and_absorb_parab(const f2elm_t ly, const f2elm_t lx2, const f2e
 }
 
 static void final_tpl(point_ext_proj_t P, const f2elm_t A, f2elm_t lam, f2elm_t mu, f2elm_t D)
-{ // Special iteration for the final tripling step in Miller's algorithm. This is necessary since the tripling 
-  // at the end of the Miller loop is an exceptional case (tripling a point of order 3). Uses lines instead of 
+{ // Special iteration for the final tripling step in Miller's algorithm. This is necessary since the tripling
+  // at the end of the Miller loop is an exceptional case (tripling a point of order 3). Uses lines instead of
   // parabolas.
 	felm_t *X2 = (felm_t*)P->X2, *XZ = (felm_t*)P->XZ, *YZ = (felm_t*)P->YZ, *Z2 = (felm_t*)P->Z2;
 	f2elm_t X, Y, Z, Y2, tX2, AX2, tXZ, tAXZ;
@@ -1389,9 +1389,9 @@ static void final_tpl(point_ext_proj_t P, const f2elm_t A, f2elm_t lam, f2elm_t 
 }
 
 static void final_tpl_iteration(const f2elm_t x, const f2elm_t y, const f2elm_t lam, const f2elm_t mu, const f2elm_t D, f2elm_t n, f2elm_t d)
-{ // Special iteration for the final tripling step in Miller's algorithm. This is necessary since the tripling 
-  // at the end of the Miller loop is an exceptional case (tripling a point of order 3). 
-  // Cubes the running pairing value n/d and absorbs the line function values. 
+{ // Special iteration for the final tripling step in Miller's algorithm. This is necessary since the tripling
+  // at the end of the Miller loop is an exceptional case (tripling a point of order 3).
+  // Cubes the running pairing value n/d and absorbs the line function values.
 	f2elm_t ln, ld, t;
 
 	fp2sqr751_mont(n, ln);             // ln = n ^ 2
@@ -1429,7 +1429,7 @@ static void final_exponentiation_3_torsion(f2elm_t n, f2elm_t d, const f2elm_t n
 
 
 void Tate_pairings_3_torsion(const point_t R1, const point_t R2, const point_t P, const point_t Q, const f2elm_t A, f2elm_t* n, PCurveIsogenyStruct CurveIsogeny)
-{ // The tripling only 3-torsion Tate pairing of order 3^eB, consisting of the tripling only Miller loop and the final exponentiation. 
+{ // The tripling only 3-torsion Tate pairing of order 3^eB, consisting of the tripling only Miller loop and the final exponentiation.
   // Computes 5 pairings at once: e(R1, R2), e(R1, P), e(R1, Q), e(R2, P), e(R2,Q).
 	point_ext_proj_t P1 = {0}, P2 = {0};
 	f2elm_t ly, lx2, lx1, lx0, vx, v0, lam, mu, d;
@@ -1441,7 +1441,7 @@ void Tate_pairings_3_torsion(const point_t R1, const point_t R2, const point_t P
 	fp2copy751(R1->x, P1->XZ);
 	fp2sqr751_mont(P1->XZ, P1->X2);
 	fp2copy751(R1->y, P1->YZ);
-	fpcopy751(one, P1->Z2[0]);                       // P1 = (x1^2,x1,1,y1)    
+	fpcopy751(one, P1->Z2[0]);                       // P1 = (x1^2,x1,1,y1)
 	fp2copy751(R2->x, P2->XZ);
 	fp2sqr751_mont(P2->XZ, P2->X2);
 	fp2copy751(R2->y, P2->YZ);
@@ -1488,16 +1488,16 @@ void phn1(const f2elm_t q, const f2elm_t* LUT, const uint64_t a, const felm_t on
 
     fp2copy751(q, u);                     // u = q
     *alpha_i = 0;
-    for (l = 0; l < a-1; l++) {  
+    for (l = 0; l < a-1; l++) {
         fp2copy751(u, v);                 // v = u
-        for (h = 1; h < (a-l); h++) { 
-            sqr_Fp2_cycl(v, one); 
+        for (h = 1; h < (a-l); h++) {
+            sqr_Fp2_cycl(v, one);
         }
 		fp2correction751(v);
         if (fpequal751_non_constant_time(v[0], one) == false || fpequal751_non_constant_time(v[1], zero) == false) {
             *alpha_i += ((uint64_t)1 << l);
             fp2copy751(LUT[6-a+l], tmp);  // tmp = LUT[6-a+l];
-            fp2mul751_mont(u, tmp, u); 
+            fp2mul751_mont(u, tmp, u);
         }
     }
 	fp2correction751(u);
@@ -1515,28 +1515,28 @@ void phn5(f2elm_t q, const f2elm_t* LUT, const f2elm_t* LUT_1, const felm_t one,
     uint64_t i, j;
 
     *alpha_k = 0;
-	fp2copy751(q, u); 
+	fp2copy751(q, u);
 	for (i = 0; i < 4; i++) {
 		fp2copy751(u, v);
 		sqr_Fp2_cycl(v, one);
-		for (j = 0; j < (5 * (3 - i)); j++) { 
+		for (j = 0; j < (5 * (3 - i)); j++) {
 			sqr_Fp2_cycl(v, one);
 		}
 		phn1(v, LUT, 5, one, &alpha_i);      // u order 2^5
 		*alpha_k += (alpha_i << (5 * i));
-		exp6_Fp2_cycl(LUT_1[i], alpha_i, one, tmp);       
+		exp6_Fp2_cycl(LUT_1[i], alpha_i, one, tmp);
 		fp2mul751_mont(u, tmp, u);
 	}
 	fp2correction751(u);
     // Do the last part
 	if (fpequal751_non_constant_time(u[0], one) == false || fpequal751_non_constant_time(u[1], zero) == false) { // q order 2
 		*alpha_k += ((uint64_t)1 << 20);
-	} 
+	}
 }
 
 
 void phn21(f2elm_t q, const f2elm_t* LUT, const f2elm_t* LUT_0, const f2elm_t* LUT_1, const felm_t one, uint64_t* alpha_k)
-{ // Pohlig-Hellman for groups of 2-power order 2^84 
+{ // Pohlig-Hellman for groups of 2-power order 2^84
     f2elm_t u, v, tmp;
     uint64_t alpha_i;
     uint64_t i, j;
@@ -1547,12 +1547,12 @@ void phn21(f2elm_t q, const f2elm_t* LUT, const f2elm_t* LUT_0, const f2elm_t* L
 	fp2copy751(q, u);
     for (i = 0; i < 3; i++) {
         fp2copy751(u, v);
-        for (j = 0; j < 21*(3-i); j++) {          
-            sqr_Fp2_cycl(v, one); 
+        for (j = 0; j < 21*(3-i); j++) {
+            sqr_Fp2_cycl(v, one);
         }
         phn5(v, LUT, LUT_1, one, &alpha_i);      // u order 2^21
         alpha_k[0] += (alpha_i << (21*i));
-        exp21_Fp2_cycl(LUT_0[i], alpha_i, one, tmp); 
+        exp21_Fp2_cycl(LUT_0[i], alpha_i, one, tmp);
         fp2mul751_mont(u, tmp, u);
     }
 	phn5(u, LUT, LUT_1, one, &alpha_i);      // u order 2^21
@@ -1562,7 +1562,7 @@ void phn21(f2elm_t q, const f2elm_t* LUT, const f2elm_t* LUT_0, const f2elm_t* L
 
 
 void phn84(f2elm_t r, const f2elm_t* t_ori, const f2elm_t* LUT, const f2elm_t* LUT_0, const f2elm_t* LUT_1, const f2elm_t* LUT_3, const felm_t one, uint64_t* alpha)
-{ // Pohlig-Hellman for groups of 2-power order 2^372                                                                                                                                                                                 
+{ // Pohlig-Hellman for groups of 2-power order 2^372
     f2elm_t u, q, t, tmp;
     uint64_t alpha_k[2], alpha_i, mask;
     uint64_t i, j, k;
@@ -1572,29 +1572,29 @@ void phn84(f2elm_t r, const f2elm_t* t_ori, const f2elm_t* LUT, const f2elm_t* L
     for (k = 0; k < 4; k++) {
 		fp2copy751(t, q);
         for (j = 0; j < 36; j++) {
-            sqr_Fp2_cycl(q, one); 
-        }
-        for (j = 0; j < 84*(3-k); j++) { 
             sqr_Fp2_cycl(q, one);
         }
-        phn21(q, LUT, LUT_0, LUT_1, one, alpha_k);  // q order 2^84 
+        for (j = 0; j < 84*(3-k); j++) {
+            sqr_Fp2_cycl(q, one);
+        }
+        phn21(q, LUT, LUT_0, LUT_1, one, alpha_k);  // q order 2^84
         alpha[k] += (alpha_k[0] << (k*20));
 	    mask = ((uint64_t)1 << (k * 20))-1;
 		alpha[k + 1] += ((alpha_k[0] >> (64 - k * 20)) & mask);
 		alpha[k + 1] += (alpha_k[1] << (k * 20));
-        exp84_Fp2_cycl(t_ori[k], alpha_k, one, tmp); 
-        fp2mul751_mont(t, tmp, t); 
+        exp84_Fp2_cycl(t_ori[k], alpha_k, one, tmp);
+        fp2mul751_mont(t, tmp, t);
     }
 	alpha[5] = (alpha_k[1] >> 4);
     // Do the last part
     for (i = 0; i < 6; i++) {
         fp2copy751(t, u);
-        for (j = 0; j < 6*(5-i); j++) {                 
-            sqr_Fp2_cycl(u, one); 
+        for (j = 0; j < 6*(5-i); j++) {
+            sqr_Fp2_cycl(u, one);
         }
         phn1(u, LUT, 6, one, &alpha_i);      // u order 2^6
         alpha[5] += (alpha_i << (16 + 6*i));
-        exp6_Fp2_cycl(LUT_3[i], alpha_i, one, tmp);      
+        exp6_Fp2_cycl(LUT_3[i], alpha_i, one, tmp);
         fp2mul751_mont(t, tmp, t);
     }
 }
@@ -1603,14 +1603,14 @@ void phn84(f2elm_t r, const f2elm_t* t_ori, const f2elm_t* LUT, const f2elm_t* L
 void build_LUTs(const f2elm_t g, f2elm_t* t_ori, f2elm_t* LUT, f2elm_t* LUT_0, f2elm_t* LUT_1, f2elm_t* LUT_3, const felm_t one)
 { // Lookup table generation for 2-torsion PH in a group of order 2^372
 	f2elm_t tmp;
-	unsigned int i, j; 
+	unsigned int i, j;
 
 	fp2copy751(g, tmp);                                    // tmp = g
 	inv_Fp2_cycl(tmp);
 	fp2copy751(tmp, t_ori[0]);                             // t_ori[0] = g^(-1), order 2^372
 	for (i = 0; i < 3; i++) {
 		for (j = 0; j < 84; j++) sqr_Fp2_cycl(tmp, one);
-		fp2copy751(tmp, t_ori[i+1]);                       // order 2^288 & 2^204 & 2^120 
+		fp2copy751(tmp, t_ori[i+1]);                       // order 2^288 & 2^204 & 2^120
 	}
 	for (i = 0; i < 36; i++) sqr_Fp2_cycl(tmp, one);
 	fp2copy751(tmp, t_ori[4]);                             // t_ori[4], order 2^84
@@ -1618,7 +1618,7 @@ void build_LUTs(const f2elm_t g, f2elm_t* t_ori, f2elm_t* LUT, f2elm_t* LUT_0, f
 	fp2copy751(tmp, LUT_0[0]);                             // LUT_0[0] = t_ori[4], order 2^84
 	for (i = 0; i < 2; i++) {
 		for (j = 0; j < 21; j++) sqr_Fp2_cycl(tmp, one);
-		fp2copy751(tmp, LUT_0[i+1]);                       // order 2^63 & 2^42 
+		fp2copy751(tmp, LUT_0[i+1]);                       // order 2^63 & 2^42
 	}
 	for (j = 0; j < 6; j++) sqr_Fp2_cycl(tmp, one);
 	fp2copy751(tmp, LUT_3[0]);                             // LUT_3[0] = tmp, order 2^36
@@ -1627,7 +1627,7 @@ void build_LUTs(const f2elm_t g, f2elm_t* t_ori, f2elm_t* LUT, f2elm_t* LUT_0, f
 	for (j = 0; j < 6; j++) sqr_Fp2_cycl(tmp, one);
 	fp2copy751(tmp, LUT_3[2]);                             // LUT_3[2] = tmp, order 2^24
 	for (j = 0; j < 3; j++) sqr_Fp2_cycl(tmp, one);
-	fp2copy751(tmp, LUT_0[3]);                             // LUT_0[3] = tmp, order 2^21 
+	fp2copy751(tmp, LUT_0[3]);                             // LUT_0[3] = tmp, order 2^21
 	                                                       // LUT_0 done.
 	fp2copy751(tmp, LUT_1[0]);                             // LUT_1[0] = LUT_0[3], order 2^21
 	for (i = 0; i < 3; i++) sqr_Fp2_cycl(tmp, one);
@@ -1639,7 +1639,7 @@ void build_LUTs(const f2elm_t g, f2elm_t* t_ori, f2elm_t* LUT, f2elm_t* LUT_0, f
 	sqr_Fp2_cycl(tmp, one);
 	fp2copy751(tmp, LUT_1[2]);                             // LUT_1[2] = tmp, order 2^11
 	for (i = 0; i < 5; i++) sqr_Fp2_cycl(tmp, one);
-	fp2copy751(tmp, LUT_1[3]);                             // LUT_1[3] = tmp, order 2^16 & 2^11 & 2^6    
+	fp2copy751(tmp, LUT_1[3]);                             // LUT_1[3] = tmp, order 2^16 & 2^11 & 2^6
 	fp2copy751(tmp, LUT_3[5]);                             // LUT_3[5] = tmp
 	                                                       // LUT_1, LUT_3 done
 	fp2copy751(tmp, LUT[0]);                               // LUT = LUT_3[5]
@@ -1651,15 +1651,15 @@ void build_LUTs(const f2elm_t g, f2elm_t* t_ori, f2elm_t* LUT, f2elm_t* LUT_0, f
 
 
 void ph2(const point_t phiP, const point_t phiQ, const point_t PS, const point_t QS, const f2elm_t A, uint64_t* a0, uint64_t* b0, uint64_t* a1, uint64_t* b1, PCurveIsogenyStruct CurveIsogeny)
-{ // Pohlig-Hellman function. 
+{ // Pohlig-Hellman function.
   // This function computes the five pairings e(QS, PS), e(QS, phiP), e(QS, phiQ), e(PS, phiP), e(PS,phiQ),
   // computes the lookup tables for the Pohlig-Hellman functions,
-  // and then computes the discrete logarithms of the last four pairing values to the base of the first pairing value.                                                                    
+  // and then computes the discrete logarithms of the last four pairing values to the base of the first pairing value.
 	f2elm_t t_ori[5], n[5], LUT[5], LUT_0[4], LUT_1[4], LUT_3[6];
 	felm_t one = {0};
-    
+
 	fpcopy751(CurveIsogeny->Montgomery_one, one);
-	
+
 	// Compute the pairings.
 	Tate_pairings_2_torsion(QS, PS, phiP, phiQ, A, n, CurveIsogeny);
 
@@ -1680,9 +1680,9 @@ void half_ph2(const point_t P, const point_t R1, const point_t R2, const f2elm_t
 {
 	f2elm_t t_ori[5], n[5], LUT[5], LUT_0[4], LUT_1[4], LUT_3[6];
 	felm_t one = {0};
-    
+
 	fpcopy751(CurveIsogeny->Montgomery_one, one);
-	
+
 	// Compute the pairings.
 	Tate_pairings_2_torsion(R1, R2, P, P, A, n, CurveIsogeny);
 
@@ -1699,23 +1699,23 @@ void half_ph2(const point_t P, const point_t R1, const point_t R2, const f2elm_t
 static void recover_os(const f2elm_t X1, const f2elm_t Z1, const f2elm_t X2, const f2elm_t Z2, const f2elm_t x, const f2elm_t y, const f2elm_t A, f2elm_t X3, f2elm_t Y3, f2elm_t Z3)
 {
     f2elm_t t0, t1, t2, t3;
-    
+
     //X3 := 2*y*Z1*Z2*X1;
     //Y3 := Z2*((X1+x*Z1+2*A*Z1)*(X1*x+Z1)-2*A*Z1^2)-(X1-x*Z1)^2*X2;
     //Z3 := 2*y*Z1*Z2*Z1;
-    
-    fp2add751(y, y, t0);             
-    fp2mul751_mont(t0, Z1, t0);    
+
+    fp2add751(y, y, t0);
+    fp2mul751_mont(t0, Z1, t0);
     fp2mul751_mont(t0, Z2, t0);       // t0 = 2*y*Z1*Z2
-    fp2mul751_mont(t0, Z1, Z3);       // Z3 = 2*y*Z1*Z2*Z1       
+    fp2mul751_mont(t0, Z1, Z3);       // Z3 = 2*y*Z1*Z2*Z1
     fp2mul751_mont(t0, X1, X3);       // X3 = 2*y*Z1*Z2*X1
-    fp2add751(A, A, t0);                    
-    fp2mul751_mont(t0, Z1, t0);       // t0 = 2*A*Z1  
-    fp2mul751_mont(x, Z1, t1);        // t1 = x*Z1  
+    fp2add751(A, A, t0);
+    fp2mul751_mont(t0, Z1, t0);       // t0 = 2*A*Z1
+    fp2mul751_mont(x, Z1, t1);        // t1 = x*Z1
     fp2add751(X1, t1, t2);            // t2 = X1+x*Z1
     fp2sub751(X1, t1, t1);            // t1 = X1-x*Z1
     fp2add751(t0, t2, t3);            // t3 = X1+x*Z1+2*A*Z1
-    fp2mul751_mont(t0, Z1, t0);       // t0 = 2*A*Z1^2 
+    fp2mul751_mont(t0, Z1, t0);       // t0 = 2*A*Z1^2
     fp2sqr751_mont(t1, t1);           // t1 = (X1-x*Z1)^2
     fp2mul751_mont(x, X1, t2);        // t2 = x*X1
     fp2add751(t2, Z1, t2);            // t2 = X1*x+Z1
@@ -1737,21 +1737,21 @@ void recover_y(const publickey_t PK, point_full_proj_t phiP, point_full_proj_t p
 
     fp2add751(PK[2], A, tmp);
     fp2mul751_mont(PK[2], tmp, tmp);
-    fp2add751(tmp, one, tmp);                 
+    fp2add751(tmp, one, tmp);
     fp2mul751_mont(PK[2], tmp, tmp);              // tmp = PK[2]^3+A*PK[2]^2+PK[2];
     sqrt_Fp2(tmp, phiXY);
     fp2copy751(PK[2], phiX->X);
     fp2copy751(phiXY, phiX->Y);
     fp2copy751(one, phiX->Z);                     // phiX = [PK[2],phiXY,1];
-    
-    recover_os(PK[1], one, PK[0], one, PK[2], phiXY, A, phiQ->X, phiQ->Y, phiQ->Z);      
+
+    recover_os(PK[1], one, PK[0], one, PK[2], phiXY, A, phiQ->X, phiQ->Y, phiQ->Z);
     fp2neg751(phiXY);
     recover_os(PK[0], one, PK[1], one, PK[2], phiXY, A, phiP->X, phiP->Y, phiP->Z);
 }
 
 
 void compress_2_torsion(const unsigned char* PublicKeyA, unsigned char* CompressedPKA, uint64_t* a0, uint64_t* b0, uint64_t* a1, uint64_t* b1, point_t R1, point_t R2, PCurveIsogenyStruct CurveIsogeny)
-{ // 2-torsion compression                                                                          
+{ // 2-torsion compression
     point_full_proj_t P, Q, phP, phQ, phX;
     point_t phiP, phiQ;
     publickey_t PK;
@@ -1761,8 +1761,8 @@ void compress_2_torsion(const unsigned char* PublicKeyA, unsigned char* Compress
     digit_t tmp[2*NWORDS_ORDER];
 
     to_fp2mont(((f2elm_t*)PublicKeyA)[0], ((f2elm_t*)&PK)[0]);    // Converting to Montgomery representation
-    to_fp2mont(((f2elm_t*)PublicKeyA)[1], ((f2elm_t*)&PK)[1]); 
-    to_fp2mont(((f2elm_t*)PublicKeyA)[2], ((f2elm_t*)&PK)[2]); 
+    to_fp2mont(((f2elm_t*)PublicKeyA)[1], ((f2elm_t*)&PK)[1]);
+    to_fp2mont(((f2elm_t*)PublicKeyA)[2], ((f2elm_t*)&PK)[2]);
 
     recover_y(PK, phP, phQ, phX, A, CurveIsogeny);
     generate_2_torsion_basis(A, P, Q, CurveIsogeny);
@@ -1784,7 +1784,7 @@ void compress_2_torsion(const unsigned char* PublicKeyA, unsigned char* Compress
     ph2(phiP, phiQ, R1, R2, A, a0, b0, a1, b1, CurveIsogeny);
 
     if ((a0[0] & 1) == 1) {  // Storing [b1*a0inv, a1*a0inv, b0*a0inv] and setting bit384 to 0
-        inv_mod_orderA((digit_t*)a0, inv);        
+        inv_mod_orderA((digit_t*)a0, inv);
 		multiply((digit_t*)b0, inv, tmp, NWORDS_ORDER);
 		copy_words(tmp, &comp[0], NWORDS_ORDER);
 		comp[NWORDS_ORDER-1] &= (digit_t)(-1) >> 12;       // Hardcoded value
@@ -1807,7 +1807,7 @@ void compress_2_torsion(const unsigned char* PublicKeyA, unsigned char* Compress
 		comp[3*NWORDS_ORDER-1] &= (digit_t)(-1) >> 12;
 		comp[3*NWORDS_ORDER-1] |= (digit_t)1 << (sizeof(digit_t)*8 - 1);
     }
-    
+
     from_fp2mont(A, (felm_t*)&comp[3*NWORDS_ORDER]);  // Converting back from Montgomery representation
 }
 
@@ -1818,25 +1818,25 @@ void phn1_3(const f2elm_t q, const f2elm_t* LUT, const uint64_t a, const felm_t 
     felm_t zero = {0};
     uint64_t l, h;
 	// Hardcoded powers of 3, 3^0 = 1, 3^1 = 3, 3^2 = 9
-	uint64_t pow3[3] = {0x0000000000000001, 0x0000000000000003, 0x0000000000000009}; 
+	uint64_t pow3[3] = {0x0000000000000001, 0x0000000000000003, 0x0000000000000009};
 
     fp2copy751(q, u);                     // u = q
     *alpha_i = 0;
-    for (l = 0; l < a-1; l++) {  
+    for (l = 0; l < a-1; l++) {
         fp2copy751(u, v);                 // v = u
-        for (h = 1; h < (a-l); h++) { 
-            cube_Fp2_cycl(v, one); 
+        for (h = 1; h < (a-l); h++) {
+            cube_Fp2_cycl(v, one);
         }
 		fp2correction751(v);
         if (fpequal751_non_constant_time(v[0], LUT[3][0]) == true && fpequal751_non_constant_time(v[1], LUT[3][1]) == true) {
             *alpha_i += pow3[l];
             fp2copy751(LUT[3-a+l], tmp);  // tmp = LUT[3-a+l];
-            fp2mul751_mont(u, tmp, u); 
+            fp2mul751_mont(u, tmp, u);
         } else if (fpequal751_non_constant_time(v[0], one) == false || fpequal751_non_constant_time(v[1], zero) == false) {
 			*alpha_i += pow3[l] << 1;
             fp2copy751(LUT[3-a+l], tmp);  // tmp = LUT[3-a+l];
 			sqr_Fp2_cycl(tmp, one);
-            fp2mul751_mont(u, tmp, u); 
+            fp2mul751_mont(u, tmp, u);
         }
     }
 	fp2correction751(u);
@@ -1862,13 +1862,13 @@ void phn3(f2elm_t q, const f2elm_t* LUT, const f2elm_t* LUT_1, const felm_t one,
 	fp2copy751(q, u);
     for (i = 0; i < 4; i++) {
         fp2copy751(u, v);
-        for (j = 0; j < 3*(4-i); j++) {       
+        for (j = 0; j < 3*(4-i); j++) {
 			cube_Fp2_cycl(v, one);
         }
         phn1_3(v, LUT, 3, one, &alpha_i);      // u order 3^3
         *alpha_k += alpha_i * pow3[i];
-        exp6_Fp2_cycl(LUT_1[i], alpha_i, one, tmp);   
-        fp2mul751_mont(u, tmp, u); 
+        exp6_Fp2_cycl(LUT_1[i], alpha_i, one, tmp);
+        fp2mul751_mont(u, tmp, u);
     }
 	phn1_3(u, LUT, 3, one, &alpha_i);      // u order 3^3
 	*alpha_k += alpha_i * pow3[4];
@@ -1893,22 +1893,22 @@ void phn15_1(f2elm_t q, const f2elm_t* LUT, const f2elm_t* LUT_0, const f2elm_t*
 	fp2copy751(q, u);
 	for (i = 0; i < 3; i++) {
         fp2copy751(u, v);
-        for (j = 0; j < 11; j++) {           
-            cube_Fp2_cycl(v, one); 
+        for (j = 0; j < 11; j++) {
+            cube_Fp2_cycl(v, one);
         }
-        for (j = 0; j < 15*(2-i); j++) {  
-            cube_Fp2_cycl(v, one); 
+        for (j = 0; j < 15*(2-i); j++) {
+            cube_Fp2_cycl(v, one);
         }
         phn3(v, LUT, LUT_1, one, &alpha_i);      // v order 3^15
 		multiply((digit_t*)&alpha_i, (digit_t*)&pow3_15[i], (digit_t*)alpha_tmp, 64/RADIX);
 		mp_add((digit_t*)alpha_k, (digit_t*)alpha_tmp, (digit_t*)alpha_k, 2*64/RADIX);
 
         fp2copy751(LUT_0[i], v);
-        for (j = 0; j < 5; j++) {           
-            cube_Fp2_cycl(v, one); 
+        for (j = 0; j < 5; j++) {
+            cube_Fp2_cycl(v, one);
         }
-		
-        exp_Fp2_cycl(v, &alpha_i, one, tmp, 24);   
+
+        exp_Fp2_cycl(v, &alpha_i, one, tmp, 24);
         fp2mul751_mont(u, tmp, u);
     }
 
@@ -1917,23 +1917,23 @@ void phn15_1(f2elm_t q, const f2elm_t* LUT, const f2elm_t* LUT_0, const f2elm_t*
 	alpha_n[1] = 0;
 	for (i = 0; i < 3; i++) {
         fp2copy751(u, v);
-        for (j = 0; j < 2; j++) {           
-            cube_Fp2_cycl(v, one); 
+        for (j = 0; j < 2; j++) {
+            cube_Fp2_cycl(v, one);
         }
-        for (j = 0; j < 3*(2-i); j++) {       
-            cube_Fp2_cycl(v, one); 
+        for (j = 0; j < 3*(2-i); j++) {
+            cube_Fp2_cycl(v, one);
         }
         phn1_3(v, LUT, 3, one, &alpha_i);      // v order 3^15
 		alpha_n[0] += alpha_i * pow3_3[i];
 
         fp2copy751(LUT_1[i], v);
-        for (j = 0; j < 4; j++) {           
-            cube_Fp2_cycl(v, one); 
+        for (j = 0; j < 4; j++) {
+            cube_Fp2_cycl(v, one);
         }
-        exp_Fp2_cycl(v, &alpha_i, one, tmp, 5);   
+        exp_Fp2_cycl(v, &alpha_i, one, tmp, 5);
         fp2mul751_mont(u, tmp, u);
     }
-        
+
     phn1_3(u, LUT, 2, one, &alpha_i);
 	alpha_n[0] += alpha_i * pow3_3[3];
 	multiply((digit_t*)alpha_n, (digit_t*)pow3_45, (digit_t*)alpha_tmp, 2*64/RADIX);  // Can be optimized because alpha_n is only single precision and pow3_45 is only slightly larger than 64 bits.
@@ -1969,7 +1969,7 @@ void phn15(f2elm_t q, const f2elm_t* LUT, const f2elm_t* LUT_0, const f2elm_t* L
 		}
 		phn3(v, LUT, LUT_1, one, &alpha_i);      // u order 3^15
 
-		multiply((digit_t*)&alpha_i, (digit_t*)&pow3_15[i], (digit_t*)alpha_tmp, 64/RADIX);    
+		multiply((digit_t*)&alpha_i, (digit_t*)&pow3_15[i], (digit_t*)alpha_tmp, 64/RADIX);
 		mp_add((digit_t*)alpha_k, (digit_t*)alpha_tmp, (digit_t*)alpha_k, 2*64/RADIX);
 
 		exp_Fp2_cycl(LUT_0[i], &alpha_i, one, tmp, 24);
@@ -1980,7 +1980,7 @@ void phn15(f2elm_t q, const f2elm_t* LUT, const f2elm_t* LUT_0, const f2elm_t* L
 	cube_Fp2_cycl(v, one);
 	phn3(v, LUT, LUT_1, one, &alpha_n[0]);      // u order 3^15
 
-	multiply((digit_t*)alpha_n, (digit_t*)pow3_45, (digit_t*)alpha_tmp, 2*64/RADIX);    
+	multiply((digit_t*)alpha_n, (digit_t*)pow3_45, (digit_t*)alpha_tmp, 2*64/RADIX);
 	mp_add((digit_t*)alpha_k, (digit_t*)alpha_tmp, (digit_t*)alpha_k, 2*64/RADIX);
 
 	exp_Fp2_cycl(LUT_0[3], &alpha_n[0], one, tmp, 24);
@@ -1995,7 +1995,7 @@ void phn15(f2elm_t q, const f2elm_t* LUT, const f2elm_t* LUT_0, const f2elm_t* L
 
 
 void phn61(f2elm_t r, f2elm_t* t_ori, const f2elm_t* LUT, const f2elm_t* LUT_0, const f2elm_t* LUT_1, const felm_t one, uint64_t* alpha)
-{                                                                                                                                                                                 
+{
     f2elm_t u, v, tmp;
     uint64_t alpha_k[5] = {0}, alpha_tmp[10] = {0};
     uint64_t i, k;
@@ -2005,7 +2005,7 @@ void phn61(f2elm_t r, f2elm_t* t_ori, const f2elm_t* LUT, const f2elm_t* LUT_0, 
 		                     0x6878E44938606769, 0xD73A1059B8013933,     // 3^(2*61)
 	                         0x9396F76B67B7C403, 0x0000000000000002,
 		                     0x25A79F6508B7F5CB, 0x05515FED4D025D6F,     // 3^(3*61)
-		                     0x37E2AD6FF9936EA9, 0xB69B5308880B15B6, 
+		                     0x37E2AD6FF9936EA9, 0xB69B5308880B15B6,
 		                     0x0000000422BE6150 };
 
 	for (i = 0; i < NWORDS64_ORDER; i++) alpha[i] = 0;
@@ -2014,31 +2014,31 @@ void phn61(f2elm_t r, f2elm_t* t_ori, const f2elm_t* LUT, const f2elm_t* LUT_0, 
     for (k = 0; k < 2; k++) {
         fp2copy751(u, v);
         for (i = 0; i < 56; i++) {
-            cube_Fp2_cycl(v, one); 
+            cube_Fp2_cycl(v, one);
         }
-        for (i = 0; i < 61*(2-k); i++) {          
+        for (i = 0; i < 61*(2-k); i++) {
             cube_Fp2_cycl(v, one);
         }
         phn15(v, LUT, LUT_0, LUT_1, one, alpha_k);  // q order 3^61
-		multiply((digit_t*)alpha_k, (digit_t*)&pow3_61[2*k], (digit_t*)alpha_tmp, 2*64/RADIX);    
+		multiply((digit_t*)alpha_k, (digit_t*)&pow3_61[2*k], (digit_t*)alpha_tmp, 2*64/RADIX);
 		mp_add((digit_t*)alpha, (digit_t*)alpha_tmp, (digit_t*)alpha, 4*64/RADIX);
 
-        exp_Fp2_cycl(t_ori[k], alpha_k, one, tmp, 97);                            
-        fp2mul751_mont(u, tmp, u); 
+        exp_Fp2_cycl(t_ori[k], alpha_k, one, tmp, 97);
+        fp2mul751_mont(u, tmp, u);
     }
 	fp2copy751(u, v);
 	for (i = 0; i < 56; i++) {
 		cube_Fp2_cycl(v, one);
 	}
 	phn15(v, LUT, LUT_0, LUT_1, one, alpha_k);  // q order 3^61
-	multiply((digit_t*)alpha_k, (digit_t*)&pow3_61[4], (digit_t*)alpha_tmp, 4*64/RADIX);    
+	multiply((digit_t*)alpha_k, (digit_t*)&pow3_61[4], (digit_t*)alpha_tmp, 4*64/RADIX);
 	mp_add((digit_t*)alpha, (digit_t*)alpha_tmp, (digit_t*)alpha, NWORDS_ORDER);
 
 	exp_Fp2_cycl(t_ori[2], alpha_k, one, tmp, 97);
 	fp2mul751_mont(u, tmp, u);
     phn15_1(u, LUT, LUT_0, LUT_1, one, alpha_k);  // q order 3^56
-	multiply((digit_t*)alpha_k, (digit_t*)&pow3_61[8], (digit_t*)alpha_tmp, 5*64/RADIX);    
-	mp_add((digit_t*)alpha, (digit_t*)alpha_tmp, (digit_t*)alpha, NWORDS_ORDER);    
+	multiply((digit_t*)alpha_k, (digit_t*)&pow3_61[8], (digit_t*)alpha_tmp, 5*64/RADIX);
+	mp_add((digit_t*)alpha, (digit_t*)alpha_tmp, (digit_t*)alpha, NWORDS_ORDER);
 }
 
 
@@ -2056,7 +2056,7 @@ void build_LUTs_3(f2elm_t g, f2elm_t* t_ori, f2elm_t* LUT, f2elm_t* LUT_0, f2elm
 		fp2copy751(tmp, t_ori[i + 1]);
 	}
 	for (i = 0; i < 56; i++) cube_Fp2_cycl(tmp, one);
-	fp2copy751(tmp, t_ori[3]);                                            
+	fp2copy751(tmp, t_ori[3]);
 	fp2copy751(tmp, LUT_0[0]);
 	for (i = 0; i < 5; i++) cube_Fp2_cycl(tmp, one);
 	fp2copy751(tmp, t_ori[4]);                              // t_ori done.
@@ -2089,7 +2089,7 @@ void ph3(point_t phiP, point_t phiQ, point_t PS, point_t QS, f2elm_t A, uint64_t
 { // 3-torsion Pohlig-Hellman function
   // This function computes the five pairings e(QS, PS), e(QS, phiP), e(QS, phiQ), e(PS, phiP), e(PS,phiQ),
   // computes the lookup tables for the Pohlig-Hellman functions,
-  // and then computes the discrete logarithms of the last four pairing values to the base of the first pairing value.                                                                 
+  // and then computes the discrete logarithms of the last four pairing values to the base of the first pairing value.
 	f2elm_t t_ori[5], n[5], LUT[4], LUT_0[4], LUT_1[5];
 	felm_t one = {0};
 
@@ -2119,7 +2119,7 @@ void half_ph3(point_t P, point_t R1, point_t R2, f2elm_t A, uint64_t* a, uint64_
 
 	// Compute the pairings
 	Tate_pairings_3_torsion(R2, R1, P, P, A, n, CurveIsogeny); //could write a custom pairings function for half the computations
-	
+
 	build_LUTs_3(n[0], t_ori, LUT, LUT_0, LUT_1, one); //same as for tate pairings?
 
 	phn61(n[1], t_ori, LUT, LUT_0, LUT_1, one, a);
@@ -2128,9 +2128,9 @@ void half_ph3(point_t P, point_t R1, point_t R2, f2elm_t A, uint64_t* a, uint64_
 }
 
 
-unsigned int mod3(digit_t* a) 
+unsigned int mod3(digit_t* a)
 { // Computes the input modulo 3
-  // The input is assumed to be NWORDS_ORDER long 
+  // The input is assumed to be NWORDS_ORDER long
     digit_t temp;
     hdigit_t *val = (hdigit_t*)a, r = 0;
     int i;
@@ -2145,7 +2145,7 @@ unsigned int mod3(digit_t* a)
 
 
 void compress_3_torsion(const unsigned char* pPublicKeyB, unsigned char* CompressedPKB, uint64_t* a0, uint64_t* b0, uint64_t* a1, uint64_t* b1, point_t R1, point_t R2, PCurveIsogenyStruct CurveIsogeny)
-{ // 3-torsion compression function                                                                          
+{ // 3-torsion compression function
 	point_full_proj_t P, Q, phP, phQ, phX;
 	point_t phiP, phiQ;
 	publickey_t PK;
@@ -2157,8 +2157,8 @@ void compress_3_torsion(const unsigned char* pPublicKeyB, unsigned char* Compres
 	unsigned int bit;
 
 	to_fp2mont(((f2elm_t*)pPublicKeyB)[0], ((f2elm_t*)&PK)[0]);    // Converting to Montgomery representation
-	to_fp2mont(((f2elm_t*)pPublicKeyB)[1], ((f2elm_t*)&PK)[1]); 
-	to_fp2mont(((f2elm_t*)pPublicKeyB)[2], ((f2elm_t*)&PK)[2]); 
+	to_fp2mont(((f2elm_t*)pPublicKeyB)[1], ((f2elm_t*)&PK)[1]);
+	to_fp2mont(((f2elm_t*)pPublicKeyB)[2], ((f2elm_t*)&PK)[2]);
 
 	recover_y(PK, phP, phQ, phX, A, CurveIsogeny);
 	generate_3_torsion_basis(A, P, Q, CurveIsogeny);
@@ -2181,26 +2181,26 @@ void compress_3_torsion(const unsigned char* pPublicKeyB, unsigned char* Compres
 
 	bit = mod3((digit_t*)a0);
 	to_Montgomery_mod_order((digit_t*)a0, (digit_t*)a0, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);    // Converting to Montgomery representation
-	to_Montgomery_mod_order((digit_t*)a1, (digit_t*)a1, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime); 
-	to_Montgomery_mod_order((digit_t*)b0, (digit_t*)b0, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);  
-	to_Montgomery_mod_order((digit_t*)b1, (digit_t*)b1, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime); 
-    
-	if (bit != 0) {  // Storing [b1*a0inv, a1*a0inv, b0*a0inv] and setting bit384 to 0               
+	to_Montgomery_mod_order((digit_t*)a1, (digit_t*)a1, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+	to_Montgomery_mod_order((digit_t*)b0, (digit_t*)b0, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+	to_Montgomery_mod_order((digit_t*)b1, (digit_t*)b1, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+
+	if (bit != 0) {  // Storing [b1*a0inv, a1*a0inv, b0*a0inv] and setting bit384 to 0
 		Montgomery_inversion_mod_order_bingcd((digit_t*)a0, inv, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
-		Montgomery_multiply_mod_order((digit_t*)b0, inv, &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
-		Montgomery_multiply_mod_order((digit_t*)a1, inv, &comp[NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
-		Montgomery_multiply_mod_order((digit_t*)b1, inv, &comp[2*NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
+		Montgomery_multiply_mod_order((digit_t*)b0, inv, &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
+		Montgomery_multiply_mod_order((digit_t*)a1, inv, &comp[NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
+		Montgomery_multiply_mod_order((digit_t*)b1, inv, &comp[2*NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
 		from_Montgomery_mod_order(&comp[0], &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);                           // Converting back from Montgomery representation
-		from_Montgomery_mod_order(&comp[NWORDS_ORDER], &comp[NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
+		from_Montgomery_mod_order(&comp[NWORDS_ORDER], &comp[NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
 		from_Montgomery_mod_order(&comp[2*NWORDS_ORDER], &comp[2*NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
 		comp[3*NWORDS_ORDER-1] &= (digit_t)(-1) >> 1;
 	} else {  // Storing [b1*b0inv, a1*b0inv, a0*b0inv] and setting bit384 to 1
-		Montgomery_inversion_mod_order_bingcd((digit_t*)b0, inv, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);         
-		Montgomery_multiply_mod_order((digit_t*)a0, inv, &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
-		Montgomery_multiply_mod_order((digit_t*)a1, inv, &comp[NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
-		Montgomery_multiply_mod_order((digit_t*)b1, inv, &comp[2*NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
-		from_Montgomery_mod_order(&comp[0], &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);                           // Converting back from Montgomery representation 
-		from_Montgomery_mod_order(&comp[NWORDS_ORDER], &comp[NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
+		Montgomery_inversion_mod_order_bingcd((digit_t*)b0, inv, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+		Montgomery_multiply_mod_order((digit_t*)a0, inv, &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
+		Montgomery_multiply_mod_order((digit_t*)a1, inv, &comp[NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
+		Montgomery_multiply_mod_order((digit_t*)b1, inv, &comp[2*NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
+		from_Montgomery_mod_order(&comp[0], &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);                           // Converting back from Montgomery representation
+		from_Montgomery_mod_order(&comp[NWORDS_ORDER], &comp[NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
 		from_Montgomery_mod_order(&comp[2*NWORDS_ORDER], &comp[2*NWORDS_ORDER], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
 		comp[3*NWORDS_ORDER-1] |= (digit_t)1 << (sizeof(digit_t)*8 - 1);
 	}
@@ -2215,14 +2215,14 @@ void compress_3_torsion(const unsigned char* pPublicKeyB, unsigned char* Compres
 void ADD(const point_full_proj_t P, const f2elm_t QX, const f2elm_t QY, const f2elm_t QZ, const f2elm_t A, point_full_proj_t R)
 { // General addition.
   // Input: projective Montgomery points P=(XP:YP:ZP) and Q=(XQ:YQ:ZQ).
-  // Output: projective Montgomery point R <- P+Q = (XQP:YQP:ZQP). 
+  // Output: projective Montgomery point R <- P+Q = (XQP:YQP:ZQP).
     f2elm_t t0, t1, t2, t3, t4, t5, t6, t7;
 
-	fp2mul751_mont(QX, P->Z, t0);            // t0 = x2*Z1    
-	fp2mul751_mont(P->X, QZ, t1);            // t1 = X1*z2    
+	fp2mul751_mont(QX, P->Z, t0);            // t0 = x2*Z1
+	fp2mul751_mont(P->X, QZ, t1);            // t1 = X1*z2
 	fp2add751(t0, t1, t2);                   // t2 = t0 + t1
 	fp2sub751(t1, t0, t3);                   // t3 = t1 - t0
-	fp2mul751_mont(QX, P->X, t0);            // t0 = x2*X1    
+	fp2mul751_mont(QX, P->X, t0);            // t0 = x2*X1
 	fp2mul751_mont(P->Z, QZ, t1);            // t1 = Z1*z2
 	fp2add751(t0, t1, t4);                   // t4 = t0 + t1
 	fp2mul751_mont(t0, A, t0);               // t0 = t0*A
@@ -2262,7 +2262,7 @@ void ADD(const point_full_proj_t P, const f2elm_t QX, const f2elm_t QY, const f2
 
 void Mont_ladder(const f2elm_t x, const digit_t* m, point_proj_t P, point_proj_t Q, const f2elm_t A24, const unsigned int order_bits, const unsigned int order_fullbits, PCurveIsogenyStruct CurveIsogeny)
 { // The Montgomery ladder, running in non constant-time
-  // Inputs: the affine x-coordinate of a point P on E: B*y^2=x^3+A*x^2+x, 
+  // Inputs: the affine x-coordinate of a point P on E: B*y^2=x^3+A*x^2+x,
   //         scalar m
   //         curve constant A24 = (A+2)/4
   //         order_bits = subgroup order bitlength
@@ -2289,14 +2289,14 @@ void Mont_ladder(const f2elm_t x, const digit_t* m, point_proj_t P, point_proj_t
     for (i = order_fullbits-order_bits; i > 0; i--) {
         mp_shiftl1(scalar, owords);
     }
-        
+
     for (i = order_bits; i > 0; i--) {
         bit = (unsigned int)(scalar[owords-1] >> (RADIX-1));
         mp_shiftl1(scalar, owords);
         mask = 0-(digit_t)bit;
 
         swap_points(P, Q, mask);
-        xDBLADD(P, Q, x, A24);                     // If bit=0 then P <- 2*P and Q <- P+Q, 
+        xDBLADD(P, Q, x, A24);                     // If bit=0 then P <- 2*P and Q <- P+Q,
         swap_points(P, Q, mask);                   // else if bit=1 then Q <- 2*Q and P <- P+Q
     }
 }
@@ -2310,13 +2310,13 @@ void mont_twodim_scalarmult(digit_t* a, const point_t R, const point_t S, const 
 
     fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
     Mont_ladder(S->x, a, P0, P1, A24, CurveIsogeny->oBbits, CurveIsogeny->owordbits, CurveIsogeny);  // Hardwired to oBbits
-    recover_os(P0->X, P0->Z, P1->X, P1->Z, S->x, S->y, A, P2->X, P2->Y, P2->Z); 
+    recover_os(P0->X, P0->Z, P1->X, P1->Z, S->x, S->y, A, P2->X, P2->Y, P2->Z);
     ADD(P2, R->x, R->y, one, A, P);
 }
 
 
 void decompress_2_torsion(const unsigned char* SecretKey, const unsigned char* CompressedPKB, point_proj_t R, f2elm_t A, PCurveIsogenyStruct CurveIsogeny)
-{ // 2-torsion decompression function                                                                          
+{ // 2-torsion decompression function
     point_t R1, R2;
     point_full_proj_t P, Q;
     digit_t* comp = (digit_t*)CompressedPKB;
@@ -2324,7 +2324,7 @@ void decompress_2_torsion(const unsigned char* SecretKey, const unsigned char* C
     digit_t tmp1[2*NWORDS_ORDER], tmp2[2*NWORDS_ORDER], vone[2*NWORDS_ORDER] = {0}, mask = (digit_t)(-1);
     unsigned int bit;
 
-    mask >>= (CurveIsogeny->owordbits - CurveIsogeny->oAbits);  
+    mask >>= (CurveIsogeny->owordbits - CurveIsogeny->oAbits);
     vone[0] = 1;
     fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
     to_fp2mont((felm_t*)&comp[3*NWORDS_ORDER], A);    // Converting to Montgomery representation
@@ -2344,38 +2344,38 @@ void decompress_2_torsion(const unsigned char* SecretKey, const unsigned char* C
     fp2div2_751(A24, A24);
     fp2div2_751(A24, A24);
 
-    bit = comp[3*NWORDS_ORDER-1] >> (sizeof(digit_t)*8 - 1);   
+    bit = comp[3*NWORDS_ORDER-1] >> (sizeof(digit_t)*8 - 1);
     comp[3*NWORDS_ORDER-1] &= (digit_t)(-1) >> 1;
 
     if (bit == 0) {
 		multiply((digit_t*)SecretKey, &comp[NWORDS_ORDER], tmp1, NWORDS_ORDER);
         mp_add(tmp1, vone, tmp1, NWORDS_ORDER);
 		tmp1[NWORDS_ORDER-1] &= mask;
-        inv_mod_orderA(tmp1, tmp2);  
+        inv_mod_orderA(tmp1, tmp2);
 		multiply((digit_t*)SecretKey, &comp[2*NWORDS_ORDER], tmp1, NWORDS_ORDER);
-        mp_add(&comp[0], tmp1, tmp1, NWORDS_ORDER);  
-		multiply(tmp1, tmp2, vone, NWORDS_ORDER);  
-		vone[NWORDS_ORDER-1] &= mask;  
+        mp_add(&comp[0], tmp1, tmp1, NWORDS_ORDER);
+		multiply(tmp1, tmp2, vone, NWORDS_ORDER);
+		vone[NWORDS_ORDER-1] &= mask;
         mont_twodim_scalarmult(vone, R1, R2, A, A24, P, CurveIsogeny);
     } else {
 		multiply((digit_t*)SecretKey, &comp[2*NWORDS_ORDER], tmp1, NWORDS_ORDER);
         mp_add(tmp1, vone, tmp1, NWORDS_ORDER);
 		tmp1[NWORDS_ORDER-1] &= mask;
-        inv_mod_orderA(tmp1, tmp2);  
+        inv_mod_orderA(tmp1, tmp2);
 		multiply((digit_t*)SecretKey, &comp[NWORDS_ORDER], tmp1, NWORDS_ORDER);
-        mp_add(&comp[0], tmp1, tmp1, NWORDS_ORDER);  
-		multiply(tmp1, tmp2, vone, NWORDS_ORDER);  
-		vone[NWORDS_ORDER-1] &= mask;   
+        mp_add(&comp[0], tmp1, tmp1, NWORDS_ORDER);
+		multiply(tmp1, tmp2, vone, NWORDS_ORDER);
+		vone[NWORDS_ORDER-1] &= mask;
         mont_twodim_scalarmult(vone, R2, R1, A, A24, P, CurveIsogeny);
     }
 
-    fp2copy751(P->X, R->X);               
+    fp2copy751(P->X, R->X);
     fp2copy751(P->Z, R->Z);
 }
 
 
 void decompress_3_torsion(const unsigned char* SecretKey, const unsigned char* CompressedPKA, point_proj_t R, f2elm_t A, PCurveIsogenyStruct CurveIsogeny)
-{ // 3-torsion decompression function                                                                          
+{ // 3-torsion decompression function
     point_t R1, R2;
     point_full_proj_t P, Q;
     digit_t* comp = (digit_t*)CompressedPKA;
@@ -2385,7 +2385,7 @@ void decompress_3_torsion(const unsigned char* SecretKey, const unsigned char* C
     uint64_t Montgomery_Rprime[NWORDS64_ORDER] = {0x1A55482318541298, 0x070A6370DFA12A03, 0xCB1658E0E3823A40, 0xB3B7384EB5DEF3F9, 0xCBCA952F7006EA33, 0x00569EF8EC94864C}; // Value (2^384)^2 mod 3^239
     uint64_t Montgomery_rprime[NWORDS64_ORDER] = {0x48062A91D3AB563D, 0x6CE572751303C2F5, 0x5D1319F3F160EC9D, 0xE35554E8C2D5623A, 0xCA29300232BC79A5, 0x8AAD843D646D78C5}; // Value -(3^239)^-1 mod 2^384
     unsigned int bit;
-    
+
     vone[0] = 1;
     to_Montgomery_mod_order(vone, vone, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);  // Converting to Montgomery representation
     fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
@@ -2406,33 +2406,33 @@ void decompress_3_torsion(const unsigned char* SecretKey, const unsigned char* C
     fp2div2_751(A24, A24);
     fp2div2_751(A24, A24);
 
-    bit = comp[3*NWORDS_ORDER-1] >> (sizeof(digit_t)*8 - 1);   
+    bit = comp[3*NWORDS_ORDER-1] >> (sizeof(digit_t)*8 - 1);
     comp[3*NWORDS_ORDER-1] &= (digit_t)(-1) >> 1;
-    to_Montgomery_mod_order(SKin, t1, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);    // Converting to Montgomery representation 
-    to_Montgomery_mod_order(&comp[0], t2, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime); 
-    to_Montgomery_mod_order(&comp[NWORDS_ORDER], t3, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);  
-    to_Montgomery_mod_order(&comp[2*NWORDS_ORDER], t4, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime); 
+    to_Montgomery_mod_order(SKin, t1, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);    // Converting to Montgomery representation
+    to_Montgomery_mod_order(&comp[0], t2, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+    to_Montgomery_mod_order(&comp[NWORDS_ORDER], t3, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
+    to_Montgomery_mod_order(&comp[2*NWORDS_ORDER], t4, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
 
-    if (bit == 0) {    
-        Montgomery_multiply_mod_order(t1, t3, t3, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
-        mp_add(t3, vone, t3, NWORDS_ORDER);   
+    if (bit == 0) {
+        Montgomery_multiply_mod_order(t1, t3, t3, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
+        mp_add(t3, vone, t3, NWORDS_ORDER);
         Montgomery_inversion_mod_order_bingcd(t3, t3, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
-        Montgomery_multiply_mod_order(t1, t4, t4, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
-        mp_add(t2, t4, t4, NWORDS_ORDER);   
-        Montgomery_multiply_mod_order(t3, t4, t3, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
+        Montgomery_multiply_mod_order(t1, t4, t4, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
+        mp_add(t2, t4, t4, NWORDS_ORDER);
+        Montgomery_multiply_mod_order(t3, t4, t3, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
         from_Montgomery_mod_order(t3, t3, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);    // Converting back from Montgomery representation
         mont_twodim_scalarmult(t3, R1, R2, A, A24, P, CurveIsogeny);
-    } else {   
-        Montgomery_multiply_mod_order(t1, t4, t4, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
-        mp_add(t4, vone, t4, NWORDS_ORDER);   
+    } else {
+        Montgomery_multiply_mod_order(t1, t4, t4, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
+        mp_add(t4, vone, t4, NWORDS_ORDER);
         Montgomery_inversion_mod_order_bingcd(t4, t4, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime, (digit_t*)&Montgomery_Rprime);
-        Montgomery_multiply_mod_order(t1, t3, t3, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
-        mp_add(t2, t3, t3, NWORDS_ORDER);   
-        Montgomery_multiply_mod_order(t3, t4, t3, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime); 
+        Montgomery_multiply_mod_order(t1, t3, t3, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
+        mp_add(t2, t3, t3, NWORDS_ORDER);
+        Montgomery_multiply_mod_order(t3, t4, t3, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
         from_Montgomery_mod_order(t3, t3, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);    // Converting back from Montgomery representation
         mont_twodim_scalarmult(t3, R2, R1, A, A24, P, CurveIsogeny);
     }
 
-    fp2copy751(P->X, R->X);               
+    fp2copy751(P->X, R->X);
     fp2copy751(P->Z, R->Z);
 }
