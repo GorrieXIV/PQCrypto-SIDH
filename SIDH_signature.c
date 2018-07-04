@@ -19,7 +19,7 @@
 #include <semaphore.h>
 
 
-int NUM_THREADS = 248;
+int NUM_THREADS = 1;
 int CUR_ROUND = 0;
 int batchSize = 248;
 int errorCount = 0;
@@ -150,7 +150,6 @@ void *sign_thread(void *TPS) {
 
 		if (tps->compressed) {
 			Status = compressPsiS(tempPsiS, tps->sig->compPsiS[r], &(tps->sig->compBit[r]), tps->sig->Commitments1[r], *(tps->CurveIsogeny), NULL);
-      //Status = psiSTestCompress(tempPsiS, tps->sig->compPsiS[r]);
       if (Status != CRYPTO_SUCCESS) {
 				if (Status == CRYPTO_ERROR_DURING_TEST) {
           #ifdef TEST_RUN_PRINTS

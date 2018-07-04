@@ -1154,11 +1154,11 @@ static void print_digit(digit_t d) {
 }
 
 static void print_digit_order(digit_t* d, int order) {
-  printf("Fborder![0x");
+  printf("0x");
   for (int i = order - 1; i >= 0; i--) {
     print_digit(d[i]);
   }
-  printf("];");
+  printf(";");
 }
 
 static void print_felm(felm_t f) {
@@ -1353,6 +1353,10 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	}
 	//---------------------------------------------------------------------------------------------------------------------------------//
 
+#ifdef COMPARE_COMPRESSED_PSIS_PRINTS
+  printf_digit_order("comp", a, NWORDS_ORDER);
+#endif
+
 	// make sure comp has order 3 -------//
 	bita = mod3(comp);
 	if (bita != 0) {
@@ -1389,7 +1393,7 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 
 	fp2copy751(A, A_temp);
 	fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
-	to_fp2mont((felm_t*)comp, comp);
+	//to_fp2mont((felm_t*)comp, comp);
 
 	// generate projective basis {P, Q} generating E[3^239] which gives affine basis {R1, R2} //
 	generate_3_torsion_basis(A_temp, P, Q, CurveIsogeny);
@@ -1453,14 +1457,16 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
   from_fp2mont(S_temp->X, S_temp->X);
   from_fp2mont(S_temp->Y, S_temp->Y);
   from_fp2mont(S_temp->Z, S_temp->Z);
-  from_fp2mont((felm_t*)comp, comp);
 
   printf_f2elm("A", A_temp);
 
-  printf_f2elm("R1.x", R1->x);
-  printf_f2elm("R1.y", R1->y);
-  printf_f2elm("R2.x", R2->x);
-  printf_f2elm("R2.y", R2->y);
+  printf_f2elm("R1x", R1->x);
+  printf_f2elm("R1y", R1->y);
+  printf_f2elm("R2x", R2->x);
+  printf_f2elm("R2y", R2->y);
+  printf_f2elm("newPsiSx", S_temp->X);
+  printf_f2elm("newPsiSy", S_temp->Y);
+  printf_f2elm("newPsiSz", S_temp->Z);
   printf_digit_order("comp", a, NWORDS_ORDER);
   printf("bit :=  %d\n", compBit);
 
@@ -1472,7 +1478,10 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
   to_fp2mont(S_temp->X, S_temp->X);
   to_fp2mont(S_temp->Y, S_temp->Y);
   to_fp2mont(S_temp->Z, S_temp->Z);
-  to_fp2mont((felm_t*)comp, comp);
+  //to_fp2mont((felm_t*)comp, comp);
+#endif
+#ifdef COMPARE_COMPRESSED_PSIS_PRINTS
+  printf_digit_order("comp", a, NWORDS_ORDER);
 #endif
 
 	//from_Montgomery_mod_order(&comp, &comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
