@@ -14,8 +14,8 @@
 
 //#define TEST_RUN_PRINTS
 //#define COMP_PSIS_PRINTS
-#define DECOMP_PSIS_PRINTS
-//#define COMPARE_COMPRESSED_PSIS_PRINTS
+//#define DECOMP_PSIS_PRINTS
+#define COMPARE_COMPRESSED_PSIS_PRINTS
 
 // For C++
 #ifdef __cplusplus

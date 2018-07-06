@@ -69,22 +69,22 @@ arith_test: $(OBJECTS_ARITH_TEST)
 sig_test: $(OBJECTS_SIG_TEST)
 	$(CC) -pthread -o sig_test $(OBJECTS_SIG_TEST)
 
-kex.o: kex.c SIDH.h SIDH_internal.h
+kex.o: kex.c SIDH.h SIDH_internal.h tests/test_extras.h
 	$(CC) $(CFLAGS) kex.c
 
-ec_isogeny.o: ec_isogeny.c SIDH.h SIDH_internal.h
+ec_isogeny.o: ec_isogeny.c SIDH.h SIDH_internal.h tests/test_extras.h
 	$(CC) $(CFLAGS) ec_isogeny.c
 
-SIDH.o: SIDH.c SIDH.h SIDH_internal.h
+SIDH.o: SIDH.c SIDH.h SIDH_internal.h tests/test_extras.h
 	$(CC) $(CFLAGS) SIDH.c
 
-SIDH_setup.o: SIDH_setup.c SIDH.h SIDH_internal.h
+SIDH_setup.o: SIDH_setup.c SIDH.h SIDH_internal.h tests/test_extras.h
 	$(CC) $(CFLAGS) SIDH_setup.c
 
-SIDH_signature.o: SIDH_signature.c SIDH_internal.h SIDH.h keccak.h
+SIDH_signature.o: SIDH_signature.c SIDH_internal.h SIDH.h keccak.h tests/test_extras.h
 	$(CC) $(CFLAGS) SIDH_signature.c
 
-fpx.o: fpx.c SIDH.h SIDH_internal.h
+fpx.o: fpx.c SIDH.h SIDH_internal.h tests/test_extras.h
 	$(CC) $(CFLAGS) fpx.c
 
 keccak.o: keccak.c

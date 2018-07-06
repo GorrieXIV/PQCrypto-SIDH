@@ -1146,48 +1146,6 @@ CRYPTO_STATUS EphemeralSecretAgreement_Compression_B(const unsigned char* Privat
     return CRYPTO_SUCCESS;
 }
 
-static void print_digit(digit_t d) {
-  unsigned char *c = (unsigned char *) &d;
-  for (int i = sizeof(digit_t) - 1; i >= 0; i--) {
-    printf("%02X", c[i]);
-  }
-}
-
-static void print_digit_order(digit_t* d, int order) {
-  printf("0x");
-  for (int i = order - 1; i >= 0; i--) {
-    print_digit(d[i]);
-  }
-  printf(";");
-}
-
-static void print_felm(felm_t f) {
-  printf("Fp![0x");
-  for (int i = NWORDS_FIELD - 1; i >= 0; i--) {
-    print_digit(f[i]);
-  }
-  printf("]");
-}
-
-static void print_f2elm(f2elm_t f2) {
-  printf("");
-  print_felm(f2[0]);
-  printf(" + ");
-  print_felm(f2[1]);
-  printf("*i;");
-}
-
-static void printf_digit_order(char *s, digit_t* d, int order) {
-  printf("%s := ", s);
-  print_digit_order(d, order);
-  printf("\n");
-}
-
-static void printf_f2elm(char *s, f2elm_t f2) {
-  printf("%s := ", s);
-  print_f2elm(f2);
-  printf("\n");
-}
 
 ///////////////////////////////////////////////////////////////////////////////////
 ///////////////             COMPRESSION FOR SIGNATURES              ///////////////
@@ -1334,6 +1292,9 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
     #ifdef TEST_RUN_PRINTS
 		printf("Both a and b of order of 3\n");
     #endif
+    #ifdef COMPARE_COMPRESSED_PSIS_PRINTS
+    printf("Both a and b of order of 3\n");
+    #endif
 		return CRYPTO_ERROR_INVALID_ORDER;
 	}
 
@@ -1352,10 +1313,6 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 		from_Montgomery_mod_order(&comp[0], &comp[0], CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
 	}
 	//---------------------------------------------------------------------------------------------------------------------------------//
-
-#ifdef COMPARE_COMPRESSED_PSIS_PRINTS
-  printf_digit_order("comp", a, NWORDS_ORDER);
-#endif
 
 	// make sure comp has order 3 -------//
 	bita = mod3(comp);
@@ -1389,7 +1346,7 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 	unsigned int bit;
 	f2elm_t tmp, one = {0};
 	f2elm_t A_temp, A24;
-	int error;
+	int error = 0;
 
 	fp2copy751(A, A_temp);
 	fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
@@ -1467,7 +1424,7 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
   printf_f2elm("newPsiSx", S_temp->X);
   printf_f2elm("newPsiSy", S_temp->Y);
   printf_f2elm("newPsiSz", S_temp->Z);
-  printf_digit_order("comp", a, NWORDS_ORDER);
+  printf_digit_order("comp", comp, NWORDS_ORDER);
   printf("bit :=  %d\n", compBit);
 
   to_fp2mont(A_temp, A_temp);
@@ -1479,9 +1436,6 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
   to_fp2mont(S_temp->Y, S_temp->Y);
   to_fp2mont(S_temp->Z, S_temp->Z);
   //to_fp2mont((felm_t*)comp, comp);
-#endif
-#ifdef COMPARE_COMPRESSED_PSIS_PRINTS
-  printf_digit_order("comp", a, NWORDS_ORDER);
 #endif
 
 	//from_Montgomery_mod_order(&comp, &comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);

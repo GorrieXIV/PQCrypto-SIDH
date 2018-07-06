@@ -1,5 +1,5 @@
 /********************************************************************************************
-* SIDH: an efficient supersingular isogeny-based cryptography library for ephemeral 
+* SIDH: an efficient supersingular isogeny-based cryptography library for ephemeral
 *       Diffie-Hellman key exchange.
 *
 *    Copyright (c) Microsoft Corporation. All rights reserved.
@@ -23,13 +23,13 @@
 #include <stdlib.h>
 
 
-// Global constants          
+// Global constants
 extern const uint64_t p751[NWORDS_FIELD];
-extern const uint64_t Montgomery_R2[NWORDS_FIELD]; 
+extern const uint64_t Montgomery_R2[NWORDS_FIELD];
 
 // Montgomery constant -p751^-1 mod 2^768
-static uint64_t Montgomery_pp751[NWORDS_FIELD] = { 0x0000000000000001, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0xEEB0000000000000, 
-                                                   0xE3EC968549F878A8, 0xDA959B1A13F7CC76, 0x084E9867D6EBE876, 0x8562B5045CB25748, 0x0E12909F97BADC66, 0x258C28E5D541F71C };   
+static uint64_t Montgomery_pp751[NWORDS_FIELD] = { 0x0000000000000001, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0x0000000000000000, 0xEEB0000000000000,
+                                                   0xE3EC968549F878A8, 0xDA959B1A13F7CC76, 0x084E9867D6EBE876, 0x8562B5045CB25748, 0x0E12909F97BADC66, 0x258C28E5D541F71C };
 
 
 int64_t cpucycles(void)
@@ -49,7 +49,7 @@ int64_t cpucycles(void)
     clock_gettime(CLOCK_REALTIME, &time);
     return (int64_t)(time.tv_sec*1e9 + time.tv_nsec);
 #else
-    return 0;            
+    return 0;
 #endif
 }
 
@@ -82,31 +82,31 @@ int compare_words(digit_t* a, digit_t* b, unsigned int nwords)
         if (a[i] != b[i]) return 1;
     }
 
-    return 0; 
+    return 0;
 }
 
 
 
 static __inline void sub751_test(felm_t a, felm_t b, felm_t c)
 { // 751-bit subtraction without borrow, c = a-b where a>b
-  // SECURITY NOTE: this function does not have constant-time execution. It is for TESTING ONLY.     
+  // SECURITY NOTE: this function does not have constant-time execution. It is for TESTING ONLY.
     unsigned int i;
     digit_t res, carry, borrow = 0;
-  
+
     for (i = 0; i < NWORDS_FIELD; i++)
     {
         res = a[i] - b[i];
         carry = (a[i] < b[i]);
         c[i] = res - borrow;
         borrow = carry || (res < borrow);
-    } 
+    }
 
     return;
 }
 
 
 void fprandom751_test(felm_t a)
-{ // Generating a pseudo-random field element in [0, p751-1] 
+{ // Generating a pseudo-random field element in [0, p751-1]
   // SECURITY NOTE: distribution is not fully uniform. TO BE USED FOR TESTING ONLY.
     int i, diff = 768-751;
     unsigned char* string = NULL;
@@ -133,7 +133,7 @@ void fprandom751_test(felm_t a)
 
 
 void fp2random751_test(f2elm_t a)
-{ // Generating a pseudo-random element in GF(p751^2) 
+{ // Generating a pseudo-random element in GF(p751^2)
   // SECURITY NOTE: distribution is not fully uniform. TO BE USED FOR TESTING ONLY.
 
     fprandom751_test(a[0]);
@@ -152,7 +152,7 @@ int fpcompare751(felm_t a, felm_t b)
         else if (a[i] < b[i]) return -1;
     }
 
-    return 0; 
+    return 0;
 }
 
 
@@ -161,12 +161,12 @@ int fp2compare751(f2elm_t a, f2elm_t b)
   // SECURITY NOTE: this function does not have constant-time execution. TO BE USED FOR TESTING ONLY.
 
     if (fpcompare751(a[0], b[0])!=0 || fpcompare751(a[1], b[1])!=0) return 1;
-    return 0; 
+    return 0;
 }
 
 
-static __inline void mp_mul_basic(digit_t* a, digit_t* b, digit_t* c, unsigned int nwords)                   
-{ // Multiprecision schoolbook multiprecision multiply, c = a*b, where lng(a) = lng(b) = nwords.   
+static __inline void mp_mul_basic(digit_t* a, digit_t* b, digit_t* c, unsigned int nwords)
+{ // Multiprecision schoolbook multiprecision multiply, c = a*b, where lng(a) = lng(b) = nwords.
     unsigned int i, j;
     digit_t u, v, UV[2];
     unsigned int carry = 0;
@@ -176,10 +176,10 @@ static __inline void mp_mul_basic(digit_t* a, digit_t* b, digit_t* c, unsigned i
      for (i = 0; i < nwords; i++) {
           u = 0;
           for (j = 0; j < nwords; j++) {
-               MUL(a[i], b[j], UV+1, UV[0]); 
-               ADDC(0, UV[0], u, carry, v); 
+               MUL(a[i], b[j], UV+1, UV[0]);
+               ADDC(0, UV[0], u, carry, v);
                u = UV[1] + carry;
-               ADDC(0, c[i+j], v, carry, v); 
+               ADDC(0, c[i+j], v, carry, v);
                u = u + carry;
                c[i+j] = v;
           }
@@ -191,20 +191,20 @@ static __inline void mp_mul_basic(digit_t* a, digit_t* b, digit_t* c, unsigned i
 void fpmul751_mont_basic(felm_t ma, felm_t mb, felm_t mc)
 { // Basic Montgomery multiplication, mc = ma*mb*R^-1 mod p751, where ma,mb,mc in [0, p751-1] and R = 2^768.
   // ma and mb are assumed to be in Montgomery representation.
-  // The Montgomery constant pp751 = -p751^(-1) mod R is the global value "Montgomery_pp751".   
+  // The Montgomery constant pp751 = -p751^(-1) mod R is the global value "Montgomery_pp751".
     unsigned int i, bout = 0;
     digit_t mask, P[2*NWORDS_FIELD], Q[2*NWORDS_FIELD], temp[2*NWORDS_FIELD];
 
     mp_mul_basic(ma, mb, P, NWORDS_FIELD);                          // P = ma * mb
     mp_mul_basic(P, (digit_t*)&Montgomery_pp751, Q, NWORDS_FIELD);  // Q = P * pp751 mod R
     mp_mul_basic(Q, (digit_t*)&p751, temp, NWORDS_FIELD);           // temp = Q * p751
-    mp_add(P, temp, temp, 2*NWORDS_FIELD);                    // temp = P + Q * p751     
+    mp_add(P, temp, temp, 2*NWORDS_FIELD);                    // temp = P + Q * p751
 
     for (i = 0; i < NWORDS_FIELD; i++) {                      // mc = (P + Q * p751)/R
         mc[i] = temp[NWORDS_FIELD+i];
     }
 
-    // Final, constant-time subtraction     
+    // Final, constant-time subtraction
     bout = mp_sub(mc, (digit_t*)&p751, mc, NWORDS_FIELD);     // (bout, mc) = mc - p751
     mask = 0 - (digit_t)bout;                                 // if mc < 0 then mask = 0xFF..F, else if mc >= 0 then mask = 0x00..0
 
@@ -220,7 +220,7 @@ void fpmul751_mont_basic(felm_t ma, felm_t mb, felm_t mc)
 void to_mont_basic(felm_t a, felm_t mc)
 { // Conversion to Montgomery representation
   // mc = a*R^2*R^-1 mod p751 = a*R mod p751, where a in [0, p751-1]
-  // The Montgomery constant R^2 mod p751 is the global value "Montgomery_R2". 
+  // The Montgomery constant R^2 mod p751 is the global value "Montgomery_R2".
 
     fpmul751_mont_basic(a, (digit_t*)&Montgomery_R2, mc);
 }
@@ -228,9 +228,52 @@ void to_mont_basic(felm_t a, felm_t mc)
 
 void from_mont_basic(felm_t ma, felm_t c)
 { // Conversion from Montgomery representation to standard representation
-  // c = ma*R^-1 mod p751 = a mod p751, where ma in [0, p751-1]. 
+  // c = ma*R^-1 mod p751 = a mod p751, where ma in [0, p751-1].
     digit_t one[NWORDS_FIELD] = {0};
-    
+
     one[0] = 1;
     fpmul751_mont_basic(ma, one, c);
+}
+
+void print_digit(digit_t d) {
+  unsigned char *c = (unsigned char *) &d;
+  for (int i = sizeof(digit_t) - 1; i >= 0; i--) {
+    printf("%02X", c[i]);
+  }
+}
+
+void print_digit_order(digit_t* d, int order) {
+  printf("0x");
+  for (int i = order - 1; i >= 0; i--) {
+    print_digit(d[i]);
+  }
+  printf(";");
+}
+
+void print_felm(felm_t f) {
+  printf("Fp![0x");
+  for (int i = NWORDS_FIELD - 1; i >= 0; i--) {
+    print_digit(f[i]);
+  }
+  printf("]");
+}
+
+void print_f2elm(f2elm_t f2) {
+  printf("");
+  print_felm(f2[0]);
+  printf(" + ");
+  print_felm(f2[1]);
+  printf("*i;");
+}
+
+void printf_digit_order(char *s, digit_t* d, int order) {
+  printf("%s := ", s);
+  print_digit_order(d, order);
+  printf("\n");
+}
+
+void printf_f2elm(char *s, f2elm_t f2) {
+  printf("%s := ", s);
+  print_f2elm(f2);
+  printf("\n");
 }

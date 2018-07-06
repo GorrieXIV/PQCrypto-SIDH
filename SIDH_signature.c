@@ -150,6 +150,10 @@ void *sign_thread(void *TPS) {
 
 		if (tps->compressed) {
 			Status = compressPsiS(tempPsiS, tps->sig->compPsiS[r], &(tps->sig->compBit[r]), tps->sig->Commitments1[r], *(tps->CurveIsogeny), NULL);
+      #ifdef COMPARE_COMPRESSED_PSIS_PRINTS
+        printf("Sign round %d: ", r);
+        printf_digit_order("comp", tps->sig->compPsiS[r], NWORDS_ORDER);
+      #endif
       if (Status != CRYPTO_SUCCESS) {
 				if (Status == CRYPTO_ERROR_DURING_TEST) {
           #ifdef TEST_RUN_PRINTS
@@ -413,13 +417,12 @@ void *verify_thread(void *TPV) {
 			point_proj_t newPsiS = {0};
 			f2elm_t A,C={0};
 			fp2copy751(tpv->sig->Commitments1[r], A);
-      /*
-      printf("Verify A[%d]:   ", r);
-      for (int i = 0; i < 2*tpv->pbytes; i++) {
-        printf("%0hhu", (tpv->sig->Commitments1[r])[i]);
-      } printf("\n");
-      */
+
 			if (tpv->compressed) {
+        #ifdef COMPARE_COMPRESSED_PSIS_PRINTS
+          printf("Verify round %d: ", r);
+          printf_digit_order("comp", tpv->sig->compPsiS[r], NWORDS_ORDER);
+        #endif
 				Status = decompressPsiS(tpv->sig->compPsiS[r], triple, tpv->sig->compBit[r], A, *(tpv->CurveIsogeny));
         //Status = psiSTestDecompress(triple, tpv->sig->compPsiS[r]);
         if (Status != CRYPTO_SUCCESS) {
@@ -444,6 +447,7 @@ void *verify_thread(void *TPV) {
           #ifdef TEST_RUN_PRINTS
           printf("ERROR: psi(S) has order 3^%d\n", t+1);
           #endif
+          break;
 				}
 			}
 
@@ -476,6 +480,9 @@ void *verify_thread(void *TPV) {
 					pthread_mutex_unlock(&ELOCK);
           #ifdef TEST_RUN_PRINTS
 					printf("Error in verify on round %d\n", r);
+          #endif
+          #ifdef COMPARE_COMPRESSED_PSIS_PRINTS
+          printf("Error in verify on round %d\n", r);
           #endif
 				} else {
           #ifdef TEST_RUN_PRINTS
