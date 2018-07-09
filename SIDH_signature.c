@@ -34,6 +34,8 @@ pthread_mutex_t RLOCK;      //lock for round counter
 pthread_mutex_t BLOCK;      //lock for batch size counter
 pthread_mutex_t ELOCK;      //lock for errorCount
 
+digit_t a[NWORDS_ORDER], b[NWORDS_ORDER];
+
 void hashdata(unsigned int pbytes, unsigned char** comm1, unsigned char** comm2, uint8_t* HashResp, int hlen, int dlen, uint8_t *data, uint8_t *cHash, int cHashLength) {
     int r;
     for (r=0; r<NUM_ROUNDS; r++) {
@@ -149,7 +151,7 @@ void *sign_thread(void *TPS) {
 
 
 		if (tps->compressed) {
-			Status = compressPsiS(tempPsiS, tps->sig->compPsiS[r], &(tps->sig->compBit[r]), tps->sig->Commitments1[r], *(tps->CurveIsogeny), NULL);
+			Status = compressPsiS_test(tempPsiS, tps->sig->compPsiS[r], &(tps->sig->compBit[r]), tps->sig->Commitments1[r], *(tps->CurveIsogeny), NULL, a, b);
       #ifdef COMPARE_COMPRESSED_PSIS_PRINTS
         printf("Sign round %d: ", r);
         printf_digit_order("comp", tps->sig->compPsiS[r], NWORDS_ORDER);
@@ -423,7 +425,7 @@ void *verify_thread(void *TPV) {
           printf("Verify round %d: ", r);
           printf_digit_order("comp", tpv->sig->compPsiS[r], NWORDS_ORDER);
         #endif
-				Status = decompressPsiS(tpv->sig->compPsiS[r], triple, tpv->sig->compBit[r], A, *(tpv->CurveIsogeny));
+				Status = decompressPsiS_test(tpv->sig->compPsiS[r], triple, tpv->sig->compBit[r], A, *(tpv->CurveIsogeny), a, b);
         //Status = psiSTestDecompress(triple, tpv->sig->compPsiS[r]);
         if (Status != CRYPTO_SUCCESS) {
           #ifdef TEST_RUN_PRINTS
