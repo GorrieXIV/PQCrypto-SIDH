@@ -1630,7 +1630,10 @@ CRYPTO_STATUS decompressPsiS_test(const unsigned char* CompressedPsiS, point_pro
 
 	point_full_proj_t P, Q;                    //points used in the construction of {R1,R2}
 	point_full_proj_t S_temp;
+  point_full_proj_t newPsiS;
 	point_proj_t temp1;
+  point_proj_t aR1, bR2;
+  point_full_proj_t aR1_full, bR2_full;
 	point_proj_t Pnot, Qnot;
 	point_t R1, R2;
 	digit_t* comp = (digit_t*)CompressedPsiS;
@@ -1639,7 +1642,7 @@ CRYPTO_STATUS decompressPsiS_test(const unsigned char* CompressedPsiS, point_pro
 	uint64_t Montgomery_Rprime[NWORDS64_ORDER] = {0x1A55482318541298, 0x070A6370DFA12A03, 0xCB1658E0E3823A40, 0xB3B7384EB5DEF3F9, 0xCBCA952F7006EA33, 0x00569EF8EC94864C}; // Value (2^384)^2 mod 3^239
 	uint64_t Montgomery_rprime[NWORDS64_ORDER] = {0x48062A91D3AB563D, 0x6CE572751303C2F5, 0x5D1319F3F160EC9D, 0xE35554E8C2D5623A, 0xCA29300232BC79A5, 0x8AAD843D646D78C5}; // Value -(3^239)^-1 mod 2^384
 	unsigned int bit;
-	f2elm_t tmp, one = {0};
+	f2elm_t tmp, tmp2, one = {0};
 	f2elm_t A_temp, A24;
 	int error = 0;
 
@@ -1677,6 +1680,11 @@ CRYPTO_STATUS decompressPsiS_test(const unsigned char* CompressedPsiS, point_pro
 	}
 	//----------------------------------------------------------------------------------//
 
+  fp2copy751(P->X, Pnot->X);
+	fp2copy751(P->Z, Pnot->Z);
+	fp2copy751(Q->X, Qnot->X);
+	fp2copy751(Q->Z, Qnot->Z);
+
 	fp2copy751(P->Z, vec[0]);
 	fp2copy751(Q->Z, vec[1]);
 	mont_n_way_inv(vec, 2, Zinv);
@@ -1693,12 +1701,38 @@ CRYPTO_STATUS decompressPsiS_test(const unsigned char* CompressedPsiS, point_pro
 	fp2div2_751(A24, A24);
 
 	//need to swap R1 and R2 in the following function call depending on the order of a in psi(S) = [a]R1 + [b]R2
-	if (compBit) {
+	/*if (compBit) {
 		mont_twodim_scalarmult(comp, R2, R1, A_temp, A24, S_temp, CurveIsogeny);
 		//Status = ladder_3_pt(const f2elm_t xP, const f2elm_t xQ, const f2elm_t xPQ, const digit_t* m, const unsigned int AliceOrBob, temp1, A_temp, CurveIsogeny);
 	} else {
 		mont_twodim_scalarmult(comp, R1, R2, A_temp, A24, S_temp, CurveIsogeny);
-	}
+	}*/
+
+  Mont_ladder(R1->x, a, aR1, Pnot, A24, CurveIsogeny->oBbits, CurveIsogeny->owordbits, CurveIsogeny);
+  Mont_ladder(R2->x, b, bR2, Qnot, A24, CurveIsogeny->oBbits, CurveIsogeny->owordbits, CurveIsogeny);
+
+  //build and recover y of aR1_full
+  fp2copy751(aR1->X, aR1_full->X);
+  fp2copy751(aR1->Z, aR1_full->Z);
+  fp2mul751_mont(aR1_full->X, aR1_full->X, tmp);
+  fp2mul751_mont(tmp, aR1_full->X, tmp2);
+  fp2mul751_mont(tmp, A_temp, tmp);
+  fp2add751(tmp, tmp2, tmp);
+  fp2add751(tmp, aR1_full->X, tmp);
+  sqrt_Fp2(tmp, aR1_full->Y);
+  fp2neg751(aR1_full->Y);
+  //build and recover y of bR2_full
+  fp2copy751(bR2->X, bR2_full->X);
+  fp2copy751(bR2->Z, bR2_full->Z);
+  fp2mul751_mont(bR2_full->X, bR2_full->X, tmp);
+  fp2mul751_mont(tmp, bR2_full->X, tmp2);
+  fp2mul751_mont(tmp, A_temp, tmp);
+  fp2add751(tmp, tmp2, tmp);
+  fp2add751(tmp, bR2_full->X, tmp);
+  sqrt_Fp2(tmp, bR2_full->Y);
+  fp2neg751(bR2_full->Y);
+
+  ADD(aR1_full, bR2_full->X, bR2_full->Y, bR2_full->Z, A_temp, newPsiS);
 
 #ifdef DECOMP_PSIS_PRINTS
   from_fp2mont(A_temp, A_temp);

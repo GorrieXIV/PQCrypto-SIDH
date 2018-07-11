@@ -18,7 +18,6 @@
 #include <pthread.h>
 #include <semaphore.h>
 
-
 int NUM_THREADS = 1;
 int CUR_ROUND = 0;
 int batchSize = 248;
@@ -427,6 +426,7 @@ void *verify_thread(void *TPV) {
         #endif
 				Status = decompressPsiS_test(tpv->sig->compPsiS[r], triple, tpv->sig->compBit[r], A, *(tpv->CurveIsogeny), a, b);
         //Status = psiSTestDecompress(triple, tpv->sig->compPsiS[r]);
+
         if (Status != CRYPTO_SUCCESS) {
           #ifdef TEST_RUN_PRINTS
 					printf("Error in psi(S) decompression\n");
@@ -467,6 +467,7 @@ void *verify_thread(void *TPV) {
         #endif
 			}
 
+      //only look at x in affine otherwise false negatives
 			int cmp = memcmp(TempSharSec, tpv->sig->Commitments2[r], 2*tpv->pbytes);
 			if (cmp != 0) {
 				verified = false;

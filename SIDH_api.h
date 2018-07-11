@@ -115,7 +115,7 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* ps
 
 CRYPTO_STATUS compressPsiS_test(const point_proj* psiS, unsigned char* CompressedPsiS, int* compBit, const f2elm_t A, PCurveIsogenyStruct CurveIsogeny, batch_struct* batch, digit_t* a, digit_t* b);
 
-CRYPTO_STATUS decompressPsiS_test(const unsigned char* CompressedPsiS, point_proj* S, int compBit, const f2elm_t A, PCurveIsogenyStruct CurveIsogeny);
+CRYPTO_STATUS decompressPsiS_test(const unsigned char* CompressedPsiS, point_proj* S, int compBit, const f2elm_t A, PCurveIsogenyStruct CurveIsogeny, digit_t* a, digit_t* b);
 
 /*********************** SIDH 1.0 Key exchange API ***********************/
 

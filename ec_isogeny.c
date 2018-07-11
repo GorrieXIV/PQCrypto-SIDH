@@ -2216,7 +2216,7 @@ void ADD(const point_full_proj_t P, const f2elm_t QX, const f2elm_t QY, const f2
 { // General addition.
   // Input: projective Montgomery points P=(XP:YP:ZP) and Q=(XQ:YQ:ZQ).
   // Output: projective Montgomery point R <- P+Q = (XQP:YQP:ZQP).
-    f2elm_t t0, t1, t2, t3, t4, t5, t6, t7;
+	f2elm_t t0, t1, t2, t3, t4, t5, t6, t7;
 
 	fp2mul751_mont(QX, P->Z, t0);            // t0 = x2*Z1
 	fp2mul751_mont(P->X, QZ, t1);            // t1 = X1*z2
