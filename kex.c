@@ -1146,6 +1146,71 @@ CRYPTO_STATUS EphemeralSecretAgreement_Compression_B(const unsigned char* Privat
     return CRYPTO_SUCCESS;
 }
 
+/* PRINTING FUNCTIONS FOR TESTING COMPRESSION VALUES * * * * * */
+
+static void print_comp_tests (f2elm_t A, point_t R1, point_t R2, point_t psiSa, digit_t* a, digit_t* b, int order) {
+  from_fp2mont(R1->x, R1->x);
+  from_fp2mont(R1->y, R1->y);
+  from_fp2mont(R2->x, R2->x);
+  from_fp2mont(R2->y, R2->y);
+
+  printf_f2elm("A", A);
+  printf_f2elm("psiSx", psiSa->x);
+  printf_f2elm("psiSy", psiSa->y);
+  printf_f2elm("R1x", R1->x);
+  printf_f2elm("R1y", R1->y);
+  printf_f2elm("R2x", R2->x);
+  printf_f2elm("R2y", R2->y);
+  printf_digit_order("a", a, order);
+  printf_digit_order("b", b, order);
+
+  to_fp2mont(R1->x, R1->x);
+  to_fp2mont(R1->y, R1->y);
+  to_fp2mont(R2->x, R2->x);
+  to_fp2mont(R2->y, R2->y);
+}
+
+static void print_decomp_tests (f2elm_t A, point_full_proj_t S, point_t R1, point_t R2, digit_t* comp, int compSize, int compBit) {
+  from_fp2mont(A, A);
+  from_fp2mont(R1->x, R1->x);
+  from_fp2mont(R1->y, R1->y);
+  from_fp2mont(R2->x, R2->x);
+  from_fp2mont(R2->y, R2->y);
+  from_fp2mont(S->X, S->X);
+  from_fp2mont(S->Y, S->Y);
+  from_fp2mont(S->Z, S->Z);
+
+  printf_f2elm("A", A);
+
+  printf_f2elm("R1x", R1->x);
+  printf_f2elm("R1y", R1->y);
+  printf_f2elm("R2x", R2->x);
+  printf_f2elm("R2y", R2->y);
+  printf_f2elm("newPsiSx", S->X);
+  printf_f2elm("newPsiSy", S->Y);
+  printf_f2elm("newPsiSz", S->Z);
+  printf_digit_order("comp", comp, compSize);
+  printf("bit :=  %d\n", compBit);
+
+  to_fp2mont(A, A);
+  to_fp2mont(R1->x, R1->x);
+  to_fp2mont(R1->y, R1->y);
+  to_fp2mont(R2->x, R2->x);
+  to_fp2mont(R2->y, R2->y);
+  to_fp2mont(S->X, S->X);
+  to_fp2mont(S->Y, S->Y);
+  to_fp2mont(S->Z, S->Z);
+}
+
+static void print_whole_comp_tests () {
+
+}
+
+static void print_whole_decomp_tests () {
+
+}
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 ///////////////////////////////////////////////////////////////////////////////////
 ///////////////             COMPRESSION FOR SIGNATURES              ///////////////
@@ -1182,7 +1247,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 
 		if (is_felm_zero(((felm_t*)psiSTriple->Z)[0]) && is_felm_zero(((felm_t*)psiSTriple->Z)[1])) {
       #ifdef TEST_RUN_PRINTS
-      printf ("Error: order of psi(S) falls short of 3^239\n");
+        printf ("Error: order of psi(S) falls short of 3^239\n");
       #endif
 			return CRYPTO_ERROR_INVALID_ORDER;
 		}
@@ -1203,13 +1268,13 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 
 		if (is_felm_zero(((felm_t*)Pnot->Z)[0]) && is_felm_zero(((felm_t*)Pnot->Z)[1])) {
       #ifdef TEST_RUN_PRINTS
-      printf ("Error: order of P falls short of 3^239\n");
+        printf ("Error: order of P falls short of 3^239\n");
       #endif
 			error++;
 		}
 		if (is_felm_zero(((felm_t*)Qnot->Z)[0]) && is_felm_zero(((felm_t*)Qnot->Z)[1])) {
       #ifdef TEST_RUN_PRINTS
-      printf ("Error: order of Q falls short of 3^239\n");
+        printf ("Error: order of Q falls short of 3^239\n");
       #endif
 			error++;
 		}
@@ -1259,27 +1324,9 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	//}
 
 	// compute ainv*b or binv*a depending on which element is divisible by 3 ----------------------------------------------------------//
-#ifdef COMP_PSIS_PRINTS
-  from_fp2mont(R1->x, R1->x);
-  from_fp2mont(R1->y, R1->y);
-  from_fp2mont(R2->x, R2->x);
-  from_fp2mont(R2->y, R2->y);
-
-  printf_f2elm("A", A_temp);
-  printf_f2elm("psiSx", psiSa->x);
-  printf_f2elm("psiSy", psiSa->y);
-  printf_f2elm("R1x", R1->x);
-  printf_f2elm("R1y", R1->y);
-  printf_f2elm("R2x", R2->x);
-  printf_f2elm("R2y", R2->y);
-  printf_digit_order("a", a, NWORDS_ORDER);
-  printf_digit_order("b", b, NWORDS_ORDER);
-
-  to_fp2mont(R1->x, R1->x);
-  to_fp2mont(R1->y, R1->y);
-  to_fp2mont(R2->x, R2->x);
-  to_fp2mont(R2->y, R2->y);
-#endif
+  #ifdef COMP_PSIS_PRINTS
+    print_comp_tests (A, R1, R2, psiSa, a, b, NWORDS_ORDER);
+  #endif
 
   to_fp2mont(psiSa->x, psiSa->x);
   to_fp2mont(psiSa->y, psiSa->y);
@@ -1433,27 +1480,13 @@ CRYPTO_STATUS compressPsiS_test(const point_proj* psiS, unsigned char* Compresse
 	//}
 
 	// compute ainv*b or binv*a depending on which element is divisible by 3 ----------------------------------------------------------//
-#ifdef COMP_PSIS_PRINTS
-  from_fp2mont(R1->x, R1->x);
-  from_fp2mont(R1->y, R1->y);
-  from_fp2mont(R2->x, R2->x);
-  from_fp2mont(R2->y, R2->y);
+  #ifdef COMP_PSIS_PRINTS
+    print_comp_tests (A, R1, R2, psiSa, a, b, NWORDS_ORDER);
+  #endif
 
-  printf_f2elm("A", A_temp);
-  printf_f2elm("psiSx", psiSa->x);
-  printf_f2elm("psiSy", psiSa->y);
-  printf_f2elm("R1x", R1->x);
-  printf_f2elm("R1y", R1->y);
-  printf_f2elm("R2x", R2->x);
-  printf_f2elm("R2y", R2->y);
-  printf_digit_order("a", a, NWORDS_ORDER);
-  printf_digit_order("b", b, NWORDS_ORDER);
-
-  to_fp2mont(R1->x, R1->x);
-  to_fp2mont(R1->y, R1->y);
-  to_fp2mont(R2->x, R2->x);
-  to_fp2mont(R2->y, R2->y);
-#endif
+  #ifdef TEST_WHOLE_PSIS
+    print_whole_comp_tests (psiS);
+  #endif
 
   to_fp2mont(psiSa->x, psiSa->x);
   to_fp2mont(psiSa->y, psiSa->y);
@@ -1464,10 +1497,10 @@ CRYPTO_STATUS compressPsiS_test(const point_proj* psiS, unsigned char* Compresse
 
 	if (bita == 0 && bitb == 0) {
     #ifdef TEST_RUN_PRINTS
-		printf("Both a and b of order of 3\n");
+		  printf("Both a and b of order of 3\n");
     #endif
     #ifdef COMPARE_COMPRESSED_PSIS_PRINTS
-    printf("Both a and b of order of 3\n");
+      printf("Both a and b of order of 3\n");
     #endif
 		return CRYPTO_ERROR_INVALID_ORDER;
 	}
@@ -1579,40 +1612,9 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 		mont_twodim_scalarmult(comp, R1, R2, A_temp, A24, S_temp, CurveIsogeny);
 	}
 
-#ifdef DECOMP_PSIS_PRINTS
-  from_fp2mont(A_temp, A_temp);
-  from_fp2mont(R1->x, R1->x);
-  from_fp2mont(R1->y, R1->y);
-  from_fp2mont(R2->x, R2->x);
-  from_fp2mont(R2->y, R2->y);
-  from_fp2mont(S_temp->X, S_temp->X);
-  from_fp2mont(S_temp->Y, S_temp->Y);
-  from_fp2mont(S_temp->Z, S_temp->Z);
-
-  printf_f2elm("A", A_temp);
-
-  printf_f2elm("R1x", R1->x);
-  printf_f2elm("R1y", R1->y);
-  printf_f2elm("R2x", R2->x);
-  printf_f2elm("R2y", R2->y);
-  printf_f2elm("newPsiSx", S_temp->X);
-  printf_f2elm("newPsiSy", S_temp->Y);
-  printf_f2elm("newPsiSz", S_temp->Z);
-  printf_digit_order("comp", comp, NWORDS_ORDER);
-  printf("bit :=  %d\n", compBit);
-
-  to_fp2mont(A_temp, A_temp);
-  to_fp2mont(R1->x, R1->x);
-  to_fp2mont(R1->y, R1->y);
-  to_fp2mont(R2->x, R2->x);
-  to_fp2mont(R2->y, R2->y);
-  to_fp2mont(S_temp->X, S_temp->X);
-  to_fp2mont(S_temp->Y, S_temp->Y);
-  to_fp2mont(S_temp->Z, S_temp->Z);
-  //to_fp2mont((felm_t*)comp, comp);
-#endif
-
-	//from_Montgomery_mod_order(&comp, &comp, CurveIsogeny->Border, (digit_t*)&Montgomery_rprime);
+  #ifdef DECOMP_PSIS_PRINTS
+  print_decomp_tests (A_temp, S_temp, R1, R2, comp, NWORDS_ORDER, compBit);
+  #endif
 
 	fp2copy751(S_temp->X, S->X);
 	fp2copy751(S_temp->Z, S->Z);
@@ -1701,14 +1703,6 @@ CRYPTO_STATUS decompressPsiS_test(const unsigned char* CompressedPsiS, point_pro
 	fp2div2_751(A24, A24);
 	fp2div2_751(A24, A24);
 
-	//need to swap R1 and R2 in the following function call depending on the order of a in psi(S) = [a]R1 + [b]R2
-	/*if (compBit) {
-		mont_twodim_scalarmult(comp, R2, R1, A_temp, A24, S_temp, CurveIsogeny);
-		//Status = ladder_3_pt(const f2elm_t xP, const f2elm_t xQ, const f2elm_t xPQ, const digit_t* m, const unsigned int AliceOrBob, temp1, A_temp, CurveIsogeny);
-	} else {
-		mont_twodim_scalarmult(comp, R1, R2, A_temp, A24, S_temp, CurveIsogeny);
-	}*/
-
   Mont_ladder(R1->x, a, aR1, Pnot, A24, CurveIsogeny->oBbits, CurveIsogeny->owordbits, CurveIsogeny);
   Mont_ladder(R2->x, b, bR2, Qnot, A24, CurveIsogeny->oBbits, CurveIsogeny->owordbits, CurveIsogeny);
 
@@ -1746,38 +1740,13 @@ CRYPTO_STATUS decompressPsiS_test(const unsigned char* CompressedPsiS, point_pro
 
   ADD(aR1_full, bR2_full->X, bR2_full->Y, bR2_full->Z, A_temp, newPsiS);
 
-#ifdef DECOMP_PSIS_PRINTS
-  from_fp2mont(A_temp, A_temp);
-  from_fp2mont(R1->x, R1->x);
-  from_fp2mont(R1->y, R1->y);
-  from_fp2mont(R2->x, R2->x);
-  from_fp2mont(R2->y, R2->y);
-  from_fp2mont(S_temp->X, S_temp->X);
-  from_fp2mont(S_temp->Y, S_temp->Y);
-  from_fp2mont(S_temp->Z, S_temp->Z);
+  #ifdef DECOMP_PSIS_PRINTS
+    print_decomp_tests (A_temp, S_temp, R1, R2, comp, NWORDS_ORDER, compBit);
+  #endif
 
-  printf_f2elm("A", A_temp);
-
-  printf_f2elm("R1x", R1->x);
-  printf_f2elm("R1y", R1->y);
-  printf_f2elm("R2x", R2->x);
-  printf_f2elm("R2y", R2->y);
-  printf_f2elm("newPsiSx", S_temp->X);
-  printf_f2elm("newPsiSy", S_temp->Y);
-  printf_f2elm("newPsiSz", S_temp->Z);
-  printf_digit_order("comp", comp, NWORDS_ORDER);
-  printf("bit :=  %d\n", compBit);
-
-  to_fp2mont(A_temp, A_temp);
-  to_fp2mont(R1->x, R1->x);
-  to_fp2mont(R1->y, R1->y);
-  to_fp2mont(R2->x, R2->x);
-  to_fp2mont(R2->y, R2->y);
-  to_fp2mont(S_temp->X, S_temp->X);
-  to_fp2mont(S_temp->Y, S_temp->Y);
-  to_fp2mont(S_temp->Z, S_temp->Z);
-  //to_fp2mont((felm_t*)comp, comp);
-#endif
+  #ifdef TEST_WHOLE_PSIS
+    print_whole_decomp_tests ();
+  #endif
 
   fp2copy751(newPsiS->X, S->X);
   fp2copy751(newPsiS->Z, S->Z);
