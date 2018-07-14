@@ -1202,12 +1202,21 @@ static void print_decomp_tests (f2elm_t A, point_full_proj_t S, point_t R1, poin
   to_fp2mont(S->Z, S->Z);
 }
 
-static void print_whole_comp_tests () {
-
+static void print_whole_comp_tests (point_t psiS) {
+  printf_f2elm("psiSx", psiS->x);
+  printf_f2elm("psiSy", psiS->y);
 }
 
-static void print_whole_decomp_tests () {
-
+static void print_whole_decomp_tests (point_full_proj_t psiS, point_t R1, point_t R2, digit_t* a, digit_t* b, int order) {
+  printf_f2elm("newPsiSx", psiS->X);
+  printf_f2elm("newPsiSy", psiS->Y);
+  printf_f2elm("newPsiSz", psiS->Z);
+  printf_f2elm("R1x", R1->x);
+  printf_f2elm("R1y", R1->y);
+  printf_f2elm("R2x", R2->x);
+  printf_f2elm("R2y", R2->y);
+  printf_digit_order("a", a, order);
+  printf_digit_order("b", b, order);
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -1485,7 +1494,7 @@ CRYPTO_STATUS compressPsiS_test(const point_proj* psiS, unsigned char* Compresse
   #endif
 
   #ifdef TEST_WHOLE_PSIS
-    print_whole_comp_tests (psiS);
+    print_whole_comp_tests (psiSa);
   #endif
 
   to_fp2mont(psiSa->x, psiSa->x);
@@ -1745,7 +1754,7 @@ CRYPTO_STATUS decompressPsiS_test(const unsigned char* CompressedPsiS, point_pro
   #endif
 
   #ifdef TEST_WHOLE_PSIS
-    print_whole_decomp_tests ();
+    print_whole_decomp_tests (newPsiS, R1, R2, a, b, NWORDS_ORDER);
   #endif
 
   fp2copy751(newPsiS->X, S->X);
