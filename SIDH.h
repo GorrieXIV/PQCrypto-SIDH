@@ -12,7 +12,7 @@
 #ifndef __SIDH_H__
 #define __SIDH_H__
 
-#define TEST_RUN_PRINTS
+//#define TEST_RUN_PRINTS
 //#define COMP_PSIS_PRINTS
 //#define DECOMP_PSIS_PRINTS
 //#define COMPARE_COMPRESSED_PSIS_PRINTS
