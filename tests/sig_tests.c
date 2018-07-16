@@ -423,10 +423,11 @@ cleanup:
 
 
 int main (int argc, char** argv) {
+	srand(2);
 	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
 
 	//signature tests --------------------------------------------------------------
-	/*Status = cryptotest_signature();
+	Status = cryptotest_signature();
 	if (Status != CRYPTO_SUCCESS) {
 		#ifdef TEST_RUN_PRINTS
 		printf("\n\n   Error detected: %s \n\n", SIDH_get_error_message(Status));
@@ -436,7 +437,7 @@ int main (int argc, char** argv) {
 		#ifdef TEST_RUN_PRINTS
 		printf("\n  ISOGENY-BASED SIGNATURE RUN SUCCESSFUL\n\n");
 		#endif
-	}*/
+	}
 
 
 	//signature benchmark ----------------------------------------------------------
@@ -448,7 +449,7 @@ int main (int argc, char** argv) {
 
 
 	//signature test with batched inversions ---------------------------------------
-	/*Status = cryptotest_signature_batchedinv();
+	Status = cryptotest_signature_batchedinv();
 	if (Status != CRYPTO_SUCCESS) {
 		#ifdef TEST_RUN_PRINTS
 		printf("\n\n   Error detected: %s \n\n", SIDH_get_error_message(Status));
@@ -458,7 +459,7 @@ int main (int argc, char** argv) {
 		#ifdef TEST_RUN_PRINTS
 		printf("\n  ISOGENY-BASED SIGNATURE WITH BATCHED INVERSIONS SUCCESSFUL\n\n");
 		#endif
-	}*/
+	}
 
 
 	//signature benchmark with batched inversions ----------------------------------
@@ -472,7 +473,7 @@ int main (int argc, char** argv) {
 
 
 	//signature tests with compressed psi(S) ---------------------------------------
-	Status = cryptotest_signature_compressed();
+	/*Status = cryptotest_signature_compressed();
 	if (Status != CRYPTO_SUCCESS) {
 		#ifdef TEST_RUN_PRINTS
 		printf("\n\n   Error detected: %s \n\n", SIDH_get_error_message(Status));
@@ -482,7 +483,7 @@ int main (int argc, char** argv) {
 	printf("\n  ISOGENY-BASED SIGNATURE RUN WITH COMPRESSION SUCCESSFUL\n\n");
 		#ifdef TEST_RUN_PRINTS
 		#endif
-	}
+	}*/
 
 
 	//signature benchmark with compressed psi(S) -----------------------------------

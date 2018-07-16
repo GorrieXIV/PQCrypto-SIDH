@@ -18,7 +18,7 @@
 #include <pthread.h>
 #include <semaphore.h>
 
-int NUM_THREADS = 1;
+int NUM_THREADS = 248;
 int CUR_ROUND = 0;
 int batchSize = 248;
 int errorCount = 0;
@@ -150,7 +150,8 @@ void *sign_thread(void *TPS) {
 
 
 		if (tps->compressed) {
-			Status = compressPsiS_test(tempPsiS, tps->sig->compPsiS[r], &(tps->sig->compBit[r]), tps->sig->Commitments1[r], *(tps->CurveIsogeny), NULL, a, b);
+			Status = compressPsiS(tempPsiS, tps->sig->compPsiS[r], &(tps->sig->compBit[r]), tps->sig->Commitments1[r], *(tps->CurveIsogeny), NULL);
+      //Status = compressPsiS_test(tempPsiS, tps->sig->compPsiS[r], &(tps->sig->compBit[r]), tps->sig->Commitments1[r], *(tps->CurveIsogeny), NULL, a, b);
       #ifdef COMPARE_COMPRESSED_PSIS_PRINTS
         printf("Sign round %d: ", r);
         printf_digit_order("comp", tps->sig->compPsiS[r], NWORDS_ORDER);
@@ -402,7 +403,7 @@ void *verify_thread(void *TPV) {
 			if (cmp != 0) {
 				verified = false;
         #ifdef TEST_RUN_PRINTS
-				printf("verifying E/<S> -> E/<R,S> failed\n");
+				printf("verifying E/<S> -> E/<R,S> failed on non-compressed path\n");
         #endif
 			}
 
@@ -424,8 +425,8 @@ void *verify_thread(void *TPV) {
           printf("Verify round %d: ", r);
           printf_digit_order("comp", tpv->sig->compPsiS[r], NWORDS_ORDER);
         #endif
-				Status = decompressPsiS_test(tpv->sig->compPsiS[r], triple, tpv->sig->compBit[r], A, *(tpv->CurveIsogeny), a, b);
-        //Status = psiSTestDecompress(triple, tpv->sig->compPsiS[r]);
+				Status = decompressPsiS(tpv->sig->compPsiS[r], triple, tpv->sig->compBit[r], A, *(tpv->CurveIsogeny));
+        //Status = decompressPsiS_test(tpv->sig->compPsiS[r], triple, tpv->sig->compBit[r], A, *(tpv->CurveIsogeny), a, b);
 
         if (Status != CRYPTO_SUCCESS) {
           #ifdef TEST_RUN_PRINTS
@@ -472,7 +473,7 @@ void *verify_thread(void *TPV) {
 			if (cmp != 0) {
 				verified = false;
         #ifdef TEST_RUN_PRINTS
-				printf("verifying E/<R> -> E/<R,S> failed\n");
+				printf("verifying E/<R> -> E/<R,S> failed on compressed path\n");
         #endif
 			}
 

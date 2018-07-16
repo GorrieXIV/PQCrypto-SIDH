@@ -1204,8 +1204,8 @@ static void print_decomp_tests (f2elm_t A, point_full_proj_t S, point_t R1, poin
 
 static void print_whole_comp_tests (f2elm_t A, point_t psiS) {
   from_fp2mont(A, A);
-  from_fp2mont(psiS->X, psiS->X);
-  from_fp2mont(psiS->Y, psiS->Y);
+  from_fp2mont(psiS->x, psiS->x);
+  from_fp2mont(psiS->y, psiS->y);
 
   printf_f2elm("A", A);
   printf_f2elm("psiSx", psiS->x);
@@ -1216,20 +1216,18 @@ static void print_whole_comp_tests (f2elm_t A, point_t psiS) {
   to_fp2mont(psiS->y, psiS->y);
 }
 
-static void print_whole_decomp_tests (f2elm_t A, point_full_proj_t psiS, point_t R1, point_t R2, digit_t* a, digit_t* b, int order) {
+static void print_whole_decomp_tests (f2elm_t A, point_t psiS, point_t R1, point_t R2, digit_t* a, digit_t* b, int order) {
   from_fp2mont(A, A);
-  from_fp2mont(psiS->X, psiS->X);
-  from_fp2mont(psiS->Y, psiS->Y);
-  from_fp2mont(psiS->Z, psiS->Z);
+  from_fp2mont(psiS->x, psiS->x);
+  from_fp2mont(psiS->y, psiS->y);
   from_fp2mont(R1->x, R1->x);
   from_fp2mont(R1->y, R1->y);
   from_fp2mont(R2->x, R2->x);
   from_fp2mont(R2->y, R2->y);
 
   printf_f2elm("A", A);
-  printf_f2elm("newPsiSx", psiS->X);
-  printf_f2elm("newPsiSy", psiS->Y);
-  printf_f2elm("newPsiSz", psiS->Z);
+  printf_f2elm("newPsiSx", psiS->x);
+  printf_f2elm("newPsiSy", psiS->y);
   printf_f2elm("R1x", R1->x);
   printf_f2elm("R1y", R1->y);
   printf_f2elm("R2x", R2->x);
@@ -1242,9 +1240,8 @@ static void print_whole_decomp_tests (f2elm_t A, point_full_proj_t psiS, point_t
   to_fp2mont(R1->y, R1->y);
   to_fp2mont(R2->x, R2->x);
   to_fp2mont(R2->y, R2->y);
-  to_fp2mont(psiS->X, psiS->X);
-  to_fp2mont(psiS->Y, psiS->Y);
-  to_fp2mont(psiS->Z, psiS->Z);
+  to_fp2mont(psiS->x, psiS->x);
+  to_fp2mont(psiS->y, psiS->y);
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -1344,9 +1341,9 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	fp2neg751(psiSa->y);
 	//-----------------------------------------------//
 
-  from_fp2mont(psiSa->x, psiSa->x);
-  from_fp2mont(psiSa->y, psiSa->y);
-  from_fp2mont(A_temp, A_temp);
+  //from_fp2mont(psiSa->x, psiSa->x);
+  //from_fp2mont(psiSa->y, psiSa->y);
+  //from_fp2mont(A_temp, A_temp);
 
 	// do polleg-hellman to find a and b -------------------------------------//
 	half_ph3(psiSa, R1, R2, A_temp, (uint64_t*)a, (uint64_t*)b, CurveIsogeny);
@@ -1365,9 +1362,9 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
     print_comp_tests (A, R1, R2, psiSa, a, b, NWORDS_ORDER);
   #endif
 
-  to_fp2mont(psiSa->x, psiSa->x);
-  to_fp2mont(psiSa->y, psiSa->y);
-  to_fp2mont(A_temp, A_temp);
+  //to_fp2mont(psiSa->x, psiSa->x);
+  //to_fp2mont(psiSa->y, psiSa->y);
+  //to_fp2mont(A_temp, A_temp);
 
 	bita = mod3(a);
 	bitb = mod3(b);
@@ -1398,11 +1395,7 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	}
 	//---------------------------------------------------------------------------------------------------------------------------------//
 
-	// make sure comp has order 3 -------//
-	bita = mod3(comp);
-	if (bita != 0) {
-		return CRYPTO_ERROR_INVALID_ORDER;
-	}
+	// make sure comp has order 3 -------/
 	//-----------------------------------//
 
 	return Status;
@@ -1500,9 +1493,9 @@ CRYPTO_STATUS compressPsiS_test(const point_proj* psiS, unsigned char* Compresse
 	fp2neg751(psiSa->y);
 	//-----------------------------------------------//
 
-  from_fp2mont(psiSa->x, psiSa->x);
-  from_fp2mont(psiSa->y, psiSa->y);
-  from_fp2mont(A_temp, A_temp);
+  //from_fp2mont(psiSa->x, psiSa->x);
+  //from_fp2mont(psiSa->y, psiSa->y);
+  //from_fp2mont(A_temp, A_temp);
 
 	// do polleg-hellman to find a and b -------------------------------------//
 	half_ph3(psiSa, R1, R2, A_temp, (uint64_t*)a, (uint64_t*)b, CurveIsogeny);
@@ -1525,9 +1518,9 @@ CRYPTO_STATUS compressPsiS_test(const point_proj* psiS, unsigned char* Compresse
     print_whole_comp_tests (A, psiSa);
   #endif
 
-  to_fp2mont(psiSa->x, psiSa->x);
-  to_fp2mont(psiSa->y, psiSa->y);
-  to_fp2mont(A_temp, A_temp);
+  //to_fp2mont(psiSa->x, psiSa->x);
+  //to_fp2mont(psiSa->y, psiSa->y);
+  //to_fp2mont(A_temp, A_temp);
 
 	bita = mod3(a);
 	bitb = mod3(b);
@@ -1781,8 +1774,15 @@ CRYPTO_STATUS decompressPsiS_test(const unsigned char* CompressedPsiS, point_pro
     print_decomp_tests (A_temp, S_temp, R1, R2, comp, NWORDS_ORDER, compBit);
   #endif
 
+  f2elm_t newPsiSZinv;
+  point_t newPsiS_affine;
+  mont_n_way_inv(&newPsiS->Z, 1, newPsiSZinv);
+  fp2mul751_mont(newPsiS->X, newPsiSZinv, newPsiS_affine->x);
+  fp2mul751_mont(newPsiS->Y, newPsiSZinv, newPsiS_affine->y);
+
+
   #ifdef TEST_WHOLE_PSIS
-    print_whole_decomp_tests (A, newPsiS, R1, R2, a, b, NWORDS_ORDER);
+    print_whole_decomp_tests (A, newPsiS_affine, R1, R2, a, b, NWORDS_ORDER);
   #endif
 
   fp2copy751(newPsiS->X, S->X);

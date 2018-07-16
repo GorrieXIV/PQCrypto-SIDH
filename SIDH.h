@@ -12,11 +12,12 @@
 #ifndef __SIDH_H__
 #define __SIDH_H__
 
-//#define TEST_RUN_PRINTS
+#define TEST_RUN_PRINTS
 //#define COMP_PSIS_PRINTS
 //#define DECOMP_PSIS_PRINTS
 //#define COMPARE_COMPRESSED_PSIS_PRINTS
-#define TEST_WHOLE_PSIS
+//#define TEST_WHOLE_PSIS
+//#define TEST_COMMITMENTS2
 
 // For C++
 #ifdef __cplusplus
