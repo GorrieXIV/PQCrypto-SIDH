@@ -473,7 +473,7 @@ int main (int argc, char** argv) {
 
 
 	//signature tests with compressed psi(S) ---------------------------------------
-	/*Status = cryptotest_signature_compressed();
+	Status = cryptotest_signature_compressed();
 	if (Status != CRYPTO_SUCCESS) {
 		#ifdef TEST_RUN_PRINTS
 		printf("\n\n   Error detected: %s \n\n", SIDH_get_error_message(Status));
@@ -483,7 +483,7 @@ int main (int argc, char** argv) {
 	printf("\n  ISOGENY-BASED SIGNATURE RUN WITH COMPRESSION SUCCESSFUL\n\n");
 		#ifdef TEST_RUN_PRINTS
 		#endif
-	}*/
+	}
 
 
 	//signature benchmark with compressed psi(S) -----------------------------------

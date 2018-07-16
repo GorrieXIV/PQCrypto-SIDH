@@ -169,10 +169,6 @@ void *sign_thread(void *TPS) {
 				pthread_mutex_lock(&ELOCK);
 				errorCount++;
 				pthread_mutex_unlock(&ELOCK);
-			} else {
-        #ifdef TEST_RUN_PRINTS
-				printf("compress complete for %d\n", r);
-        #endif
 			}
 		} else {
 			fp2copy751(tempPsiS->X, tps->sig->psiS[r]->X);
@@ -482,15 +478,8 @@ void *verify_thread(void *TPV) {
 					pthread_mutex_lock(&ELOCK);
 					errorCount++;
 					pthread_mutex_unlock(&ELOCK);
-          #ifdef TEST_RUN_PRINTS
+          #ifdef COMPRESSION_TEST_PRINTS
 					printf("Error in verify on round %d\n", r);
-          #endif
-          #ifdef COMPARE_COMPRESSED_PSIS_PRINTS
-          printf("Error in verify on round %d\n", r);
-          #endif
-				} else {
-          #ifdef TEST_RUN_PRINTS
-					printf("Verify complete for %d\n", r);
           #endif
 				}
 			}
