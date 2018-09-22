@@ -1567,89 +1567,89 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 //          compBit - a bit signifying if ainv*b (0) or binv*a (1) was computed
 // Outputs: point S generating the same kernel as the original psi(S)
 //
-	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
+  CRYPTO_STATUS Status = CRYPTO_SUCCESS;
 
-	point_full_proj_t P, Q;                    //points used in the construction of {R1,R2}
-	point_full_proj_t S_temp;
-	point_proj_t temp1;
-	point_proj_t Pnot, Qnot;
-	point_t R1, R2;
-	digit_t* comp = (digit_t*)CompressedPsiS;
-	f2elm_t vec[2], Zinv[2];
-	digit_t a[NWORDS_ORDER], b[NWORDS_ORDER];  //for pohlig-hellman results
-	digit_t inv[NWORDS_ORDER];                 //for storing the inverse of alpha
-	uint64_t Montgomery_Rprime[NWORDS64_ORDER] = {0x1A55482318541298, 0x070A6370DFA12A03, 0xCB1658E0E3823A40, 0xB3B7384EB5DEF3F9, 0xCBCA952F7006EA33, 0x00569EF8EC94864C}; // Value (2^384)^2 mod 3^239
-	uint64_t Montgomery_rprime[NWORDS64_ORDER] = {0x48062A91D3AB563D, 0x6CE572751303C2F5, 0x5D1319F3F160EC9D, 0xE35554E8C2D5623A, 0xCA29300232BC79A5, 0x8AAD843D646D78C5}; // Value -(3^239)^-1 mod 2^384
-	unsigned int bit;
-	f2elm_t tmp, one = {0};
-	f2elm_t A_temp, A24;
-	int error = 0;
+  point_full_proj_t P, Q;                    //points used in the construction of {R1,R2}
+  point_full_proj_t S_temp;
+  point_proj_t temp1;
+  point_proj_t Pnot, Qnot;
+  point_t R1, R2;
+  digit_t* comp = (digit_t*)CompressedPsiS;
+  f2elm_t vec[2], Zinv[2];
+  digit_t a[NWORDS_ORDER], b[NWORDS_ORDER];  //for pohlig-hellman results
+  digit_t inv[NWORDS_ORDER];                 //for storing the inverse of alpha
+  uint64_t Montgomery_Rprime[NWORDS64_ORDER] = {0x1A55482318541298, 0x070A6370DFA12A03, 0xCB1658E0E3823A40, 0xB3B7384EB5DEF3F9, 0xCBCA952F7006EA33, 0x00569EF8EC94864C}; // Value (2^384)^2 mod 3^239
+  uint64_t Montgomery_rprime[NWORDS64_ORDER] = {0x48062A91D3AB563D, 0x6CE572751303C2F5, 0x5D1319F3F160EC9D, 0xE35554E8C2D5623A, 0xCA29300232BC79A5, 0x8AAD843D646D78C5}; // Value -(3^239)^-1 mod 2^384
+  unsigned int bit;
+  f2elm_t tmp, one = {0};
+  f2elm_t A_temp, A24;
+  int error = 0;
 
-	fp2copy751(A, A_temp);
-	fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
-	//to_fp2mont((felm_t*)comp, comp);
+  fp2copy751(A, A_temp);
+  fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
+  //to_fp2mont((felm_t*)comp, comp);
 
-	// generate projective basis {P, Q} generating E[3^239] which gives affine basis {R1, R2} //
-	generate_3_torsion_basis(A_temp, P, Q, CurveIsogeny);
+  // generate projective basis {P, Q} generating E[3^239] which gives affine basis {R1, R2} //
+  generate_3_torsion_basis(A_temp, P, Q, CurveIsogeny);
 
-	// check that P and Q have full order ----------------------------------------------//
-	fp2copy751(P->X, Pnot->X);
-	fp2copy751(P->Z, Pnot->Z);
-	fp2copy751(Q->X, Qnot->X);
-	fp2copy751(Q->Z, Qnot->Z);
-	for (int i=0; i < 238; i++) {
-		xTPL(Pnot, Pnot, A_temp, CurveIsogeny->C);
-		xTPL(Qnot, Qnot, A_temp, CurveIsogeny->C);
+  // check that P and Q have full order ----------------------------------------------//
+  fp2copy751(P->X, Pnot->X);
+  fp2copy751(P->Z, Pnot->Z);
+  fp2copy751(Q->X, Qnot->X);
+  fp2copy751(Q->Z, Qnot->Z);
+  for (int i=0; i < 238; i++) {
+    xTPL(Pnot, Pnot, A_temp, CurveIsogeny->C);
+    xTPL(Qnot, Qnot, A_temp, CurveIsogeny->C);
 
-		if (is_felm_zero(((felm_t*)Pnot->Z)[0]) && is_felm_zero(((felm_t*)Pnot->Z)[1])) {
+    if (is_felm_zero(((felm_t*)Pnot->Z)[0]) && is_felm_zero(((felm_t*)Pnot->Z)[1])) {
       #ifdef TEST_RUN_PRINTS
       printf ("Error: order of P falls short of 3^239\n");
       #endif
-			error++;
-		}
-		if (is_felm_zero(((felm_t*)Qnot->Z)[0]) && is_felm_zero(((felm_t*)Qnot->Z)[1])) {
+      error++;
+    }
+    if (is_felm_zero(((felm_t*)Qnot->Z)[0]) && is_felm_zero(((felm_t*)Qnot->Z)[1])) {
       #ifdef TEST_RUN_PRINTS
       printf ("Error: order of Q falls short of 3^239\n");
       #endif
-			error++;
-		}
-		if (error) {
-			return CRYPTO_ERROR_INVALID_ORDER;
-		}
-	}
-	//----------------------------------------------------------------------------------//
+      error++;
+    }
+    if (error) {
+      return CRYPTO_ERROR_INVALID_ORDER;
+    }
+  }
+  //----------------------------------------------------------------------------------//
 
-	fp2copy751(P->Z, vec[0]);
-	fp2copy751(Q->Z, vec[1]);
-	mont_n_way_inv(vec, 2, Zinv);
+  fp2copy751(P->Z, vec[0]);
+  fp2copy751(Q->Z, vec[1]);
+  mont_n_way_inv(vec, 2, Zinv);
 
-	fp2mul751_mont(P->X, Zinv[0], R1->x);
-	fp2mul751_mont(P->Y, Zinv[0], R1->y);
-	fp2mul751_mont(Q->X, Zinv[1], R2->x);
-	fp2mul751_mont(Q->Y, Zinv[1], R2->y);
+  fp2mul751_mont(P->X, Zinv[0], R1->x);
+  fp2mul751_mont(P->Y, Zinv[0], R1->y);
+  fp2mul751_mont(Q->X, Zinv[1], R2->x);
+  fp2mul751_mont(Q->Y, Zinv[1], R2->y);
 
-	//construct (A+2)/4 from A
-	fp2add751(A_temp, one, A24);
-	fp2add751(A24, one, A24);
-	fp2div2_751(A24, A24);
-	fp2div2_751(A24, A24);
+  //construct (A+2)/4 from A
+  fp2add751(A_temp, one, A24);
+  fp2add751(A24, one, A24);
+  fp2div2_751(A24, A24);
+  fp2div2_751(A24, A24);
 
-	//need to swap R1 and R2 in the following function call depending on the order of a in psi(S) = [a]R1 + [b]R2
-	if (compBit) {
-		mont_twodim_scalarmult(comp, R2, R1, A_temp, A24, S_temp, CurveIsogeny);
-		//Status = ladder_3_pt(const f2elm_t xP, const f2elm_t xQ, const f2elm_t xPQ, const digit_t* m, const unsigned int AliceOrBob, temp1, A_temp, CurveIsogeny);
-	} else {
-		mont_twodim_scalarmult(comp, R1, R2, A_temp, A24, S_temp, CurveIsogeny);
-	}
+  //need to swap R1 and R2 in the following function call depending on the order of a in psi(S) = [a]R1 + [b]R2
+  if (compBit) {
+    mont_twodim_scalarmult(comp, R2, R1, A_temp, A24, S_temp, CurveIsogeny);
+    //Status = ladder_3_pt(const f2elm_t xP, const f2elm_t xQ, const f2elm_t xPQ, const digit_t* m, const unsigned int AliceOrBob, temp1, A_temp, CurveIsogeny);
+  } else {
+    mont_twodim_scalarmult(comp, R1, R2, A_temp, A24, S_temp, CurveIsogeny);
+  }
 
   #ifdef DECOMP_PSIS_PRINTS
   print_decomp_tests (A_temp, S_temp, R1, R2, comp, NWORDS_ORDER, compBit);
   #endif
 
-	fp2copy751(S_temp->X, S->X);
-	fp2copy751(S_temp->Z, S->Z);
+  fp2copy751(S_temp->X, S->X);
+  fp2copy751(S_temp->Z, S->Z);
 
-	return Status;
+  return Status;
 }
 
 CRYPTO_STATUS decompressPsiS_test(const unsigned char* CompressedPsiS, point_proj* S, int compBit, const f2elm_t A, PCurveIsogenyStruct CurveIsogeny, digit_t* a, digit_t* b) {
@@ -1658,80 +1658,80 @@ CRYPTO_STATUS decompressPsiS_test(const unsigned char* CompressedPsiS, point_pro
 //          compBit - a bit signifying if ainv*b (0) or binv*a (1) was computed
 // Outputs: point S generating the same kernel as the original psi(S)
 //
-	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
+  CRYPTO_STATUS Status = CRYPTO_SUCCESS;
 
-	point_full_proj_t P, Q;                    //points used in the construction of {R1,R2}
-	point_full_proj_t S_temp;
+  point_full_proj_t P, Q;                    //points used in the construction of {R1,R2}
+  point_full_proj_t S_temp;
   point_full_proj_t newPsiS;
-	point_proj_t temp1;
+  point_proj_t temp1;
   point_proj_t aR1, bR2;
   point_full_proj_t aR1_full, bR2_full;
   f2elm_t aR1x, aR1y, bR2x, bR2y;
-	point_proj_t Pnot, Qnot;
-	point_t R1, R2;
-	digit_t* comp = (digit_t*)CompressedPsiS;
-	f2elm_t vec[2], Zinv[2];
-	digit_t inv[NWORDS_ORDER];                 //for storing the inverse of alpha
-	uint64_t Montgomery_Rprime[NWORDS64_ORDER] = {0x1A55482318541298, 0x070A6370DFA12A03, 0xCB1658E0E3823A40, 0xB3B7384EB5DEF3F9, 0xCBCA952F7006EA33, 0x00569EF8EC94864C}; // Value (2^384)^2 mod 3^239
-	uint64_t Montgomery_rprime[NWORDS64_ORDER] = {0x48062A91D3AB563D, 0x6CE572751303C2F5, 0x5D1319F3F160EC9D, 0xE35554E8C2D5623A, 0xCA29300232BC79A5, 0x8AAD843D646D78C5}; // Value -(3^239)^-1 mod 2^384
-	unsigned int bit;
-	f2elm_t tmp, tmp2, one = {0};
-	f2elm_t A_temp, A24;
-	int error = 0;
+  point_proj_t Pnot, Qnot;
+  point_t R1, R2;
+  digit_t* comp = (digit_t*)CompressedPsiS;
+  f2elm_t vec[2], Zinv[2];
+  digit_t inv[NWORDS_ORDER];                 //for storing the inverse of alpha
+  uint64_t Montgomery_Rprime[NWORDS64_ORDER] = {0x1A55482318541298, 0x070A6370DFA12A03, 0xCB1658E0E3823A40, 0xB3B7384EB5DEF3F9, 0xCBCA952F7006EA33, 0x00569EF8EC94864C}; // Value (2^384)^2 mod 3^239
+  uint64_t Montgomery_rprime[NWORDS64_ORDER] = {0x48062A91D3AB563D, 0x6CE572751303C2F5, 0x5D1319F3F160EC9D, 0xE35554E8C2D5623A, 0xCA29300232BC79A5, 0x8AAD843D646D78C5}; // Value -(3^239)^-1 mod 2^384
+  unsigned int bit;
+  f2elm_t tmp, tmp2, one = {0};
+  f2elm_t A_temp, A24;
+  int error = 0;
 
-	fp2copy751(A, A_temp);
-	fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
-	//to_fp2mont((felm_t*)comp, comp);
+  fp2copy751(A, A_temp);
+  fpcopy751(CurveIsogeny->Montgomery_one, one[0]);
+  //to_fp2mont((felm_t*)comp, comp);
 
-	// generate projective basis {P, Q} generating E[3^239] which gives affine basis {R1, R2} //
-	generate_3_torsion_basis(A_temp, P, Q, CurveIsogeny);
+  // generate projective basis {P, Q} generating E[3^239] which gives affine basis {R1, R2} //
+  generate_3_torsion_basis(A_temp, P, Q, CurveIsogeny);
 
-	// check that P and Q have full order ----------------------------------------------//
-	fp2copy751(P->X, Pnot->X);
-	fp2copy751(P->Z, Pnot->Z);
-	fp2copy751(Q->X, Qnot->X);
-	fp2copy751(Q->Z, Qnot->Z);
-	for (int i=0; i < 238; i++) {
-		xTPL(Pnot, Pnot, A_temp, CurveIsogeny->C);
-		xTPL(Qnot, Qnot, A_temp, CurveIsogeny->C);
+  // check that P and Q have full order ----------------------------------------------//
+  fp2copy751(P->X, Pnot->X);
+  fp2copy751(P->Z, Pnot->Z);
+  fp2copy751(Q->X, Qnot->X);
+  fp2copy751(Q->Z, Qnot->Z);
+  for (int i=0; i < 238; i++) {
+    xTPL(Pnot, Pnot, A_temp, CurveIsogeny->C);
+    xTPL(Qnot, Qnot, A_temp, CurveIsogeny->C);
 
-		if (is_felm_zero(((felm_t*)Pnot->Z)[0]) && is_felm_zero(((felm_t*)Pnot->Z)[1])) {
+    if (is_felm_zero(((felm_t*)Pnot->Z)[0]) && is_felm_zero(((felm_t*)Pnot->Z)[1])) {
       #ifdef TEST_RUN_PRINTS
       printf ("Error: order of P falls short of 3^239\n");
       #endif
-			error++;
-		}
-		if (is_felm_zero(((felm_t*)Qnot->Z)[0]) && is_felm_zero(((felm_t*)Qnot->Z)[1])) {
+      error++;
+    }
+    if (is_felm_zero(((felm_t*)Qnot->Z)[0]) && is_felm_zero(((felm_t*)Qnot->Z)[1])) {
       #ifdef TEST_RUN_PRINTS
       printf ("Error: order of Q falls short of 3^239\n");
       #endif
-			error++;
-		}
-		if (error) {
-			return CRYPTO_ERROR_INVALID_ORDER;
-		}
-	}
-	//----------------------------------------------------------------------------------//
+      error++;
+    }
+    if (error) {
+      return CRYPTO_ERROR_INVALID_ORDER;
+    }
+  }
+  //----------------------------------------------------------------------------------//
 
   fp2copy751(P->X, Pnot->X);
-	fp2copy751(P->Z, Pnot->Z);
-	fp2copy751(Q->X, Qnot->X);
-	fp2copy751(Q->Z, Qnot->Z);
+  fp2copy751(P->Z, Pnot->Z);
+  fp2copy751(Q->X, Qnot->X);
+  fp2copy751(Q->Z, Qnot->Z);
 
-	fp2copy751(P->Z, vec[0]);
-	fp2copy751(Q->Z, vec[1]);
-	mont_n_way_inv(vec, 2, Zinv);
+  fp2copy751(P->Z, vec[0]);
+  fp2copy751(Q->Z, vec[1]);
+  mont_n_way_inv(vec, 2, Zinv);
 
-	fp2mul751_mont(P->X, Zinv[0], R1->x);
-	fp2mul751_mont(P->Y, Zinv[0], R1->y);
-	fp2mul751_mont(Q->X, Zinv[1], R2->x);
-	fp2mul751_mont(Q->Y, Zinv[1], R2->y);
+  fp2mul751_mont(P->X, Zinv[0], R1->x);
+  fp2mul751_mont(P->Y, Zinv[0], R1->y);
+  fp2mul751_mont(Q->X, Zinv[1], R2->x);
+  fp2mul751_mont(Q->Y, Zinv[1], R2->y);
 
-	//construct (A+2)/4 from A
-	fp2add751(A_temp, one, A24);
-	fp2add751(A24, one, A24);
-	fp2div2_751(A24, A24);
-	fp2div2_751(A24, A24);
+  //construct (A+2)/4 from A
+  fp2add751(A_temp, one, A24);
+  fp2add751(A24, one, A24);
+  fp2div2_751(A24, A24);
+  fp2div2_751(A24, A24);
 
   Mont_ladder(R1->x, a, aR1, Pnot, A24, CurveIsogeny->oBbits, CurveIsogeny->owordbits, CurveIsogeny);
   Mont_ladder(R2->x, b, bR2, Qnot, A24, CurveIsogeny->oBbits, CurveIsogeny->owordbits, CurveIsogeny);
