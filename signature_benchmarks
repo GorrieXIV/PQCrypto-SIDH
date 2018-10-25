@@ -1,0 +1,45 @@
+
+  BENCHMARKING ISOGENY-BASED SIGNATURE SCHEME WITH COMPRESSION
+  --------------------------------------------------------------
+  SIGNATURE KEYGEN RUNS IN ........................   43321352 cycles
+  SIGNATURE SIGN RUNS (compressed) IN ............. 7844124943 cycles
+  SIGNATURE VERIFY (compressed) RUNS IN ........... 11599734931 cycles
+
+  ISOGENY-BASED SIGNATURE WITH COMPRESSION BENCHMARK COMPLETE
+
+
+  BENCHMARKING ISOGENY-BASED SIGNATURE SCHEME WITH COMPRESSION
+  --------------------------------------------------------------
+  SIGNATURE KEYGEN RUNS IN ........................   21276616 cycles
+  SIGNATURE SIGN RUNS (compressed) IN ............. 16859939418 cycles
+  SIGNATURE VERIFY (compressed) RUNS IN ........... 2526542332 cycles
+
+  ISOGENY-BASED SIGNATURE WITH COMPRESSION BENCHMARK COMPLETE
+
+
+  BENCHMARKING ISOGENY-BASED SIGNATURE SCHEME WITH COMPRESSION
+  --------------------------------------------------------------
+  SIGNATURE KEYGEN RUNS IN ........................   22148440 cycles
+  SIGNATURE SIGN RUNS (compressed) IN ............. 16857873075 cycles
+  SIGNATURE VERIFY (compressed) RUNS IN ........... 2542206517 cycles
+
+  ISOGENY-BASED SIGNATURE WITH COMPRESSION BENCHMARK COMPLETE
+
+
+  BENCHMARKING ISOGENY-BASED SIGNATURE SCHEME WITH COMPRESSION
+  --------------------------------------------------------------
+  SIGNATURE KEYGEN RUNS IN ........................   21254027 cycles
+  SIGNATURE SIGN RUNS (compressed) IN ............. 17119372356 cycles
+  SIGNATURE VERIFY (compressed) RUNS IN ........... 4304188758 cycles
+
+  ISOGENY-BASED SIGNATURE WITH COMPRESSION BENCHMARK COMPLETE
+
+
+  BENCHMARKING ISOGENY-BASED SIGNATURE SCHEME WITH COMPRESSION
+  --------------------------------------------------------------
+  SIGNATURE KEYGEN RUNS IN ........................   42177119 cycles
+  SIGNATURE SIGN RUNS (compressed) IN ............. 10491854531 cycles
+  SIGNATURE VERIFY (compressed) RUNS IN ........... 4533141166 cycles
+
+  ISOGENY-BASED SIGNATURE WITH COMPRESSION BENCHMARK COMPLETE
+
