@@ -229,7 +229,7 @@ cleanup:
 }
 
 
-CRYPTO_STATUS cryptorun_signature (unsigned long long *keygen_cycles, unsigned long long *sign_cycles, unsigned long long *verify_cycles) {
+CRYPTO_STATUS cryptorun_signature () {
 	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
 	// Number of bytes in a field element
 	unsigned int pbytes = (CurveIsogeny_SIDHp751.pwordbits + 7)/8;
@@ -267,19 +267,14 @@ CRYPTO_STATUS cryptorun_signature (unsigned long long *keygen_cycles, unsigned l
 	cycles2 = cpucycles();
 	scycles = cycles2 - cycles1;
 
-  *keygen_cycles = scycles;
-
 	#ifdef TEST_RUN_PRINTS
 	printf("  SIGNATURE KEYGEN RUNS IN ........... %10lld cycles\n", scycles);
 	#endif
-  printf("%lld\n", scycles);
 
 	cycles1 = cpucycles();
 	Status = isogeny_sign(CurveIsogeny, PrivateKey, PublicKey, &sig, 0, 0);
 	cycles2 = cpucycles();
 	scycles = cycles2 - cycles1;
-
-  *sign_cycles = scycles;
 
 	#ifdef TEST_RUN_PRINTS
 	printf("  SIGNATURE SIGN RUNS IN ............. %10lld cycles\n", scycles);
@@ -290,8 +285,6 @@ CRYPTO_STATUS cryptorun_signature (unsigned long long *keygen_cycles, unsigned l
 	Status = isogeny_verify(CurveIsogeny, PublicKey, &sig, 0, 0);
 	cycles2 = cpucycles();
 	scycles = cycles2 - cycles1;
-
-  *verify_cycles = scycles;
 
 	#ifdef TEST_RUN_PRINTS
 	printf("  SIGNATURE VERIFY RUNS IN ........... %10lld cycles\n", scycles);
@@ -308,7 +301,7 @@ cleanup:
 }
 
 
-CRYPTO_STATUS cryptorun_signature_batchedinv (unsigned long long *keygen_cycles, unsigned long long *sign_cycles, unsigned long long *verify_cycles) {
+CRYPTO_STATUS cryptorun_signature_batchedinv () {
 	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
 	// Number of bytes in a field element
 	unsigned int pbytes = (CurveIsogeny_SIDHp751.pwordbits + 7)/8;
@@ -349,7 +342,6 @@ CRYPTO_STATUS cryptorun_signature_batchedinv (unsigned long long *keygen_cycles,
 	#ifdef TEST_RUN_PRINTS
 	printf("  SIGNATURE KEYGEN RUNS IN ..................... %10lld cycles\n", scycles);
 	#endif
-  printf("%lld\n", scycles);
 
 	cycles1 = cpucycles();
 	Status = isogeny_sign(CurveIsogeny, PrivateKey, PublicKey, &sig, 1, 0);
@@ -380,7 +372,7 @@ cleanup:
 }
 
 
-CRYPTO_STATUS cryptorun_signature_compressed (unsigned long long *keygen_cycles, unsigned long long *sign_cycles, unsigned long long *verify_cycles) {
+CRYPTO_STATUS cryptorun_signature_compressed () {
 	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
 	// Number of bytes in a field element
 	unsigned int pbytes = (CurveIsogeny_SIDHp751.pwordbits + 7)/8;
@@ -418,19 +410,14 @@ CRYPTO_STATUS cryptorun_signature_compressed (unsigned long long *keygen_cycles,
 	cycles2 = cpucycles();
 	scycles = cycles2 - cycles1;
 
-  *keygen_cycles = scycles;
-
 	#ifdef TEST_RUN_PRINTS
 	printf("  SIGNATURE KEYGEN RUNS IN ........................ %10lld cycles\n", scycles);
 	#endif
-  printf("%lld\n", scycles);
 
 	cycles1 = cpucycles();
 	Status = isogeny_sign(CurveIsogeny, PrivateKey, PublicKey, &sig, 0, 1);
 	cycles2 = cpucycles();
 	scycles = cycles2 - cycles1;
-
-  *sign_cycles = scycles;
 
 	#ifdef TEST_RUN_PRINTS
 	printf("  SIGNATURE SIGN RUNS (compressed) IN ............. %10lld cycles\n", scycles);
@@ -441,8 +428,6 @@ CRYPTO_STATUS cryptorun_signature_compressed (unsigned long long *keygen_cycles,
 	Status = isogeny_verify(CurveIsogeny, PublicKey, &sig, 0, 1);
 	cycles2 = cpucycles();
 	scycles = cycles2 - cycles1;
-
-  *verify_cycles = scycles;
 
 	#ifdef TEST_RUN_PRINTS
 	printf("  SIGNATURE VERIFY (compressed) RUNS IN ........... %10lld cycles\n", scycles);
@@ -461,12 +446,6 @@ cleanup:
 int main (int argc, char** argv) {
 	srand(2);
 	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
-  unsigned long long *accumulated_keygen_cycles = malloc(sizeof(unsigned long long)); *accumulated_keygen_cycles = 0;
-  unsigned long long *accumulated_sign_cycles = malloc(sizeof(unsigned long long)); *accumulated_sign_cycles = 0;
-  unsigned long long *accumulated_verify_cycles = malloc(sizeof(unsigned long long)); *accumulated_verify_cycles = 0;
-  unsigned long long *current_keygen_cycles = malloc(sizeof(unsigned long long));
-  unsigned long long *current_sign_cycles = malloc(sizeof(unsigned long long));
-  unsigned long long *current_verify_cycles = malloc(sizeof(unsigned long long));
 
   int vanilla_rounds = atoi(argv[1]);
   int batched_rounds = atoi(argv[2]);
@@ -488,7 +467,7 @@ int main (int argc, char** argv) {
 
 	//signature benchmark ----------------------------------------------------------
   for (int i = 1; i <= vanilla_rounds; i++) {
-  	Status = cryptorun_signature(current_keygen_cycles, current_sign_cycles, current_verify_cycles);
+  	Status = cryptorun_signature();
   	if (Status != CRYPTO_SUCCESS) {
   		printf("\n\n   Error detected: %s \n\n", SIDH_get_error_message(Status));
   		continue;
@@ -516,7 +495,7 @@ int main (int argc, char** argv) {
 
 	//signature benchmark with batched inversions ----------------------------------
   for (int i = 1; i <= batched_rounds; i++) {
-  	Status = cryptorun_signature_batchedinv(current_keygen_cycles, current_sign_cycles, current_verify_cycles);
+  	Status = cryptorun_signature_batchedinv();
   	if (Status != CRYPTO_SUCCESS) {
   		#ifdef TEST_RUN_PRINTS
   		printf("\n\n   Error detected: %s \n\n", SIDH_get_error_message(Status));
@@ -546,7 +525,7 @@ int main (int argc, char** argv) {
 
 	//signature benchmark with compressed psi(S) -----------------------------------
   for (int i = 1; i <= compressed_rounds; i++) {
-  	Status = cryptorun_signature_compressed(current_keygen_cycles, current_sign_cycles, current_verify_cycles);
+  	Status = cryptorun_signature_compressed();
   	if (Status != CRYPTO_SUCCESS) {
       #ifdef TEST_RUN_PRINTS
   		printf("\n\n   Error detected: %s \n\n", SIDH_get_error_message(Status));
