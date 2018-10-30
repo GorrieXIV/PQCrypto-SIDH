@@ -590,6 +590,7 @@ int main (int argc, char** argv) {
   int vanilla_rounds = atoi(argv[1]);
   int batched_rounds = atoi(argv[2]);
   int compressed_rounds = atoi(argv[3]);
+  int CB_rounds = atoi(argv[4]);
 
 	//signature tests --------------------------------------------------------------
 	/*Status = cryptotest_signature(current_keygen_cycles, current_sign_cycles, current_verify_cycles);
@@ -679,7 +680,7 @@ int main (int argc, char** argv) {
   }
 
   //signature tests with compressed psi(S) and batcheding ------------------
-  Status = cryptotest_signature_CB();
+  /*Status = cryptotest_signature_CB();
   if (Status != CRYPTO_SUCCESS) {
     #ifdef TEST_RUN_PRINTS
     printf("\n\n   Error detected: %s \n\n", SIDH_get_error_message(Status));
@@ -689,11 +690,11 @@ int main (int argc, char** argv) {
     printf("\n  ISOGENY-BASED SIGNATURE RUN WITH COMPRESSION AND BATCHING SUCCESSFUL\n\n");
     #ifdef TEST_RUN_PRINTS
     #endif
-  }
+  }*/
 
 
   //signature benchmark with compressed psi(S) and batcheding ------------------
-  /*for (int i = 1; i <= compressed_rounds; i++) {
+  for (int i = 1; i <= CB_rounds; i++) {
     Status = cryptorun_signature_CB();
     if (Status != CRYPTO_SUCCESS) {
       #ifdef TEST_RUN_PRINTS
@@ -705,7 +706,7 @@ int main (int argc, char** argv) {
       printf("\n  ISOGENY-BASED SIGNATURE WITH COMPRESSION AND BATCHING BENCHMARK COMPLETE\n\n");
       #endif
     }
-  }*/
+  }
 
 cleanup:
 
