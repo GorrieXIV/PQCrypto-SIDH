@@ -5,9 +5,22 @@ Benchmarking script
 import sys, os, math
 from matplotlib import pyplot
 
-sig_runs = 0
-batched_runs = 20
-compressed_runs = 0
+
+def plot_and_save(sign_points, verify_points, title, file_name):
+  x = list(range(len(sign_points)))
+  pyplot.scatter(x, sign_points, label='Sign Cycles', c='blue')
+  pyplot.scatter(x, verify_points, label='Verify Cycles', c='red')
+  pyplot.title(title)
+  pyplot.ylabel('Cycles')
+  pyplot.xlabel('Iteration #')
+  pyplot.legend(loc='upper left')
+  pyplot.savefig(file_name)
+  pyplot.clf()
+
+
+sig_runs = 2
+batched_runs = 3
+compressed_runs = 1
 
 # run signature test
 exec_call = ".././sig_test " + str(sig_runs) + " " + str(batched_runs) + " " + str(compressed_runs) + " > signature_benchmarks"
@@ -69,11 +82,10 @@ with open("signature_benchmarks") as file:
       elif(j == 1):
         print("cycle time for compressed signature " + str(i+1-sig_runs-batched_runs) + " sign: " + str(line)[:-1])
         compressed_verify_avg += int(line)
-        compresseD_verify_stddev_list.append(int(line))
+        compressed_verify_stddev_list.append(int(line))
 
     j += 1
 print("-------------------------------------------------------------")
-
 
 vanilla_sign_stddev = 0
 vanilla_verify_stddev = 0
@@ -86,6 +98,7 @@ compressed_verify_stddev = 0
 
 # compute and display vanilla signature average runtime and standard deviation
 if (sig_runs != 0):
+  plot_and_save(vanilla_sign_stddev_list, vanilla_verify_stddev_list, 'Performance Measurements - Unmodified Scheme', 'vanilla_cycles.pdf')
   vanilla_sign_avg = vanilla_sign_avg / sig_runs
   vanilla_verify_avg = vanilla_verify_avg / sig_runs
   print("signature sign average: " + str(vanilla_sign_avg))
@@ -102,6 +115,7 @@ if (sig_runs != 0):
  
 # compute and display batched signature average runtime and standard deviation
 if (batched_runs != 0):
+  plot_and_save(batched_sign_stddev_list, batched_verify_stddev_list, 'Performance Measurements - With Batching', 'batched-cycles.pdf')
   batched_sign_avg = batched_sign_avg / batched_runs
   batched_verify_avg = batched_verify_avg / batched_runs
   print("batched signature sign average: " + str(batched_sign_avg))
@@ -117,7 +131,8 @@ if (batched_runs != 0):
   print("batched signature verify standard deviation: " + str(batched_verify_stddev))
 
 # compute and display compressed signature average runtime and standard deviation
-if (compressed_runs != 0):
+if (compressed_runs != 0): 
+  plot_and_save(compressed_sign_stddev_list, compressed_verify_stddev_list, 'Performance Measurements - Compressed Signatures', 'compressed-cycles.pdf')
   compressed_sign_avg = compressed_sign_avg / compressed_runs
   compressed_verify_avg = compressed_verify_avg / compressed_runs
   print("compressed signature sign average: " + str(compressed_sign_avg))
@@ -131,4 +146,6 @@ if (compressed_runs != 0):
   compressed_verify_stddev = math.sqrt(compressed_verify_stddev / compressed_runs)
   print("compressed signature sign standard deviation: " + str(compressed_sign_stddev))
   print("compressed signature verify standard deviation: " + str(compressed_verify_stddev))
+
+
 

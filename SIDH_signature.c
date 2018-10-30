@@ -23,12 +23,14 @@ int CUR_ROUND = 0;
 int batchSize = 248;
 int errorCount = 0;
 int roundSuccess = 0;
+int psiS_count = 0;
 batch_struct* signBatchA;
 batch_struct* signBatchB;
 batch_struct* verifyBatchA;
 batch_struct* verifyBatchB;
 batch_struct* verifyBatchC;
 batch_struct* compressionBatch;
+batch_struct* decompressionBatch;
 pthread_mutex_t RLOCK;      //lock for round counter
 pthread_mutex_t BLOCK;      //lock for batch size counter
 pthread_mutex_t ELOCK;      //lock for errorCount
@@ -150,7 +152,7 @@ void *sign_thread(void *TPS) {
 
 
 		if (tps->compressed) {
-			Status = compressPsiS(tempPsiS, tps->sig->compPsiS[r], &(tps->sig->compBit[r]), tps->sig->Commitments1[r], *(tps->CurveIsogeny), NULL);
+			Status = compressPsiS(tempPsiS, tps->sig->compPsiS[r], &(tps->sig->compBit[r]), tps->sig->Commitments1[r], *(tps->CurveIsogeny), compressionBatch);
       //Status = compressPsiS_test(tempPsiS, tps->sig->compPsiS[r], &(tps->sig->compBit[r]), tps->sig->Commitments1[r], *(tps->CurveIsogeny), NULL, a, b);
       #ifdef COMPARE_COMPRESSED_PSIS_PRINTS
         printf("Sign round %d: ", r);
@@ -229,9 +231,18 @@ CRYPTO_STATUS isogeny_sign(PCurveIsogenyStruct CurveIsogeny, unsigned char *Priv
 		signBatchB->invDest = (f2elm_t*) malloc (248 * sizeof(f2elm_t));
 		pthread_mutex_init(&signBatchB->arrayLock, NULL);
 		sem_init(&signBatchB->sign_sem, 0, 0);
+
+    compressionBatch = (batch_struct*) malloc (sizeof(batch_struct));
+    compressionBatch->batchSize = 248;
+    compressionBatch->cntr = 0;
+    compressionBatch->invArray = (f2elm_t*) malloc (248 * sizeof(f2elm_t));
+    compressionBatch->invDest = (f2elm_t*) malloc (248 * sizeof(f2elm_t));
+    pthread_mutex_init(&compressionBatch->arrayLock, NULL);
+    sem_init(&compressionBatch->sign_sem, 0, 0);
 	} else {
 		signBatchA = NULL;
 		signBatchB = NULL;
+    compressionBatch = NULL;
 	}
 
 
@@ -285,6 +296,8 @@ cleanup:
 			free(signBatchA->invDest);
 			free(signBatchB->invArray);
 			free(signBatchB->invDest);
+      free(compressionBatch->invArray);
+      free(compressionBatch->invDest);
 		}
 
 
@@ -341,8 +354,8 @@ void *verify_thread(void *TPV) {
 		if (bit == 0) {
 			pthread_mutex_lock(&BLOCK);
 			if (verifyBatchA != NULL && verifyBatchB != NULL) {
-				verifyBatchA->batchSize++;
-				verifyBatchB->batchSize++;
+				//verifyBatchA->batchSize++;
+				//verifyBatchB->batchSize++;
 			}
 			pthread_mutex_unlock(&BLOCK);
 			//printf("round %d: bit 0 - ", r);
@@ -406,7 +419,8 @@ void *verify_thread(void *TPV) {
 		} else {
 			pthread_mutex_lock(&BLOCK);
 			if (verifyBatchC != NULL) {
-				verifyBatchC->batchSize++;
+				//verifyBatchC->batchSize++;
+        //decompressionBatch->batchSize++;
 			}
 			pthread_mutex_unlock(&BLOCK);
 
@@ -421,7 +435,7 @@ void *verify_thread(void *TPV) {
           printf("Verify round %d: ", r);
           printf_digit_order("comp", tpv->sig->compPsiS[r], NWORDS_ORDER);
         #endif
-				Status = decompressPsiS(tpv->sig->compPsiS[r], triple, tpv->sig->compBit[r], A, *(tpv->CurveIsogeny));
+				Status = decompressPsiS(tpv->sig->compPsiS[r], triple, tpv->sig->compBit[r], A, *(tpv->CurveIsogeny), decompressionBatch);
         //Status = decompressPsiS_test(tpv->sig->compPsiS[r], triple, tpv->sig->compBit[r], A, *(tpv->CurveIsogeny), a, b);
 
         if (Status != CRYPTO_SUCCESS) {
@@ -532,34 +546,54 @@ CRYPTO_STATUS isogeny_verify(PCurveIsogenyStruct CurveIsogeny, unsigned char *Pu
 
 	thread_params_verify tpv = {&CurveIsogeny, PublicKey, sig, cHashLength, cHash, pbytes, n, obytes, compressed};
 
+  int bit;
+  for (int iter=0; iter<NUM_THREADS; iter++) {
+    int hash_index = iter/8;
+    int word_shift = iter%8;
+    bit = tpv.cHash[hash_index] & (1 << word_shift);
+    if (bit != 0) {
+      psiS_count++;
+    }
+  }
+
+
 	if (batched) {
 		verifyBatchA = (batch_struct*) malloc (sizeof(batch_struct));
-		verifyBatchA->batchSize = 0;
+		verifyBatchA->batchSize = 248 - psiS_count;
 		verifyBatchA->cntr = 0;
-		verifyBatchA->invArray = (f2elm_t*) malloc (batchSize * sizeof(f2elm_t));
-		verifyBatchA->invDest = (f2elm_t*) malloc (batchSize * sizeof(f2elm_t));
+		verifyBatchA->invArray = (f2elm_t*) malloc ((248 - psiS_count) * sizeof(f2elm_t));
+		verifyBatchA->invDest = (f2elm_t*) malloc ((248 - psiS_count) * sizeof(f2elm_t));
 		pthread_mutex_init(&verifyBatchA->arrayLock, NULL);
 		sem_init(&verifyBatchA->sign_sem, 0, 0);
 
 		verifyBatchB = (batch_struct*) malloc (sizeof(batch_struct));
-		verifyBatchB->batchSize = 0;
+		verifyBatchB->batchSize = 248 - psiS_count;
 		verifyBatchB->cntr = 0;
-		verifyBatchB->invArray = (f2elm_t*) malloc (batchSize * sizeof(f2elm_t));
-		verifyBatchB->invDest = (f2elm_t*) malloc (batchSize * sizeof(f2elm_t));
+		verifyBatchB->invArray = (f2elm_t*) malloc ((248 - psiS_count) * sizeof(f2elm_t));
+		verifyBatchB->invDest = (f2elm_t*) malloc ((248 - psiS_count) * sizeof(f2elm_t));
 		pthread_mutex_init(&verifyBatchB->arrayLock, NULL);
 		sem_init(&verifyBatchB->sign_sem, 0, 0);
 
 		verifyBatchC = (batch_struct*) malloc (sizeof(batch_struct));
-		verifyBatchC->batchSize = 0;
+		verifyBatchC->batchSize = psiS_count;
 		verifyBatchC->cntr = 0;
-		verifyBatchC->invArray = (f2elm_t*) malloc (batchSize * sizeof(f2elm_t));
-		verifyBatchC->invDest = (f2elm_t*) malloc (batchSize * sizeof(f2elm_t));
+		verifyBatchC->invArray = (f2elm_t*) malloc (psiS_count * sizeof(f2elm_t));
+		verifyBatchC->invDest = (f2elm_t*) malloc (psiS_count * sizeof(f2elm_t));
 		pthread_mutex_init(&verifyBatchC->arrayLock, NULL);
 		sem_init(&verifyBatchC->sign_sem, 0, 0);
+
+    decompressionBatch = (batch_struct*) malloc (sizeof(batch_struct));
+    decompressionBatch->batchSize = psiS_count;
+    decompressionBatch->cntr = 0;
+    decompressionBatch->invArray = (f2elm_t*) malloc (psiS_count * sizeof(f2elm_t));
+    decompressionBatch->invDest = (f2elm_t*) malloc (psiS_count * sizeof(f2elm_t));
+    pthread_mutex_init(&decompressionBatch->arrayLock, NULL);
+    sem_init(&decompressionBatch->sign_sem, 0, 0);
 	} else {
 		verifyBatchA = NULL;
 		verifyBatchB = NULL;
 		verifyBatchC = NULL;
+    decompressionBatch = NULL;
 	}
 
 	int t;
@@ -587,6 +621,8 @@ cleanup:
 			free(verifyBatchB->invDest);
 			free(verifyBatchC->invArray);
 			free(verifyBatchC->invDest);
+      free(decompressionBatch->invArray);
+      free(decompressionBatch->invDest);
 		}
 
     return Status;

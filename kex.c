@@ -1323,7 +1323,12 @@ CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS
 	fp2copy751(Q->Z, vec[1]);
 	fp2copy751(psiS->Z, vec[2]);
 
-	mont_n_way_inv(vec, 3, Zinv);
+  if (batch == NULL) {
+    mont_n_way_inv(vec, 3, Zinv);
+  } else {
+    mont_n_way_inv_batched(vec, 3, Zinv, batch);
+  }
+
 
 	fp2mul751_mont(P->X, Zinv[0], R1->x);
 	fp2mul751_mont(P->Y, Zinv[0], R1->y);
@@ -1561,7 +1566,7 @@ CRYPTO_STATUS compressPsiS_test(const point_proj* psiS, unsigned char* Compresse
 	return Status;
 }
 
-CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S, int compBit, const f2elm_t A, PCurveIsogenyStruct CurveIsogeny) {
+CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S, int compBit, const f2elm_t A, PCurveIsogenyStruct CurveIsogeny, batch_struct* batch) {
 // Inputs:  CompressedPsiS: x s.t. psi(S) = R1 + [x]R2 or psi(S) = [x]R1 + R2
 //          CurveIsogeny - SIDHp751
 //          compBit - a bit signifying if ainv*b (0) or binv*a (1) was computed
@@ -1621,7 +1626,13 @@ CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* S,
 
   fp2copy751(P->Z, vec[0]);
   fp2copy751(Q->Z, vec[1]);
-  mont_n_way_inv(vec, 2, Zinv);
+
+  if (batch == NULL){
+    mont_n_way_inv(vec, 2, Zinv);
+  } else {
+    mont_n_way_inv_batched(vec, 2, Zinv, batch);
+  }
+
 
   fp2mul751_mont(P->X, Zinv[0], R1->x);
   fp2mul751_mont(P->Y, Zinv[0], R1->y);

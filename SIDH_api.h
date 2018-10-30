@@ -111,7 +111,7 @@ CRYPTO_STATUS EphemeralSecretAgreement_Compression_B(const unsigned char* Privat
 CRYPTO_STATUS compressPsiS(const point_proj* psiS, unsigned char* CompressedPsiS, int* compBit, const f2elm_t A, PCurveIsogenyStruct CurveIsogeny, batch_struct* batch);
 
 // Decompression of value psi(S) and calculation of the points degree
-CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* psiS, int compBit, const f2elm_t A, PCurveIsogenyStruct CurveIsogeny);
+CRYPTO_STATUS decompressPsiS(const unsigned char* CompressedPsiS, point_proj* psiS, int compBit, const f2elm_t A, PCurveIsogenyStruct CurveIsogeny, batch_struct* batch);
 
 CRYPTO_STATUS compressPsiS_test(const point_proj* psiS, unsigned char* CompressedPsiS, int* compBit, const f2elm_t A, PCurveIsogenyStruct CurveIsogeny, batch_struct* batch, digit_t* a, digit_t* b);
 

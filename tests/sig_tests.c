@@ -228,6 +228,76 @@ cleanup:
 	return Status;
 }
 
+CRYPTO_STATUS cryptotest_signature_CB() {
+	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
+	// Number of bytes in a field element
+	unsigned int pbytes = (CurveIsogeny_SIDHp751.pwordbits + 7)/8;
+	// Number of bytes in an element in [1, order]
+	unsigned int n, obytes = (CurveIsogeny_SIDHp751.owordbits + 7)/8;
+
+	// Allocate space for keys
+	unsigned char *PrivateKey, *PublicKey;
+	PrivateKey = (unsigned char*)calloc(1, obytes);        // One element in [1, order]
+	PublicKey = (unsigned char*)calloc(1, 4*2*pbytes);     // Four elements in GF(p^2)
+
+	struct Signature sig;
+
+	PCurveIsogenyStruct CurveIsogeny = {0};
+
+	#ifdef TEST_RUN_PRINTS
+	printf("\n  TESTING ISOGENY-BASED SIGNATURE SCHEME (COMP & BATCHING) \n");
+	printf("  ---------------------------------------------------------\n");
+	#endif
+
+	CurveIsogeny = SIDH_curve_allocate(&CurveIsogeny_SIDHp751);
+	if (CurveIsogeny == NULL) {
+		Status = CRYPTO_ERROR_NO_MEMORY;
+		goto cleanup;
+	}
+
+	Status = SIDH_curve_initialize(CurveIsogeny, &random_bytes_test, &CurveIsogeny_SIDHp751);
+	if (Status != CRYPTO_SUCCESS) {
+		goto cleanup;
+	}
+
+	//generate signing keypair using KeyGeneration_B
+	Status = isogeny_keygen(CurveIsogeny, PrivateKey, PublicKey);
+	if (Status != CRYPTO_SUCCESS) {
+		return Status;
+	} else {
+		#ifdef TEST_RUN_PRINTS
+		printf("  SIGNATURE KEYGEN ........................ SUCCESSFUL\n");
+		#endif
+	}
+
+	//signing procedure
+	Status = isogeny_sign(CurveIsogeny, PrivateKey, PublicKey, &sig, 1, 1);
+	if (Status != CRYPTO_SUCCESS) {
+		return Status;
+	} else {
+		#ifdef TEST_RUN_PRINTS
+		printf("  SIGNATURE SIGN (C + B) .................. SUCCESSFUL\n");
+		#endif
+	}
+
+	//verifying procedure
+	Status = isogeny_verify(CurveIsogeny, PublicKey, &sig, 1, 1);
+	if (Status != CRYPTO_SUCCESS) {
+		return Status;
+	} else {
+		#ifdef TEST_RUN_PRINTS
+		printf("  SIGNATURE VERIFY (C + B) ................ SUCCESSFUL\n");
+		#endif
+	}
+
+cleanup:
+		SIDH_curve_free(CurveIsogeny);
+		free(PrivateKey);
+		free(PublicKey);
+
+	return Status;
+}
+
 
 CRYPTO_STATUS cryptorun_signature () {
 	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
@@ -442,6 +512,76 @@ cleanup:
 	return Status;
 }
 
+CRYPTO_STATUS cryptorun_signature_CB () {
+	CRYPTO_STATUS Status = CRYPTO_SUCCESS;
+	// Number of bytes in a field element
+	unsigned int pbytes = (CurveIsogeny_SIDHp751.pwordbits + 7)/8;
+	// Number of bytes in an element in [1, order]
+	unsigned int n, obytes = (CurveIsogeny_SIDHp751.owordbits + 7)/8;
+	unsigned long long cycles1, cycles2, scycles;
+
+	// Allocate space for keys
+	unsigned char *PrivateKey, *PublicKey;
+	PrivateKey = (unsigned char*)calloc(1, obytes);        // One element in [1, order]
+	PublicKey = (unsigned char*)calloc(1, 4*2*pbytes);     // Four elements in GF(p^2)
+
+	struct Signature sig;
+
+	PCurveIsogenyStruct CurveIsogeny = {0};
+
+	CurveIsogeny = SIDH_curve_allocate(&CurveIsogeny_SIDHp751);
+	if (CurveIsogeny == NULL) {
+		Status = CRYPTO_ERROR_NO_MEMORY;
+		goto cleanup;
+	}
+
+	Status = SIDH_curve_initialize(CurveIsogeny, &random_bytes_test, &CurveIsogeny_SIDHp751);
+	if (Status != CRYPTO_SUCCESS) {
+		goto cleanup;
+	}
+
+	#ifdef TEST_RUN_PRINTS
+	printf("\n  BENCHMARKING ISOGENY-BASED SIGNATURE SCHEME (COMP & BATCHING)\n");
+	printf("  --------------------------------------------------------------\n");
+	#endif
+
+	cycles1 = cpucycles();
+	Status = isogeny_keygen(CurveIsogeny, PrivateKey, PublicKey);
+	cycles2 = cpucycles();
+	scycles = cycles2 - cycles1;
+
+	#ifdef TEST_RUN_PRINTS
+	printf("  SIGNATURE KEYGEN RUNS IN ........................ %10lld cycles\n", scycles);
+	#endif
+
+	cycles1 = cpucycles();
+	Status = isogeny_sign(CurveIsogeny, PrivateKey, PublicKey, &sig, 1, 1);
+	cycles2 = cpucycles();
+	scycles = cycles2 - cycles1;
+
+	#ifdef TEST_RUN_PRINTS
+	printf("  SIGNATURE SIGN RUNS (C + B) IN .................. %10lld cycles\n", scycles);
+	#endif
+  printf("%lld\n", scycles);
+
+	cycles1 = cpucycles();
+	Status = isogeny_verify(CurveIsogeny, PublicKey, &sig, 1, 1);
+	cycles2 = cpucycles();
+	scycles = cycles2 - cycles1;
+
+	#ifdef TEST_RUN_PRINTS
+	printf("  SIGNATURE VERIFY (C + B) RUNS IN ................ %10lld cycles\n", scycles);
+	#endif
+  printf("%lld\n", scycles);
+
+cleanup:
+	SIDH_curve_free(CurveIsogeny);
+	free(PrivateKey);
+	free(PublicKey);
+
+	return Status;
+}
+
 
 int main (int argc, char** argv) {
 	srand(2);
@@ -537,23 +677,36 @@ int main (int argc, char** argv) {
       #endif
     }
   }
-    /*
-    printf("  current keygen cycle count: %llu\n", *current_keygen_cycles);
-    printf("  current sign cycle count: %llu\n", *current_sign_cycles);
-    printf("  current verify cycle count: %llu\n", *current_verify_cycles);
-    printf("---------------------------------------\n");
-    *accumulated_keygen_cycles += current_keygen_cycles;
-    *accumulated_sign_cycles += current_sign_cycles;
-    *accumulated_verify_cycles += current_verify_cycles;
-    */
-  /*
-  *accumulated_keygen_cycles = *accumulated_keygen_cycles / 100;
-  *accumulated_sign_cycles = *accumulated_sign_cycles / 100;
-  *accumulated_verify_cycles = *accumulated_verify_cycles / 100;
-  printf("\n  AVERAGE KEYGEN CYCLE TIME: %d\n", *current_keygen_cycles);
-  printf("\n  AVERAGE SIGN CYCLE TIME: %d\n", *current_sign_cycles);
-  printf("\n  AVERAGE VERIFY CYCLE TIME: %d\n", *current_verify_cycles);
- */
+
+  //signature tests with compressed psi(S) and batcheding ------------------
+  Status = cryptotest_signature_CB();
+  if (Status != CRYPTO_SUCCESS) {
+    #ifdef TEST_RUN_PRINTS
+    printf("\n\n   Error detected: %s \n\n", SIDH_get_error_message(Status));
+    #endif
+    return -1;
+  } else {
+    printf("\n  ISOGENY-BASED SIGNATURE RUN WITH COMPRESSION AND BATCHING SUCCESSFUL\n\n");
+    #ifdef TEST_RUN_PRINTS
+    #endif
+  }
+
+
+  //signature benchmark with compressed psi(S) and batcheding ------------------
+  /*for (int i = 1; i <= compressed_rounds; i++) {
+    Status = cryptorun_signature_CB();
+    if (Status != CRYPTO_SUCCESS) {
+      #ifdef TEST_RUN_PRINTS
+      printf("\n\n   Error detected: %s \n\n", SIDH_get_error_message(Status));
+      #endif
+      continue;
+    } else {
+      #ifdef TEST_RUN_PRINTS
+      printf("\n  ISOGENY-BASED SIGNATURE WITH COMPRESSION AND BATCHING BENCHMARK COMPLETE\n\n");
+      #endif
+    }
+  }*/
+
 cleanup:
 
 	return 0;
