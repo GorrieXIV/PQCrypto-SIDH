@@ -1,0 +1,11 @@
+vanilla signature sign average: 4611010573.608
+vanilla signature verify average: 3221544625.173
+vanilla signature sign standard deviation: 300643097.88251454
+vanilla signature verify standard deviation: 263674018.52809483
+batched signature sign average: 4552062482.52
+batched signature verify average: 3173340239.461
+batched signature sign standard deviation: 18113276.903635465
+batched signature verify standard deviation: 68672478.33908471
+compressed signature sign average: 465126651.644
+compressed signature verify average: 196348788.556
+

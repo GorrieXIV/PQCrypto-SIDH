@@ -18,10 +18,10 @@ def plot_and_save(sign_points, verify_points, title, file_name):
   pyplot.clf()
 
 
-sig_runs = 2
-batched_runs = 2
-compressed_runs = 2
-CB_runs = 2
+sig_runs = 0 
+batched_runs = 0
+compressed_runs = 5
+CB_runs = 5
 
 # run signature test
 exec_call = ".././sig_test " + str(sig_runs) + " " + str(batched_runs) + " " + str(compressed_runs) + " " + str(CB_runs) + " > signature_benchmarks"
